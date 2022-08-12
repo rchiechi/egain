@@ -1,5 +1,6 @@
 import telnetlib3
 import asyncio
+import time
 
 # @asyncio.coroutine
 # def shell(reader, writer, cmd):
@@ -13,37 +14,38 @@ class Telnet:
 
     IP_ADDRESS = '192.168.254.254'
     PORT = 5001
-    cmd_queue = asyncio.Queue
-    message_queue = asyncio.Queue
-    lock = asyncio.Lock()
+    cmd_queue = asyncio.Queue()
+    message_queue = asyncio.Queue()
 
     async def shell(self, reader, writer):
-        _cmd = self.cmd_queue.get()
+        _cmd = await self.cmd_queue.get()
+        self.cmd_queue.task_done()
         print(f'Sending command {_cmd}')
         writer.write(_cmd)
         outp = await reader.read(1024)
         if len(outp) > 1:
-            self.message_queue.put(outp[:2])
+            await self.message_queue.put(outp[:2])
         else:
             print('Did not receive reply.')
 
-    async def __client(self):
-        r, w = telnetlib3.open_connection(host=self.IP_ADDRESS, port=self.PORT)
-
     def __runloop(self):
-        loop = asyncio.get_event_loop()
         coro = telnetlib3.open_connection(host=self.IP_ADDRESS, port=self.PORT, shell=self.shell)
-        reader, writer = loop.run_until_complete(coro)
-        loop.run_until_complete(writer.protocol.waiter_closed)
+        asyncio.run(coro)
+        #loop = asyncio.get_event_loop()
+        #coro = telnetlib3.open_connection(host=self.IP_ADDRESS, port=self.PORT, shell=self.shell)
+        #reader, writer = loop.run_until_complete(coro)
+        #loop.run_until_complete(writer.protocol.waiter_closed)
+        
 
-    def read(self):
-        async with self.lock():
-            return self.message_queue.get()
+    async def read(self):
+        msg = await self.message_queue.get()
+        self.message_queue.task_done()
+        print(msg)
+        return msg
 
-    def write(self, cmd):
-        async with self.lock:
-            self.cmd_queue.put(cmd)
-            self.__runloop()
+    async def write(self, cmd):
+        await self.cmd_queue.put(cmd)
+        self.__runloop()
 
 
 if __name__ == '__main__':
