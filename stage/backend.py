@@ -27,7 +27,7 @@ class Telnet:
     async def shell(self, reader, writer):
         while True:
             if not self.cmd_queue:
-                asyncio.sleep(0.1)
+                await asyncio.sleep(0.1)
                 continue
             _cmd = self.cmd_queue.pop()
             print(f'Sending command {_cmd}')
