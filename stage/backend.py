@@ -37,13 +37,17 @@ class Telnet:
         # loop.run_until_complete(writer.protocol.waiter_closed)
 
     def read(self):
-        if self.message_queue:
-            return self.message_queue.pop()
+        i = 0
+        while not len(self.message_queue):
+            time.sleep(0.1)
+            i++1
+            if i > 100:
+                return ' '
+        return self.message_queue.pop()
 
     def write(self, cmd):
         self.cmd_queue.append(cmd)
         self.__runloop()
-        time.sleep(0.1)
 
 
 if __name__ == '__main__':
