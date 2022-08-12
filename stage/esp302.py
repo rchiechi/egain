@@ -18,16 +18,14 @@ XXTS = {0:'Axis connected',
         15:'reserved'}
 
 def asciitobinary(ascii):
-    print(ascii)
     if len(ascii) > 2:
-        print("Warning: parsing ASCII string longer than two characters!")
+        print(f"Warning: ASCII string {ascii} is longer than two characters!")
     return ''.join(format(ord(i), '08b') for i in ascii)[::-1]
 
 def axisstatustostring(status):
-    print(status)
-    for i in range(len(status)):
+    for i in range(0, len(status)):
         if i > 15:
-            print("Status string too long!")
+            print(f"Status {status} string too long!")
             break
         _bool = bool(status[i])
         print(f'{XXTS[i]}: {_bool}')
