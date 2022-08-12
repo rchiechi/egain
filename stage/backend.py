@@ -67,7 +67,7 @@ class Telnet:
         return self.message_queue.pop()
 
     def write(self, cmd):
-        self.cmd_queue.put(cmd)
+        self.cmd_queue.append(cmd)
         self.__runloop()
 
 
