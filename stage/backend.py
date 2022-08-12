@@ -37,10 +37,14 @@ class Telnet:
 #         # yield from protocol.waiter_closed
 # 
     async def shell(self, reader, writer):
-        writer.write(self.cmd_queue.pop())
+        _cmd = self.cmd_queue.pop()
+        print(f'Sending command {_cmd}')
+        writer.write(_cmd)
         outp = await reader.read(1024)
         if outp:
             self.message_queue.append(outp)
+        else:
+            print('Did not receive reply.')
 
     async def __client(self):
         r, w = telnetlib3.open_connection(host=self.IP_ADDRESS, port=self.PORT)
@@ -64,7 +68,8 @@ class Telnet:
         # )
 
     def read(self):
-        return self.message_queue.pop()
+        if self.message_queue:
+            return self.message_queue.pop()
 
     def write(self, cmd):
         self.cmd_queue.append(cmd)
