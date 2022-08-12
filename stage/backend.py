@@ -13,17 +13,17 @@ class Telnet:
 
     IP_ADDRESS = '192.168.254.254'
     PORT = 5001
-    cmd_queue = []
-    message_queue = []
+    cmd_queue = asyncio.Queue
+    message_queue = asyncio.Queue
     lock = asyncio.Lock()
 
     async def shell(self, reader, writer):
-        _cmd = self.cmd_queue.pop()
+        _cmd = self.cmd_queue.get()
         print(f'Sending command {_cmd}')
         writer.write(_cmd)
         outp = await reader.read(1024)
         if len(outp) > 1:
-            self.message_queue.append(outp[:2])
+            self.message_queue.put(outp[:2])
         else:
             print('Did not receive reply.')
 
@@ -38,12 +38,11 @@ class Telnet:
 
     def read(self):
         async with self.lock():
-            if self.message_queue:
-                return self.message_queue.pop()
+            return self.message_queue.get()
 
     def write(self, cmd):
         async with self.lock:
-            self.cmd_queue.append(cmd)
+            self.cmd_queue.put(cmd)
             self.__runloop()
 
 
