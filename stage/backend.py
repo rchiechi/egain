@@ -9,17 +9,11 @@ import asyncio
 #         if not outp:
 #             break
 
-r_closed
-    return protocol.stream.read()
-
 class Telnet:
 
     IP_ADDRESS = '192.168.254.254'
     PORT = 5001
     message_queue = []
-
-    # def __init__(self):
-        # self.reader, self.writer = telnetlib3.open_connection(host=self.IP_ADDRESS, port=self.PORT)
 
     def __getclient(self):
         return telnetlib3.TelnetClient(encoding='utf-8', shell=telnetlib3.TerminalShell)
@@ -38,7 +32,7 @@ class Telnet:
 
         # one shot invocation of the command
         loop.call_soon(send_command)
-        self.message_queue.append(rotocol.stream.read())
+        self.message_queue.append(protocol.stream.read())
         # what does this do exactly ?
         yield from protocol.waiter_closed
 
