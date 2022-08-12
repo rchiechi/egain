@@ -19,6 +19,8 @@ XXTS = {0:'Axis connected',
 
 def asciitobinary(ascii):
     print(ascii)
+    if len(ascii) > 2:
+        print("Warning: parsing ASCII string longer than two characters!")
     return ''.join(format(ord(i), '08b') for i in ascii)[::-1]
 
 def axisstatustostring(status):
@@ -39,7 +41,8 @@ class ESP302:
             if not self.motorOn(axis):
                 self.error = True
         if self.error:
-            raise Exception()  # TODO: throw a real exception
+            print("Error starting up axis motors!")
+            #raise Exception()  # TODO: throw a real exception
 
     def __cmd(self, axis, cmd, param=None):
         if param is None:
@@ -65,7 +68,8 @@ class ESP302:
             if not self.motorOff(axis):
                 self.error = True
             if self.error:
-                raise Exception()  # TODO: throw a real exception
+                print("Error shutting down axis motors!")
+                # raise Exception()  # TODO: throw a real exception
 
     def motorOn(self, axis):
         "Turn on axis motor."
