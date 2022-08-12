@@ -78,5 +78,5 @@ class Telnet:
 
 if __name__ == '__main__':
     tel = Telnet()
-    tel.write(b'TS\r')
+    tel.write('1TS\r')
     print(tel.read())
