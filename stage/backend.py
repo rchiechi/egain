@@ -15,6 +15,7 @@ class Telnet:
     PORT = 5001
     cmd_queue = []
     message_queue = []
+    lock = asyncio.Lock()
 
     async def shell(self, reader, writer):
         _cmd = self.cmd_queue.pop()
@@ -36,12 +37,14 @@ class Telnet:
         loop.run_until_complete(writer.protocol.waiter_closed)
 
     def read(self):
-        if self.message_queue:
-            return self.message_queue.pop()
+        async with self.lock():
+            if self.message_queue:
+                return self.message_queue.pop()
 
     def write(self, cmd):
-        self.cmd_queue.append(cmd)
-        self.__runloop()
+        async with self.lock:
+            self.cmd_queue.append(cmd)
+            self.__runloop()
 
 
 if __name__ == '__main__':
