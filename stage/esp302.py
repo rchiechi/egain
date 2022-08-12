@@ -18,10 +18,15 @@ XXTS = {0:'Axis connected',
         15:'reserved'}
 
 def asciitobinary(ascii):
+    print(ascii)
     return ''.join(format(ord(i), '08b') for i in ascii)[::-1]
 
 def axisstatustostring(status):
+    print(status)
     for i in range(len(status)):
+        if i > 15:
+            print("Status string too long!")
+            break
         _bool = bool(status[i])
         print(f'{XXTS[i]}: {_bool}')
 
@@ -65,6 +70,7 @@ class ESP302:
     def motorOn(self, axis):
         "Turn on axis motor."
         _status = asciitobinary(self.__cmd(axis, 'MO'))
+        axisstatustostring(_status)
         return self.__bittobool(_status[1])
 
     def motorOff(self, axis):
@@ -84,7 +90,7 @@ class ESP302:
 
 
 if __name__ == '__main__':
-    from stage.backend import Telnet
+    from backend import Telnet
     telnet = Telnet()
     stage = ESP302(telnet)
     stage.cleanup()
