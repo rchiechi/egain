@@ -16,7 +16,7 @@ class Telnet:
     message_queue = []
 
     def __getclient(self):
-        return telnetlib3.TelnetClient(encoding='utf-8', shell=telnetlib3.TerminalShell)
+        return telnetlib3.TelnetClient(encoding='utf-8', shell=telnetlib3.telnet_client_shell)
 
     @asyncio.coroutine
     def __register_telnet_client(self, loop, Client, host, port, command):
