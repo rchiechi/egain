@@ -27,24 +27,29 @@ class Telnet:
             await self.message_queue.put(outp[:2])
         else:
             print('Did not receive reply.')
+        await writer.protocol.waiter_closed
 
     def __runloop(self):
         coro = telnetlib3.open_connection(host=self.IP_ADDRESS, port=self.PORT, shell=self.shell)
-        asyncio.run(coro)
-        #loop = asyncio.get_event_loop()
-        #coro = telnetlib3.open_connection(host=self.IP_ADDRESS, port=self.PORT, shell=self.shell)
-        #reader, writer = loop.run_until_complete(coro)
-        #loop.run_until_complete(writer.protocol.waiter_closed)
-        
+        reader, writer = asyncio.run(coro)
+        # loop = asyncio.get_event_loop()
+        # coro = telnetlib3.open_connection(host=self.IP_ADDRESS, port=self.PORT, shell=self.shell)
+        # reader, writer = loop.run_until_complete(coro)
+        # loop.run_until_complete(writer.protocol.waiter_closed)
 
-    async def read(self):
+    async def __read(self):
         msg = await self.message_queue.get()
         self.message_queue.task_done()
-        print(msg)
         return msg
 
-    async def write(self, cmd):
+    async def __write(self, cmd):
         await self.cmd_queue.put(cmd)
+
+    def read(self):
+        return self.__read()
+
+    def write(self, cmd):
+        self.__write(cmd)
         self.__runloop()
 
 
