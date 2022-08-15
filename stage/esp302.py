@@ -51,7 +51,7 @@ class ESP302:
         return asciitobinary(self.dev.read())
 
     def __moveindefinitely(self, axis, direction):
-        _status = self.__cmd(axis, 'MF', direction)
+        _status = self.__cmd(axis, b'MF', direction)
         while not bool(int(_status[2])):
             if self.__bittobool(_status[8]) or self.__bittobool(_status[9]):
                 return False
@@ -71,17 +71,17 @@ class ESP302:
 
     def motorOn(self, axis):
         "Turn on axis motor."
-        _status = self.__cmd(axis, 'MO')
+        _status = self.__cmd(axis, b'MO')
         axisstatustostring(_status)
         return self.__bittobool(_status[1])
 
     def motorOff(self, axis):
         "Turn off axis motor."
-        _status = self.__cmd(axis, 'MF')
+        _status = self.__cmd(axis, b'MF')
         return self.__bittobool(_status[1])
 
     def stop(self, axis):
-        _status = self.__cmd(axis, 'ST')
+        _status = self.__cmd(axis, b'ST')
         return self.__bittobool(_status[2])
 
     def moveMax(self, axis):
