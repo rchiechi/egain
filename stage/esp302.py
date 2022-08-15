@@ -24,6 +24,7 @@ def asciitobinary(ascii):
 
 def axisstatustostring(status):
     print('------')
+    print(status)
     for i in range(0, len(status)):
         if i > 15:
             print(f"Status {status} string too long!")
@@ -40,8 +41,8 @@ class ESP302:
         for axis in (1,2,3):
             if not self.motorOn(axis):
                 self.error = True
-        if self.error:
-            print("Error starting up axis motors!")
+        # if self.error:
+                print(f"Error starting up axis {axis} motor!")
             # raise Exception()  # TODO: throw a real exception
 
     def __cmd(self, axis, cmd, param=None):
@@ -67,8 +68,8 @@ class ESP302:
         for axis in (1,2,3):
             if not self.motorOff(axis):
                 self.error = True
-            if self.error:
-                print("Error shutting down axis motors!")
+            # if self.error:
+                print("Error shutting down axis {axis} motor!")
                 # raise Exception()  # TODO: throw a real exception
 
     def motorOn(self, axis):
