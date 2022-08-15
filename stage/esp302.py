@@ -20,7 +20,7 @@ XXTS = {0:'Axis connected',
 def asciitobinary(ascii):
     if len(ascii) > 2:
         print(f"Warning: ASCII string {ascii} is longer than two characters!")
-    return ''.join(format(ord(i), '08b') for i in ascii)[::-1]
+    return ''.join(format(ord(i), '08b') for i in str(ascii, encoding='utf8'))[::-1]
 
 def axisstatustostring(status):
     for i in range(0, len(status)):
