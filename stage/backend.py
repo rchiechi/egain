@@ -21,9 +21,12 @@ class Telnet:
         _cmd = self.cmd_queue.pop()
         print(f'Sending command {_cmd}')
         writer.write(_cmd)
-        outp = await reader.read(1024)
+        print('Sent.')
+        outp = await reader.readline()
+        print('Read raw data.')
         if len(outp) > 1:
             await self.message_queue.append(outp[:2])
+            print(f'Received: {self.message_queue[-1]}')
         else:
             print('Did not receive reply.')
         await writer.protocol.waiter_closed
@@ -41,7 +44,7 @@ class Telnet:
         while not len(self.message_queue):
             time.sleep(0.1)
             i++1
-            if i > 100:
+            if i > 10:
                 return ' '
         return self.message_queue.pop()
 
