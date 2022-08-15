@@ -39,17 +39,23 @@ def axisstatustostring(status):
 
 class ESP302:
 
-    def __init__(self, backend):
-        self.error = False
+    def _init_(self, backend):
+        self._error = False
         self.dev = backend
+        self.dev.connect()
+        if not self.dev.connected:
+            raise IOError('Could not connect backend.')
         for axis in (1,2,3):
             if not self.motorOn(axis):
-                self.error = True
-        # if self.error:
+                self._error = True
                 print(f"Error starting up axis {axis} motor!")
             # raise Exception()  # TODO: throw a real exception
 
-    def __cmd(self, axis, cmd, param=None):
+    @property
+    def error(self):
+        return self._error
+
+    def _cmd(self, axis, cmd, param=None):
         if param is None:
             _cmdstr = b"%d%s;%dTS\r" % (axis,cmd,axis)
         else:
@@ -57,50 +63,50 @@ class ESP302:
         self.dev.write(_cmdstr)
         return asciitobinary(self.dev.read())
 
-    def __moveindefinitely(self, axis, direction):
-        _status = self.__cmd(axis, b'MF', direction)
+    def _moveindefinitely(self, axis, direction):
+        _status = self._cmd(axis, b'MF', direction)
         while not bool(int(_status[2])):
-            if self.__bittobool(_status[8]) or self.__bittobool(_status[9]):
+            if self._bittobool(_status[8]) or self._bittobool(_status[9]):
                 return False
             time.sleep(1)
         return True
 
-    def __bittobool(self, bit):
+    def _bittobool(self, bit):
         return bool(int(bit))
 
     def cleanup(self):
         for axis in (1,2,3):
             if not self.motorOff(axis):
-                self.error = True
-            # if self.error:
+                self._error = True
                 print(f"Error shutting down axis {axis} motor!")
                 # raise Exception()  # TODO: throw a real exception
+        self.dev.disconnect()
 
     def motorOn(self, axis):
         "Turn on axis motor."
-        _status = self.__cmd(axis, b'MO')
+        _status = self._cmd(axis, b'MO')
         axisstatustostring(_status)
-        return self.__bittobool(_status[1])
+        return self._bittobool(_status[1])
 
     def motorOff(self, axis):
         "Turn off axis motor."
-        _status = self.__cmd(axis, b'MF')
+        _status = self._cmd(axis, b'MF')
         axisstatustostring(_status)
-        return not self.__bittobool(_status[1])
+        return not self._bittobool(_status[1])
 
     def stop(self, axis):
-        _status = self.__cmd(axis, b'ST')
-        return self.__bittobool(_status[2])
+        _status = self._cmd(axis, b'ST')
+        return self._bittobool(_status[2])
 
     def moveMax(self, axis):
-        return self.__moveindefinitely(axis, '+')
+        return self._moveindefinitely(axis, b'+')
 
     def moveMin(self, axis):
-        return self.__moveindefinitely(axis, '-')
+        return self._moveindefinitely(axis, b'-')
 
 
 if __name__ == '__main__':
-    from backend import Telnet
-    telnet = Telnet()
-    stage = ESP302(telnet)
+    from backend import NetHost
+    nethost = NetHost()
+    stage = ESP302(nethost)
     stage.cleanup()
