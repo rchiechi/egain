@@ -29,7 +29,7 @@ def axisstatustostring(status):
         if i > 15:
             print(f"Status {status} string too long!")
             break
-        _bool = bool(status[i])
+        _bool = bool(int(status[i]))
         print(f'{XXTS[i]}: {_bool}')
     print('------')
 
