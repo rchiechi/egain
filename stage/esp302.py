@@ -30,7 +30,7 @@ def axisstatustostring(status):
             break
         _bool = bool(status[i])
         print(f'{XXTS[i]}: {_bool}')
-        print('------')
+    print('------')
 
 class ESP302:
 
@@ -80,6 +80,7 @@ class ESP302:
     def motorOff(self, axis):
         "Turn off axis motor."
         _status = self.__cmd(axis, b'MF')
+        axisstatustostring(_status)
         return self.__bittobool(_status[1])
 
     def stop(self, axis):
