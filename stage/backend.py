@@ -21,7 +21,7 @@ class Telnet:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((self.IP_ADDRESS, int(self.PORT)))
             s.sendall(cmd)
-            self.message_queue.append(s.recv(1024))
+            self.message_queue.append(s.recv(1024).strip())
 
     def read(self):
         if self.message_queue:
