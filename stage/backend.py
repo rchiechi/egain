@@ -22,6 +22,7 @@ class Telnet:
             s.connect((self.IP_ADDRESS, int(self.PORT)))
             s.sendall(cmd)
             self.message_queue.append(s.recv(1024).strip())
+            print(f"Received:{self.message_queue[-1]}")
 
     def read(self):
         if self.message_queue:
