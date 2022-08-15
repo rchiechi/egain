@@ -73,7 +73,7 @@ class ESP302:
             if not self.motorOff(axis):
                 self.error = True
             # if self.error:
-                print("Error shutting down axis {axis} motor!")
+                print(f"Error shutting down axis {axis} motor!")
                 # raise Exception()  # TODO: throw a real exception
 
     def motorOn(self, axis):
@@ -86,7 +86,7 @@ class ESP302:
         "Turn off axis motor."
         _status = self.__cmd(axis, b'MF')
         axisstatustostring(_status)
-        return self.__bittobool(_status[1])
+        return not self.__bittobool(_status[1])
 
     def stop(self, axis):
         _status = self.__cmd(axis, b'ST')
