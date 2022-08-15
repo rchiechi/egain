@@ -23,7 +23,7 @@ def asciitobinary(ascii):
     # return ''.join(format(ord(i), '08b') for i in str(ascii, encoding='utf8'))[::-1]
     binary = []
     for i in str(ascii, encoding='utf8'):
-        binary.append(format(ord(i)))[::-1]
+        binary.append(format(ord(i))[::-1])
     return ''.join(binary)
 
 def axisstatustostring(status):
