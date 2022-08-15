@@ -44,9 +44,9 @@ class ESP302:
 
     def __cmd(self, axis, cmd, param=None):
         if param is None:
-            _cmdstr = "%d%s;%dTS\r" % (axis,cmd,axis)
+            _cmdstr = b"%d%s;%dTS\r" % (axis,cmd,axis)
         else:
-            _cmdstr = "%d%s%d;%dTS\r" % (axis,cmd,param,axis)
+            _cmdstr = b"%d%s%d;%dTS\r" % (axis,cmd,param,axis)
         self.dev.write(_cmdstr)
         return asciitobinary(self.dev.read())
 
