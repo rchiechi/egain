@@ -15,7 +15,7 @@ from subprocess import Popen, PIPE
 class Telnet:
 
     IP_ADDRESS = '192.168.254.254'
-    PORT = 5001
+    PORT = '5001'
     cmd_queue = []
     message_queue = []
 
@@ -34,7 +34,7 @@ class Telnet:
         self.nc.communicate(cmd)
 
     def read(self):
-        return self.nc.communicate()
+        return self.nc.communicate()[0]
 
 
 class OldTelnet:
