@@ -2,8 +2,7 @@ import telnetlib3
 import asyncio
 import time
 import os
-from subprocess import Popen, PIPE
-
+import socket
 # @asyncio.coroutine
 # def shell(reader, writer, cmd):
 #     while True:
@@ -16,25 +15,36 @@ class Telnet:
 
     IP_ADDRESS = '192.168.254.254'
     PORT = '5001'
-    cmd_queue = []
     message_queue = []
 
-    def __init__(self):
-        nc_bin = ''
-        p = Popen(["which", "nc"], stdout=PIPE)
-        nc_bin = p.communicate()[0][:-1]  # Strip trailing \n
-        if not os.path.exists(nc_bin):
-            raise OSError("Did not find nc binary")
-        self.__startnc(nc_bin)
-
-    def __startnc(self, nc_bin):
-        self.nc = Popen([nc_bin, '-t', self.IP_ADDRESS, self.PORT], stdin=PIPE, stdout=PIPE)
-
     def write(self, cmd):
-        self.nc.communicate(cmd)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((self.IP_ADDRESS, int(self.PORT)))
+            s.sendall(cmd)
+            self.message_queue.append(s.recv(1024))
 
     def read(self):
-        return self.nc.communicate()[0]
+        if self.message_queue:
+            return self.message_queue.pop()
+        else:
+            return ''
+
+#     def __init__(self):
+#         nc_bin = ''
+#         p = Popen(["which", "nc"], stdout=PIPE)
+#         nc_bin = p.communicate()[0][:-1]  # Strip trailing \n
+#         if not os.path.exists(nc_bin):
+#             raise OSError("Did not find nc binary")
+#         self.__startnc(nc_bin)
+# 
+#     def __startnc(self, nc_bin):
+#         self.nc = Popen([nc_bin, '-t', self.IP_ADDRESS, self.PORT], stdin=PIPE, stdout=PIPE)
+# 
+#     def write(self, cmd):
+#         self.nc.communicate(cmd)
+# 
+#     def read(self):
+#         return self.nc.communicate()[0]
 
 
 class OldTelnet:
