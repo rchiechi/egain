@@ -27,7 +27,7 @@ import tkinter.ttk as tk
 from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import filedialog
-from tkinter import Text, IntVar, StringVar, Listbox, Label
+from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
 from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
@@ -36,11 +36,16 @@ from tkinter import PhotoImage
 from tkinter.font import Font
 from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from gui.datacanvas import dataCanvas
+from gui.meas import measureClick
+from gui.stagecontrol import StageControls
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
 class MainFrame(tk.Frame):
     '''The main frame for collecting EGaIn data.'''
+
+    # dataCanvas = None
+
     def __init__(self, root, opts):
         self.root = root
         super().__init__(self.root)
@@ -52,8 +57,9 @@ class MainFrame(tk.Frame):
         self.root.geometry('800x850+250+250')
         self.pack(fill=BOTH)
         self.__createWidgets()
+        self.checkOptions()
         self.ToFront()
-        
+
     def ToFront(self):
         '''Try to bring the main window to the front on different platforms'''
         if platform.system() == "Darwin":
@@ -62,20 +68,54 @@ class MainFrame(tk.Frame):
             self.master.attributes('-topmost', 1)
             self.master.attributes('-topmost', 0)
         self.master.lift()
-        
-        
-    def __createWidgets(self):
-        self.buttonFrame = tk.Frame(self)
-        self.stagecontrolFrame = tk.Frame(self)
-        self.dataFrame = tk.Frame(self)
 
-        
-        self.dataCanvas = dataCanvas(self.dataFrame)
-        
-        self.quitButton = tk.Button(master=self.buttonFrame, text="Quit", command=self.root.quit)
-        
-        self.dataFrame.pack(side=TOP, fill=BOTH)
-        self.stagecontrolFrame.pack(side=BOTTOM, fill=None)
-        self.buttonFrame.pack(side=BOTTOM, fill=X)
-        
-        
+    def __createWidgets(self):
+        dataFrame = tk.Frame(self)
+        stagecontrolFrame = StageControls(self)
+        stagecontrolFrame.createWidgets()
+        optionsFrame = tk.Frame(self)
+        outputfilenameFrame = tk.Frame(optionsFrame)
+        buttonFrame = tk.Frame(self)
+
+        dataCanvas(dataFrame)
+
+        outputfilenameEntryLabel = Label(master=outputfilenameFrame,
+                                         text='Output Filename Prefix:')
+        outputfilenameEntryLabel.pack(side=LEFT)
+        outputfilenameEntry = Entry(master=outputfilenameFrame,
+                                    width=20,
+                                    font=Font(size=10, slant='italic'))
+        outputfilenameEntry.pack(side=LEFT)
+        outputfilenameEntry.delete(0, END)
+        outputfilenameEntry.insert(0, self.opts.output_file_name)
+        for _ev in ('<Return>', '<Leave>', '<Enter>'):
+            outputfilenameEntry.bind(_ev, self.checkOutputfilename)
+
+        saveButton = tk.Button(master=buttonFrame, text="Save To", command=self.SpawnSaveDialogClick)
+        saveButton.pack(side=LEFT)
+        measButton = tk.Button(master=buttonFrame, text="Measure", command=measureClick)
+        measButton.pack(side=LEFT)
+        quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.root.quit)
+        quitButton.pack(side=BOTTOM)
+
+        dataFrame.pack(side=TOP, fill=BOTH)
+        stagecontrolFrame.pack(side=TOP, fill=BOTH)
+        outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)
+        optionsFrame.pack(side=BOTTOM, fill=Y)
+        buttonFrame.pack(side=BOTTOM, fill=X)
+
+    def SpawnSaveDialogClick(self):
+        self.checkOptions()
+        self.opts.save_path += filedialog.askdirectory(
+            title="Path to save data",
+            initialdir=self.opts.save_path)
+
+    def checkOutputfilename(self, event):
+        self.opts.output_file_name = event.widget.get()
+        self.checkOptions()
+
+    def checkOptions(self):
+        # print(self.opts)
+        return
+        # self.outputfilenameEntry.delete(0, END)
+        # self.outputfilenameEntry.insert(0, self.opts.output_file_name)

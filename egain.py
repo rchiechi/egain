@@ -2,8 +2,8 @@
 
 from tkinter import Tk
 from gui.main import MainFrame
-from config.options import Options
+from config.options import createOptions
 
 root = Tk()
-main = MainFrame(root, Options)
+main = MainFrame(root, createOptions())
 root.mainloop()
