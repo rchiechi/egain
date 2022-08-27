@@ -1,4 +1,5 @@
 import time
+import threading
 
 XXTS = {0:'Axis connected',
         1:'Motor on',
@@ -37,9 +38,25 @@ def axisstatustostring(status):
         print(f'{XXTS[i]}: {_bool}')
     print('------')
 
-class ESP302:
+class CommandThread(threading.Thread):
+    '''A Thread object to run stage commands in so it
+       doesn't block the main GUI thread.'''
 
-    def _init_(self, backend):
+    def __init__(self, parser):
+        super().__init__()
+        self.parser = parser
+
+    def run(self):
+        self.parser.readfiles(self.parser.opts.in_files)
+
+class ESP302(threading.Thread):
+
+    _in_motion = False
+    _cmd_queue = []
+
+    def __init__(self, alive, backend):
+        super().__init__()
+        self.alive = alive
         self._error = False
         self.dev = backend
         self.dev.connect()
@@ -55,20 +72,39 @@ class ESP302:
     def error(self):
         return self._error
 
+    @property
+    def isMoving(self):
+        return self._in_motion
+
+    def run(self):
+        while self.alive.isSet():
+            if self._cmd_queue:
+                _cmd = self._cmd_queue.pop()
+                _func = getattr(self, _cmd[0])
+                _func(*_cmd[1:])
+            time.sleep(0.1)
+        for axis in (1,2,3):
+            if not self.motorOff(axis):
+                self._error = True
+                print(f"Error shutting down axis {axis} motor!")
+
     def _cmd(self, axis, cmd, param=None):
         if param is None:
             _cmdstr = b"%d%s;%dTS\r" % (axis,cmd,axis)
         else:
-            _cmdstr = b"%d%s%d;%dTS\r" % (axis,cmd,param,axis)
+            _cmdstr = b"%d%s%s;%dTS\r" % (axis,cmd,param,axis)
         self.dev.write(_cmdstr)
         return asciitobinary(self.dev.read())
 
     def _moveindefinitely(self, axis, direction):
+        self._in_motion = True
         _status = self._cmd(axis, b'MF', direction)
         while not bool(int(_status[2])):
             if self._bittobool(_status[8]) or self._bittobool(_status[9]):
+                self._in_motion = False
                 return False
             time.sleep(1)
+        self._in_motion = False
         return True
 
     def _bittobool(self, bit):
@@ -99,10 +135,12 @@ class ESP302:
         return self._bittobool(_status[2])
 
     def moveMax(self, axis):
-        return self._moveindefinitely(axis, b'+')
+        self._cmd_queue.append(('_moveindefinitely', axis, b'+'))
+        # return self._moveindefinitely(axis, b'+')
 
     def moveMin(self, axis):
-        return self._moveindefinitely(axis, b'-')
+        self._cmd_queue.append(('_moveindefinitely', axis, b'-'))
+        # return self._moveindefinitely(axis, b'-')
 
 
 if __name__ == '__main__':

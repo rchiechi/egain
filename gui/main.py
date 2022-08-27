@@ -21,10 +21,10 @@ Description:
 '''
 import os
 import platform
-import logging
-import threading
+# import logging
+# import threading
 import tkinter.ttk as tk
-from tkinter import Tk
+# from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import filedialog
 from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
@@ -45,6 +45,7 @@ class MainFrame(tk.Frame):
     '''The main frame for collecting EGaIn data.'''
 
     # dataCanvas = None
+    stagecontrolFrame = None
 
     def __init__(self, root, opts):
         self.root = root
@@ -71,8 +72,8 @@ class MainFrame(tk.Frame):
 
     def __createWidgets(self):
         dataFrame = tk.Frame(self)
-        stagecontrolFrame = StageControls(self)
-        stagecontrolFrame.createWidgets()
+        self.stagecontrolFrame = StageControls(self)
+        # self.stagecontrolFrame.createWidgets()
         optionsFrame = tk.Frame(self)
         outputfilenameFrame = tk.Frame(optionsFrame)
         buttonFrame = tk.Frame(self)
@@ -84,7 +85,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntryLabel.pack(side=LEFT)
         outputfilenameEntry = Entry(master=outputfilenameFrame,
                                     width=20,
-                                    font=Font(size=10, slant='italic'))
+                                    font=Font(size=10))
         outputfilenameEntry.pack(side=LEFT)
         outputfilenameEntry.delete(0, END)
         outputfilenameEntry.insert(0, self.opts.output_file_name)
@@ -95,14 +96,18 @@ class MainFrame(tk.Frame):
         saveButton.pack(side=LEFT)
         measButton = tk.Button(master=buttonFrame, text="Measure", command=measureClick)
         measButton.pack(side=LEFT)
-        quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.root.quit)
+        quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.quitButtonClick)
         quitButton.pack(side=BOTTOM)
 
         dataFrame.pack(side=TOP, fill=BOTH)
-        stagecontrolFrame.pack(side=TOP, fill=BOTH)
+        self.stagecontrolFrame.pack(side=TOP, fill=BOTH)
         outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)
         optionsFrame.pack(side=BOTTOM, fill=Y)
         buttonFrame.pack(side=BOTTOM, fill=X)
+
+    def quitButtonClick(self):
+        self.stagecontrolFrame.shutdown()
+        self.root.quit()
 
     def SpawnSaveDialogClick(self):
         self.checkOptions()
