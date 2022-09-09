@@ -78,9 +78,9 @@ void setup() {
 void checkPeltier() {
   Serial.print("\"Peltier_on\":");
   if (peltier_on){
-    Serial.print("\"True\"");
+    Serial.print("true");
   }else{
-    Serial.print("\"False\"");
+    Serial.print("false");
   }
 }
 
@@ -101,6 +101,8 @@ void setPeltier(int power){
   if (peltier_on){
     int peltier_level = map(power, 0, 99, 0, 255);
     analogWrite(PELTIER, peltier_level); //Write this new value out to the port
+  }else{
+    analogWrite(PELTIER, 0);
   }
 }
 
@@ -119,29 +121,30 @@ void loop() {
       if (incomingCmd == "SETTEMP"){
         lowerDegC = Serial.parseFloat();
       }
+    
+  if (incomingCmd == "POLL"){
+    Serial.print("{\"LOWER\":");
+    double c = lowerThermocouple.readCelsius();
+    if (!isnan(c)){
+      Serial.print(c);
+    } else{
+      Serial.print(-100.0);
     }
-   
-  Serial.print("{\"LOWER\":");
-  double c = lowerThermocouple.readCelsius();
-  if (!isnan(c)){
-    Serial.print(c);
-  } else{
-    Serial.print(-100.0);
+    Serial.print(",\"UPPER\":");
+    c = upperThermocouple.readCelsius();
+    if (!isnan(c)){
+      Serial.print(c);
+    } else{
+      Serial.print(-100.0);
+    }
+    Serial.print(",");
+    Serial.print("\"TARGET\":");
+    Serial.print(lowerDegC);
+    Serial.print(",");
+    checkPeltier();
+    Serial.println("}");
   }
-  Serial.print(",\"UPPER\":");
-  c = upperThermocouple.readCelsius();
-  if (!isnan(c)){
-    Serial.print(c);
-  } else{
-    Serial.print(-100.0);
   }
-  Serial.print(",");
-  Serial.print("\"TARGET\":");
-  Serial.print(lowerDegC);
-  Serial.print(",");
-  checkPeltier();
-  Serial.println("}");
-
   setLower();
   delay(250);
 

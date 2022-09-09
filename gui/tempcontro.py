@@ -1,13 +1,9 @@
 import os
 import json
 import platform
-# import asyncio
-# import logging
-# import threading
+import time
 import tkinter.ttk as tk
 from tkinter import Tk
-# from tkinter import Toplevel
-from tkinter import filedialog
 from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
@@ -23,6 +19,7 @@ TEMPS = {'UPPER':None, 'LOWER':None}
 class TempControl(tk.Frame):
 
     controller = None
+    initialized = False
 
     def __init__(self, root):
         self.master = root
@@ -66,7 +63,6 @@ class TempControl(tk.Frame):
         setFrame.pack(side=TOP)
         self.tempFrame.pack(side=TOP)
         self.pack()
-        self._initdevice(None)
         self._readTemps()
 
     def _setPeltier(self):
@@ -74,166 +70,106 @@ class TempControl(tk.Frame):
             cmd = 'ON'
         else:
             cmd = 'OFF'
-        writeserial(self.controller, cmd)
+        if self.initialized:
+            self.writeserial(cmd)
 
     def _checkPeltier(self):
-        self.peltierCheck.after(500, self._checkPeltier)
-        _msg = readserial(self.controller)
+        self.peltierCheck.after('2000', self._checkPeltier)
+        _msg = self.readserial()
         _state = _msg.get('Peltier_on', None)
         if _state is None:
-            print("Error fetching Peliter state.")
+            self.peltierCheck.configure(state='disabled')
             return
+        self.peltierCheck.configure(state='normal')
         if _state:
             self.peltier_on.set(1)
-        self.peltier_on.set(0)
+        else:
+            self.peltier_on.set(0)
 
     def _setTemp(self, *args):
-        # self._initdevice()
         print(f"Setting {self.controller.name} to {self.targettemp.get()} °C")
-        writeserial(self.controller, 'SETTEMP', self.targettemp.get())
+        self.writeserial('SETTEMP', self.targettemp.get())
+
+    def _readTemps(self):
+        self.tempFrame.after('500', self._readTemps)
+        _temps = self.readserial()
+        upper = _temps.get('UPPER', -999)
+        lower = _temps.get('LOWER', -999)
+        self.upperTempString.set('Upper: %0.2f °C' % upper)
+        self.lowerTempString.set('Lower: %0.2f °C' % lower)
 
     def _initdevice(self, *args):
+        print("Initializing device.")
+        n = 0
         ser_port = os.path.join('/', 'dev', self.device.get())
         if not os.path.exists(ser_port):
             return
         try:
             self.controller = serial.Serial(ser_port, 9600, timeout=0.5)
-            self.controller.readline()
+            time.sleep(1)
             _json = ''
-            # while not _json:
-            _json = str(self.controller.readline(), encoding='utf8')
-            print(f'_init json: {_json}')
-            try:
-                _msg = json.loads(_json)
-                _val = _msg.get('message', '')
-                print(f'_val:{_val}')
-                if _val == 'Done initializing':
-                    print("Device initalized")
-                    # break
-            except json.decoder.JSONDecodeError:
-                print("Empty reply from device.")
-                # continue
+            while not _json or n < 10:
+                _json = str(self.controller.readline(), encoding='utf8')
+                try:
+                    _msg = json.loads(_json)
+                    _val = _msg.get('message', '')
+                    if _val == 'Done initializing':
+                        print("Device initalized")
+                        self.initialized = True
+                        return
+                except json.decoder.JSONDecodeError:
+                    continue
+                n += 1
         except serial.serialutil.SerialException:
             return
+        print("Empty reply from device.")
 
-    def _readTemps(self):
-        self.tempFrame.after('500', self._readTemps)
-        # print(f"Reading temps from {self.controller.name}")
-        _temps = readserial(self.controller)
-        upper = _temps.get('UPPER', None)
-        lower = _temps.get('LOWER', None)
-        if None in (upper, lower):
-            print("Error reading temperatures.")
-        self.upperTempString.set(f'Upper: {str(upper)} °C')
-        self.lowerTempString.set(f'Lower: {str(lower)} °C')
+    def readserial(self):
+        if not self.initialized:
+            return {}
+        try:
+            _json = ''
+            while not _json:
+                self.writeserial('POLL')
+                _json = str(self.controller.readline(), encoding='utf8').strip()
+                try:
+                    msg = json.loads(_json)
+                    print(msg)
+                    if 'message' in msg:
+                        print(msg)
+                        self.initialized = False
+                    return msg
+                except json.decoder.JSONDecodeError as err:
+                    print(f'JSON Error: {err}')
+        except serial.serialutil.SerialException:
+            pass
+        print(f"Error reading from {self.controller.name}.")
+        return {}
+
+    def writeserial(self, cmd, val=None):
+        if not self.initialized:
+            return
+        if not cmd:
+            return
+        try:
+            self.controller.write(bytes(cmd, encoding='utf8')+b';')
+            print(f"Wrote {cmd};", end="")
+            if val is not None:
+                self.controller.write(bytes(val, encoding='utf8'))
+                print(f"{val}", end="")
+            print(f" to {self.controller.name}.")
+        except serial.serialutil.SerialException:
+            print(f"Error sending command to {self.controller.name}.")
 
 def _enumerateDevices():
     _filter = ''
     if platform.system() == "Darwin":
         _filter = 'usbmodem'
-    _devs = []
+    _devs = ['Choose USB Device']
     for _dev in os.listdir('/dev'):
         if _filter.lower() in _dev.lower():
             _devs.append(_dev)
     return _devs
-
-# def peltierset(ser, enabled):
-#     try:
-#         if enabled:
-#             ser.write(b'ON;')
-#             print('Setting peltier ON')
-#         else:
-#             ser.write(b'OFF;')
-#             print('Setting peltier OFF')
-#     except serial.serialutil.SerialException:
-#         print("Error setting peltier status")
-# 
-# def peltiercheck(ser):
-#     peltier = None
-#     try:
-#         ser.write(b'CHECK;')
-#         _json = ''
-#         while True:
-#             _json = str(ser.readline(), encoding='utf8')
-#             print(f'peltier json: {_json}')
-#             try:
-#                 peltier = json.loads(_json).get('Peliter_on', None)
-#                 break
-#             except json.decoder.JSONDecodeError:
-#                 break
-#     except serial.serialutil.SerialException:
-#         print("Error reading peltier status")
-#     return(peltier)
-# 
-# def settemp(ser, temp):
-#     if not temp:
-#         return
-#     try:
-#         ser.write(b'SETTEMP;{temp}')
-#         print(f"Wrote to {ser.name}.")
-#     except serial.serialutil.SerialException:
-#         print("Error setting temp.")
-# 
-# 
-# def readtemps(ser):
-#     temps = TEMPS
-#     try:
-#         ser.write(b'GETTEMP;')
-#         _json = ''
-#         while True:
-#             _json = str(ser.readline(), encoding='utf8')
-#             print(f'_temp json: {_json}')
-#             try:
-#                 temps = json.loads(_json)
-#                 if 'UPPER' in temps or 'LOWER' in temps:
-#                     print(temps)
-#                     break
-#             except json.decoder.JSONDecodeError:
-#                 break
-#     except serial.serialutil.SerialException:
-#         print("Error reading temps")
-#         return TEMPS
-#     return(temps)
-
-def readserial(ser):
-    if ser is None:
-        return {}
-    _chrs = []
-    try:
-        while True:
-            _chrs.append(ser.read(1))
-            # print(str(b''.join(_chrs), encoding='utf8'), end='')
-            if _chrs[-1] not in (b'\n', b'}'):
-                continue
-            if _chrs == [b'\r', b'\n']:
-                _chrs = []
-                continue
-            _json = str(b''.join(_chrs), encoding='utf8')
-            # print(f'_json: {_json};')
-            try:
-                return json.loads(_json)
-            except json.decoder.JSONDecodeError as err:
-                print(f'JSON Error: {err}')
-                break
-    except serial.serialutil.SerialException:
-        pass
-    print(f"Error reading from {ser.name}.")
-    return {}
-
-def writeserial(ser, cmd, val=None):
-    if ser is None:
-        return
-    if not cmd:
-        return
-    try:
-        ser.write(b'{cmd};')
-        print(f"Wrote {cmd};", end="")
-        if val is not None:
-            ser.write(b'{val}')
-            print(f"{val}", end="")
-        print(f" to {ser.name}.")
-    except serial.serialutil.SerialException:
-        print(f"Error sending command to {ser.name}.")
 
 
 if __name__ == '__main__':
