@@ -22,12 +22,17 @@
 
 // Example creating a thermocouple instance with software SPI on any three
 // digital IO pins.
-#define MAXDO   3
-#define MAXCS   4
-#define MAXCLK  5
-
+#define LOWDO   3
+#define LOWCS   4
+#define LOWCLK  5
+#define HIDO   8
+#define HICS   9
+#define HICLK  10
 // initialize the Thermocouple
-Adafruit_MAX31855 thermocouple(MAXCLK, MAXCS, MAXDO);
+Adafruit_MAX31855 lowerThermocouple(LOWCLK, LOWCS, LOWDO);
+Adafruit_MAX31855 upperThermocouple(HICLK, HICS, HIDO);
+
+#define PELTIER 6
 
 // Example creating a thermocouple instance with hardware SPI
 // on a given CS pin.
@@ -39,47 +44,105 @@ Adafruit_MAX31855 thermocouple(MAXCLK, MAXCS, MAXDO);
 //#define MAXCS   10
 //Adafruit_MAX31855 thermocouple(MAXCS, SPI1);
 
-int settemp = 0;
+#define terminator ';'
+//int peltier_level = 0;
+//int peltier_level = map(power, 0, 99, 0, 255); //This is a value from 0 to 255 that actually controls the MOSFET
+int lowerDegC = 25;
+bool peltier_on = false;
+bool initialized = false;
 
 void setup() {
   Serial.begin(9600);
 
   while (!Serial) delay(1); // wait for Serial on Leonardo/Zero, etc
 
-  Serial.println("MAX31855 test");
+  // Serial.println("{\"message\":\"MAX31855 test\"}");
   // wait for MAX chip to stabilize
   delay(500);
-  Serial.print("Initializing sensor...");
-  if (!thermocouple.begin()) {
-    Serial.println("ERROR.");
+  Serial.println("{\"message\":\"Lower Thermocouple Initializing\"}");
+  if (!lowerThermocouple.begin()) {
+    Serial.println("{\"message\":\"ERROR\"}");
     while (1) delay(10);
   }
-  Serial.println("DONE.");
+    Serial.println("{\"message\":\"Upper Thermocouple Initializing\"}");
+  if (!upperThermocouple.begin()) {
+    Serial.println("{\"message\":\"ERROR\"}");
+    while (1) delay(10);
+  }
+  Serial.println("{\"message\":\"Done initializing\"}");
+  initialized = true;
   
 }
 
+
+void checkPeltier() {
+  Serial.print("\"Peltier_on\":");
+  if (peltier_on){
+    Serial.print("\"True\"");
+  }else{
+    Serial.print("\"False\"");
+  }
+}
+
+void setLower(){
+//  if(power > 99) power = 99;
+//  if(power < 0) power = 0;
+  double c = lowerThermocouple.readCelsius();
+  if (c >= lowerDegC){
+    setPeltier(50);
+  }
+  else {
+    setPeltier(0);
+  }
+
+}
+
+void setPeltier(int power){
+  if (peltier_on){
+    int peltier_level = map(power, 0, 99, 0, 255);
+    analogWrite(PELTIER, peltier_level); //Write this new value out to the port
+  }
+}
+
+
 void loop() {
-  
 
-  
-  // basic readout test, just print the current temp
-   Serial.print("Internal Temp = ");
-   Serial.println(thermocouple.readInternal());
-
-   double c = thermocouple.readCelsius();
-   if (isnan(c)) {
-     Serial.println("Something wrong with thermocouple!");
-   } else {
-    if (settemp == 0) {
-     Serial.print("C = ");
-     Serial.println(c);
-   }
-   else {
-    Serial.print("F = ");
-    Serial.println(thermocouple.readFahrenheit());
+  if (Serial.available() > 0) {
+      // read the incoming byte:
+      String incomingCmd = Serial.readStringUntil(terminator);
+      if (incomingCmd == "ON"){
+        peltier_on = true;
+      }
+      if (incomingCmd == "OFF"){
+        peltier_on = false;
+      }
+      if (incomingCmd == "SETTEMP"){
+        lowerDegC = Serial.parseFloat();
+      }
     }
-   }
-   delay(1000);
-   settemp = 1;
+   
+  Serial.print("{\"LOWER\":");
+  double c = lowerThermocouple.readCelsius();
+  if (!isnan(c)){
+    Serial.print(c);
+  } else{
+    Serial.print(-100.0);
+  }
+  Serial.print(",\"UPPER\":");
+  c = upperThermocouple.readCelsius();
+  if (!isnan(c)){
+    Serial.print(c);
+  } else{
+    Serial.print(-100.0);
+  }
+  Serial.print(",");
+  Serial.print("\"TARGET\":");
+  Serial.print(lowerDegC);
+  Serial.print(",");
+  checkPeltier();
+  Serial.println("}");
+
+  setLower();
+  delay(250);
 
 }
