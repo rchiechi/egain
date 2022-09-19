@@ -33,6 +33,7 @@ Adafruit_MAX31855 lowerThermocouple(LOWCLK, LOWCS, LOWDO);
 Adafruit_MAX31855 upperThermocouple(HICLK, HICS, HIDO);
 
 #define PELTIER 6
+#define PELTIER_RELAY 13
 
 // Example creating a thermocouple instance with hardware SPI
 // on a given CS pin.
@@ -71,6 +72,8 @@ void setup() {
   }
   Serial.println("{\"message\":\"Done initializing\"}");
   initialized = true;
+
+  pinMode(13, OUTPUT);    // sets the digital pin 13 as output
   
 }
 
@@ -106,7 +109,6 @@ void setPeltier(int power){
   }
 }
 
-
 void loop() {
 
   if (Serial.available() > 0) {
@@ -114,9 +116,11 @@ void loop() {
       String incomingCmd = Serial.readStringUntil(terminator);
       if (incomingCmd == "ON"){
         peltier_on = true;
+        digitalWrite(13, HIGH); // sets the digital pin 13 on
       }
       if (incomingCmd == "OFF"){
         peltier_on = false;
+        digitalWrite(13, LOW);  // sets the digital pin 13 off
       }
       if (incomingCmd == "SETTEMP"){
         lowerDegC = Serial.parseFloat();
