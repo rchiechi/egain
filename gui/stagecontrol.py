@@ -71,32 +71,40 @@ class StageControls(tk.Frame):
         print("Yo")
 
     def _waitformotion(self, widget):
-        if self.stage.isMoving():
-            self.widget.after('100', self._waitformotion)
-        self.widget['state'] = NORMAL
+        if self.stage.isMoving:
+            widget.after('100', lambda: self._waitformotion(widget))
+        else:
+            widget['state'] = NORMAL
 
     def upButtonClick(self):
         self.upButton['state'] = DISABLED
-        self.upButton.after('100', self._waitformotion)
+        self.upButton.after('100', lambda: self._waitformotion(self.upButton))
         self.stage.moveMax(self.Zaxis)
 
     def downButtonClick(self):
+        self.downButton['state'] = DISABLED
+        self.downButton.after('100', lambda: self._waitformotion(self.downButton))
         self.stage.moveMin(self.Zaxis)
-        return
 
     def leftButtonClick(self):
+        self.leftButton['state'] = DISABLED
+        self.leftButton.after('100', lambda: self._waitformotion(self.leftButton))
         self.stage.moveMax(self.Yaxis)
-        return
 
     def rightButtonClick(self):
+        self.rightButton['state'] = DISABLED
+        self.rightButton.after('100', lambda: self._waitformotion(self.rightButton))
         self.stage.moveMin(self.Yaxis)
-        return
 
     def forwardButtonClick(self):
+        self.forwardButton['state'] = DISABLED
+        self.forwardButton.after('100', lambda: self._waitformotion(self.forwardButton))
         self.stage.moveMax(self.Xaxis)
         return
 
     def backButtonClick(self):
+        self.backButton['state'] = DISABLED
+        self.backButton.after('100', lambda: self._waitformotion(self.backButton))
         self.stage.moveMin(self.Xaxis)
-        return
+
 

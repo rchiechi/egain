@@ -53,6 +53,8 @@ class ESP302(threading.Thread):
 
     _in_motion = False
     _cmd_queue = []
+    motion_timeout = 30
+    name = 'ESP302'
 
     def __init__(self, alive, backend):
         super().__init__()
@@ -77,10 +79,12 @@ class ESP302(threading.Thread):
         return self._in_motion
 
     def run(self):
+        print(f'Thread {self.name} started.')
         while self.alive.isSet():
             if self._cmd_queue:
                 _cmd = self._cmd_queue.pop()
                 _func = getattr(self, _cmd[0])
+                print(f'Executing command {_cmd[0]}.')
                 _func(*_cmd[1:])
             time.sleep(0.1)
         for axis in (1,2,3):
@@ -97,13 +101,18 @@ class ESP302(threading.Thread):
         return asciitobinary(self.dev.read())
 
     def _moveindefinitely(self, axis, direction):
+        _t = 0
         self._in_motion = True
         _status = self._cmd(axis, b'MF', direction)
         while not bool(int(_status[2])):
             if self._bittobool(_status[8]) or self._bittobool(_status[9]):
                 self._in_motion = False
                 return False
+            if _t > self.motion_timeout:
+                print('Timed out executing motion command')
+                break
             time.sleep(1)
+            _t += 1
         self._in_motion = False
         return True
 
