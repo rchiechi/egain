@@ -6,10 +6,10 @@ import tkinter.ttk as tk
 from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import filedialog
-from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
+from tkinter import Text, IntVar, StringVar, DoubleVar, Listbox, Label, Entry
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
-from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
+from tkinter import END, BOTH, NONE, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
 from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused-import
 from tkinter import PhotoImage
 from tkinter.font import Font
@@ -22,10 +22,16 @@ class StageControls(tk.Frame):
     Xaxis = 1
     Yaxis = 2
     Zaxis = 3
+    relative_move = 1.0
+    unit = 1
+    units = {1:'step',
+             2:'mm',
+             3:'μm'}
 
     def __init__(self, root):
         self.master = root
         super().__init__(self.master)
+        self.relative_move_label = StringVar()
         self.createWidgets()
         self.alive = threading.Event()
         self.alive.set()
@@ -59,6 +65,20 @@ class StageControls(tk.Frame):
                                     text="Back",
                                     command=self.backButtonClick)
 
+        relativemoveFrame = tk.Frame(xyzFrame)
+        relativemoveScale = tk.Scale(master=relativemoveFrame,
+                                     from_=1, to=1000,
+                                     orient=HORIZONTAL,
+                                     command=self.relativemoveScaleChange)
+        relativemoveLabel = tk.Label(master=relativemoveFrame,
+                                     text='Relative Move Distance')
+        relativemoveindicatorLabel = tk.Label(master=relativemoveFrame,
+                                              textvariable=self.relative_move_label)
+        self.relativemoveScaleChange(relativemoveScale.get())
+        relativemoveLabel.pack(side=TOP)
+        relativemoveScale.pack(side=TOP)
+        relativemoveindicatorLabel.pack(side=TOP)
+        relativemoveFrame.pack(side=RIGHT, fill=NONE)
         self.upButton.pack(side=TOP)
         self.downButton.pack(side=BOTTOM)
         self.leftButton.pack(side=LEFT)
@@ -107,4 +127,11 @@ class StageControls(tk.Frame):
         self.backButton.after('100', lambda: self._waitformotion(self.backButton))
         self.stage.moveMin(self.Xaxis)
 
-
+    def relativemoveScaleChange(self, distance):
+        distance = float(distance)
+        if self.unit in (1,3):
+            _distance = f'{distance:.0f}'
+        else:
+            _distance = f'{distance:.2f}'
+        self.relative_move_label.set(f'{_distance} {self.units[self.unit]}')
+        self.relative_move = distance

@@ -151,6 +151,17 @@ class ESP302(threading.Thread):
         self._cmd_queue.append(('_moveindefinitely', axis, b'-'))
         # return self._moveindefinitely(axis, b'-')
 
+    def setUnits(self, unit):
+        for axis in (1, 2, 3):
+            self._cmd(axis, b'SN', unit)
+
+    def getUnits(self):
+        units = []
+        for axis in (1, 2, 3):
+            self.dev.write(b'%sSN\r' % axis)
+            units.append(self.dev.read())
+        return units
+
 
 if __name__ == '__main__':
     from backend import NetHost
