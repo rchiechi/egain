@@ -91,13 +91,15 @@ void setLower(){
 //  if(power > 99) power = 99;
 //  if(power < 0) power = 0;
   double c = lowerThermocouple.readCelsius();
-  if (c >= lowerDegC){
-    setPeltier(50);
+  if (!isnan(c)){
+    int power = (1 - (lowerDegC / c)) * 100;
+    if (c >= lowerDegC){
+      setPeltier(power);
+    }
+    else {
+      setPeltier(0);
+    }
   }
-  else {
-    setPeltier(0);
-  }
-
 }
 
 void setPeltier(int power){
