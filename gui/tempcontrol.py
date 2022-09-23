@@ -165,6 +165,8 @@ def _enumerateDevices():
     _filter = ''
     if platform.system() == "Darwin":
         _filter = 'usbmodem'
+    if platform.system() == "Linux":
+        _filter = 'ttyACM'
     _devs = ['Choose USB Device']
     for _dev in os.listdir('/dev'):
         if _filter.lower() in _dev.lower():
