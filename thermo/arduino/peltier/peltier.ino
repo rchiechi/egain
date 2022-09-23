@@ -88,8 +88,7 @@ void checkPeltier() {
 }
 
 void setLower(){
-//  if(power > 99) power = 99;
-//  if(power < 0) power = 0;
+
   double c = lowerThermocouple.readCelsius();
   if (!isnan(c)){
     int power = (1 - (lowerDegC / c)) * 100;
@@ -103,6 +102,8 @@ void setLower(){
 }
 
 void setPeltier(int power){
+  if(power > 99) power = 99;
+  if(power < 0) power = 0;
   if (peltier_on){
     int peltier_level = map(power, 0, 99, 0, 255);
     analogWrite(PELTIER, peltier_level); //Write this new value out to the port
