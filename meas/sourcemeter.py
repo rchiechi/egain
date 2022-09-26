@@ -36,13 +36,11 @@ class Keithley(Instrument):
     """
 
     mode = DEFAULTMODE
-    column_names = ""
     data = [0.0, 0.0]
     source_column = 0
     data_column = 1
     source = ""
     sense = ""
-    compliance = 0
     ramp_step = 0
     source_range = 0
     sense_range = 0
@@ -54,8 +52,7 @@ class Keithley(Instrument):
         description_string = (
             f"{super().description()}, "
             f"source={self.source}, "
-            f"sense={self.sense}, "
-            f"compliance={self.compliance}"
+            f"sense={self.sense} "
             "\n"
         )
         return description_string
@@ -100,8 +97,8 @@ class Keithley(Instrument):
             else:
                 self.visa.write(f":SENS:{self.sense}:RANG {self.sense_range:.2e}")
 
-            self.compliance = kwargs.get('compliance', 105e-9)
-            self.visa.write(f":SENS:{self.sense}:PROT:LEV {self.compliance:.3e}")
+            compliance = kwargs.get('compliance', 105e-9)
+            self.visa.write(f":SENS:{self.sense}:PROT:LEV {compliance:.3e}")
 
             # Configure the auto zero (reference)
             self.visa.write(":SYST:AZER:STAT ON")
@@ -115,7 +112,7 @@ class Keithley(Instrument):
 
         else:
             self.output = bool(int(self.visa.query(":OUTP:STAT?")))
-            self.compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
+            compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
             self.read_data()
 
     def read_numeric(self, command):
