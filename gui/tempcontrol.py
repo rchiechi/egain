@@ -11,7 +11,7 @@ from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-im
 from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused-import
 from tkinter import PhotoImage
 from tkinter.font import Font
-from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
+# from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 import serial
 
 TEMPS = {'UPPER':None, 'LOWER':None}
