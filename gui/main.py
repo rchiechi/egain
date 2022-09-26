@@ -36,7 +36,7 @@ from tkinter import PhotoImage
 from tkinter.font import Font
 from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from gui.datacanvas import dataCanvas
-from gui.meas import measureClick
+from gui.measurement import measureClick
 from gui.stagecontrol import StageControls
 from gui.tempcontrol import TempControl
 
