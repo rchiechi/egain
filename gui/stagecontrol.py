@@ -69,6 +69,7 @@ class StageControls(tk.Frame):
         relativemoveFrame = tk.Frame(xyzFrame)
         self.relativemoveScale = tk.Scale(master=relativemoveFrame,
                                           from_=1, to=1000,
+                                          value=1,
                                           orient=HORIZONTAL,
                                           command=self.relativemoveScaleChange)
         relativemoveLabel = tk.Label(master=relativemoveFrame,
@@ -108,37 +109,37 @@ class StageControls(tk.Frame):
         self.upButton['state'] = DISABLED
         self.upButton.after('100', lambda: self._waitformotion(self.upButton))
         # self.stage.moveMax(self.Zaxis)
-        self.stage.relativeMove(self.Zaxis, self.distance)
+        self.stage.relativeMove(self.Zaxis, self.relative_move)
 
     def downButtonClick(self):
         self.downButton['state'] = DISABLED
         self.downButton.after('100', lambda: self._waitformotion(self.downButton))
         # self.stage.moveMin(self.Zaxis)
-        self.stage.relativeMove(self.Zaxis, -1.0*self.distance)
+        self.stage.relativeMove(self.Zaxis, -1.0*self.relative_move)
 
     def rightButtonClick(self):
         self.rightButton['state'] = DISABLED
         self.rightButton.after('100', lambda: self._waitformotion(self.rightButton))
         # self.stage.moveMin(self.Yaxis)
-        self.stage.relativeMove(self.Yaxis, self.distance)
+        self.stage.relativeMove(self.Yaxis, self.relative_move)
 
     def leftButtonClick(self):
         self.leftButton['state'] = DISABLED
         self.leftButton.after('100', lambda: self._waitformotion(self.leftButton))
         # self.stage.moveMax(self.Yaxis)
-        self.stage.relativeMove(self.Yaxis, -1.0*self.distance)
+        self.stage.relativeMove(self.Yaxis, -1.0*self.relative_move)
 
     def forwardButtonClick(self):
         self.forwardButton['state'] = DISABLED
         self.forwardButton.after('100', lambda: self._waitformotion(self.forwardButton))
         # self.stage.moveMax(self.Xaxis)
-        self.stage.relativeMove(self.Xaxis, self.distance)
+        self.stage.relativeMove(self.Xaxis, self.relative_move)
 
     def backButtonClick(self):
         self.backButton['state'] = DISABLED
         self.backButton.after('100', lambda: self._waitformotion(self.backButton))
         # self.stage.moveMin(self.Xaxis)
-        self.stage.relativeMove(self.Xaxis, -1.0*self.distance)
+        self.stage.relativeMove(self.Xaxis, -1.0*self.relative_move)
 
     def _handleunitchange(self, *args):
         for key in self.units:

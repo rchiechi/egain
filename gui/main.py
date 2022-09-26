@@ -105,11 +105,13 @@ class MainFrame(tk.Frame):
         quitButton.pack(side=BOTTOM)
 
         dataFrame.pack(side=TOP, fill=BOTH)
+        tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         controlsFrame.pack(side=TOP)
         self.stagecontrolFrame.pack(side=LEFT, fill=Y)
         tempcontrols.pack(side=RIGHT, fill=Y)
         outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)
         optionsFrame.pack(side=BOTTOM, fill=Y)
+        tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         buttonFrame.pack(side=BOTTOM, fill=X)
 
     def quitButtonClick(self):
