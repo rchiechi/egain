@@ -95,15 +95,37 @@ class ESP302(threading.Thread):
     def _cmd(self, axis, cmd, param=None):
         if param is None:
             _cmdstr = b"%d%s;%dTS\r" % (axis,cmd,axis)
+        elif isinstance(param, int) or isinstance(param, float):
+            _cmdstr = b"%d%s%d;%dTS\r" % (axis,cmd,param,axis)
         else:
             _cmdstr = b"%d%s%s;%dTS\r" % (axis,cmd,param,axis)
         self.dev.write(_cmdstr)
         return asciitobinary(self.dev.read())
 
     def _moveindefinitely(self, axis, direction):
+        if self._in_motion:
+            return False
         _t = 0
         self._in_motion = True
         _status = self._cmd(axis, b'MF', direction)
+        while not bool(int(_status[2])):
+            if self._bittobool(_status[8]) or self._bittobool(_status[9]):
+                self._in_motion = False
+                return False
+            if _t > self.motion_timeout:
+                print('Timed out executing motion command')
+                break
+            time.sleep(1)
+            _t += 1
+        self._in_motion = False
+        return True
+
+    def _moverelative(self, axis, direction):
+        if self._in_motion:
+            return False
+        _t = 0
+        self._in_motion = True
+        _status = self._cmd(axis, b'PR', direction)
         while not bool(int(_status[2])):
             if self._bittobool(_status[8]) or self._bittobool(_status[9]):
                 self._in_motion = False
@@ -151,6 +173,9 @@ class ESP302(threading.Thread):
         self._cmd_queue.append(('_moveindefinitely', axis, b'-'))
         # return self._moveindefinitely(axis, b'-')
 
+    def relativeMove(self, axis, distance):
+        self._cmd_queue.append(('_moverelative', axis, distance))
+
     def setUnits(self, unit):
         for axis in (1, 2, 3):
             self._cmd(axis, b'SN', unit)
@@ -158,7 +183,7 @@ class ESP302(threading.Thread):
     def getUnits(self):
         units = []
         for axis in (1, 2, 3):
-            self.dev.write(b'%sSN\r' % axis)
+            self.dev.write(b'%dSN\r' % axis)
             units.append(self.dev.read())
         return units
 

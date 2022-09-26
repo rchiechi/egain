@@ -1,4 +1,5 @@
 import os
+import time
 import platform
 import logging
 import threading
@@ -106,50 +107,65 @@ class StageControls(tk.Frame):
     def upButtonClick(self):
         self.upButton['state'] = DISABLED
         self.upButton.after('100', lambda: self._waitformotion(self.upButton))
-        self.stage.moveMax(self.Zaxis)
+        # self.stage.moveMax(self.Zaxis)
+        self.stage.relativeMove(self.Zaxis, self.distance)
 
     def downButtonClick(self):
         self.downButton['state'] = DISABLED
         self.downButton.after('100', lambda: self._waitformotion(self.downButton))
-        self.stage.moveMin(self.Zaxis)
-
-    def leftButtonClick(self):
-        self.leftButton['state'] = DISABLED
-        self.leftButton.after('100', lambda: self._waitformotion(self.leftButton))
-        self.stage.moveMax(self.Yaxis)
+        # self.stage.moveMin(self.Zaxis)
+        self.stage.relativeMove(self.Zaxis, -1.0*self.distance)
 
     def rightButtonClick(self):
         self.rightButton['state'] = DISABLED
         self.rightButton.after('100', lambda: self._waitformotion(self.rightButton))
-        self.stage.moveMin(self.Yaxis)
+        # self.stage.moveMin(self.Yaxis)
+        self.stage.relativeMove(self.Yaxis, self.distance)
+
+    def leftButtonClick(self):
+        self.leftButton['state'] = DISABLED
+        self.leftButton.after('100', lambda: self._waitformotion(self.leftButton))
+        # self.stage.moveMax(self.Yaxis)
+        self.stage.relativeMove(self.Yaxis, -1.0*self.distance)
 
     def forwardButtonClick(self):
         self.forwardButton['state'] = DISABLED
         self.forwardButton.after('100', lambda: self._waitformotion(self.forwardButton))
-        self.stage.moveMax(self.Xaxis)
-        return
+        # self.stage.moveMax(self.Xaxis)
+        self.stage.relativeMove(self.Xaxis, self.distance)
 
     def backButtonClick(self):
         self.backButton['state'] = DISABLED
         self.backButton.after('100', lambda: self._waitformotion(self.backButton))
-        self.stage.moveMin(self.Xaxis)
+        # self.stage.moveMin(self.Xaxis)
+        self.stage.relativeMove(self.Xaxis, -1.0*self.distance)
 
     def _handleunitchange(self, *args):
         for key in self.units:
             if self.units[key] == self.unitStr.get():
                 self.unit = key
                 self.relativemoveScaleChange(self.relativemoveScale.get())
+                self.stage.setUnits(key)
+                time.sleep(1)
+                for _unit in self.stage.getUnits():
+                    if _unit != self.unit:
+                        print("Warning units not set correctly.")
 
     def relativemoveScaleChange(self, distance):
         distance = float(distance)
         if self.unit in (1,3):
             _distance = f'{distance:.0f}'
-            self.relativemoveScale['to'] = 1000
+            _range = 1000
         else:
+            _range = 20
+            if distance > _range:
+                distance = 0.0
+                self.relativemoveScale.set(distance)
             _distance = f'{distance:.2f}'
-            self.relativemoveScale['to'] = 20
+        self.relativemoveScale['to'] = _range
+
         _labelstring = f'{_distance} {self.units[self.unit]}'
-        if distance > 1 and self.unit == 1:
+        if abs(distance) > 1 and self.unit == 1:
             _labelstring += 's'
         self.relative_move_label.set(_labelstring)
         self.relative_move = distance
