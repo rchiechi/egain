@@ -11,10 +11,11 @@ from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-im
 from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused-import
 from tkinter import PhotoImage
 from tkinter.font import Font
-from colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
+from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 import serial
 
 TEMPS = {'UPPER':None, 'LOWER':None}
+DEFAULTUSBDEVICE = 'Choose USB Device'
 
 class TempControl(tk.Frame):
 
@@ -43,7 +44,7 @@ class TempControl(tk.Frame):
         lowerTemp = tk.Label(master=self.tempFrame,
                              textvariable=self.lowerTempString)
 
-        setTemp = tk.Entry(setFrame, textvariable=self.targettemp)
+        setTemp = tk.Entry(setFrame, textvariable=self.targettemp, width=4)
         self.targettemp.trace('w', self._setTemp)
 
         self.peltierCheck = tk.Checkbutton(setFrame,
@@ -52,8 +53,11 @@ class TempControl(tk.Frame):
                                            command=self._setPeltier)
         self.peltierCheck.after(100, self._checkPeltier)
 
-        devicePicker = tk.OptionMenu(self, self.device, *_enumerateDevices())
-        self.device.trace('w', self._initdevice)
+        devicePicker = tk.OptionMenu(self,
+                                     self.device,
+                                     DEFAULTUSBDEVICE,
+                                     *_enumerateDevices())
+        self.device.trace_add('write', self._initdevice)
 
         setTemp.pack(side=LEFT)
         self.peltierCheck.pack(side=RIGHT)
@@ -99,6 +103,8 @@ class TempControl(tk.Frame):
         self.lowerTempString.set('Lower: %0.2f °C' % lower)
 
     def _initdevice(self, *args):
+        if self.device.get() == DEFAULTUSBDEVICE:
+            return
         print("Initializing device.")
         n = 0
         ser_port = os.path.join('/', 'dev', self.device.get())
@@ -167,10 +173,11 @@ def _enumerateDevices():
         _filter = 'usbmodem'
     if platform.system() == "Linux":
         _filter = 'ttyACM'
-    _devs = ['Choose USB Device']
+    _devs = []
     for _dev in os.listdir('/dev'):
         if _filter.lower() in _dev.lower():
             _devs.append(_dev)
+    _devs.append(DEFAULTUSBDEVICE)
     return _devs
 
 

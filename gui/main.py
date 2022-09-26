@@ -38,6 +38,7 @@ from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pyl
 from gui.datacanvas import dataCanvas
 from gui.meas import measureClick
 from gui.stagecontrol import StageControls
+from gui.tempcontrol import TempControl
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -51,6 +52,8 @@ class MainFrame(tk.Frame):
         self.root = root
         super().__init__(self.root)
         self.opts = opts
+        if not os.path.exists(os.path.join(absdir, 'RCCLabFluidic.png')):
+            print(f"{os.path.join(absdir, 'RCCLabFluidic.png')} does not exist.")
         bgimg = PhotoImage(file=os.path.join(absdir, 'RCCLabFluidic.png'))
         limg = Label(self.root, i=bgimg, background=GREY)
         limg.pack(side=TOP)
@@ -72,7 +75,9 @@ class MainFrame(tk.Frame):
 
     def __createWidgets(self):
         dataFrame = tk.Frame(self)
-        self.stagecontrolFrame = StageControls(self)
+        controlsFrame = tk.Frame(self)
+        self.stagecontrolFrame = StageControls(controlsFrame)
+        tempcontrols = TempControl(controlsFrame)
         # self.stagecontrolFrame.createWidgets()
         optionsFrame = tk.Frame(self)
         outputfilenameFrame = tk.Frame(optionsFrame)
@@ -100,7 +105,9 @@ class MainFrame(tk.Frame):
         quitButton.pack(side=BOTTOM)
 
         dataFrame.pack(side=TOP, fill=BOTH)
-        self.stagecontrolFrame.pack(side=TOP, fill=BOTH)
+        controlsFrame.pack(side=TOP)
+        self.stagecontrolFrame.pack(side=LEFT, fill=Y)
+        tempcontrols.pack(side=RIGHT, fill=Y)
         outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)
         optionsFrame.pack(side=BOTTOM, fill=Y)
         buttonFrame.pack(side=BOTTOM, fill=X)

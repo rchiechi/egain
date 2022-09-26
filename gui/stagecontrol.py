@@ -32,10 +32,10 @@ class StageControls(tk.Frame):
         self.master = root
         super().__init__(self.master)
         self.relative_move_label = StringVar()
+        self.unitStr = StringVar()
         self.createWidgets()
         self.alive = threading.Event()
         self.alive.set()
-        # nethost = NetHost()
         nethost = GenericBackEnd()
         self.stage = ESP302(self.alive, nethost)
         self.stage.start()
@@ -66,19 +66,26 @@ class StageControls(tk.Frame):
                                     command=self.backButtonClick)
 
         relativemoveFrame = tk.Frame(xyzFrame)
-        relativemoveScale = tk.Scale(master=relativemoveFrame,
-                                     from_=1, to=1000,
-                                     orient=HORIZONTAL,
-                                     command=self.relativemoveScaleChange)
+        self.relativemoveScale = tk.Scale(master=relativemoveFrame,
+                                          from_=1, to=1000,
+                                          orient=HORIZONTAL,
+                                          command=self.relativemoveScaleChange)
         relativemoveLabel = tk.Label(master=relativemoveFrame,
                                      text='Relative Move Distance')
         relativemoveindicatorLabel = tk.Label(master=relativemoveFrame,
                                               textvariable=self.relative_move_label)
-        self.relativemoveScaleChange(relativemoveScale.get())
+        self.unitStr.set(self.units[1])
+        unitOptionMenu = tk.OptionMenu(relativemoveFrame,
+                                       self.unitStr,
+                                       self.unitStr.get(),
+                                       *list(self.units.values()))
+        self.unitStr.trace_add('write', self._handleunitchange)
+        self.relativemoveScaleChange(self.relativemoveScale.get())
         relativemoveLabel.pack(side=TOP)
-        relativemoveScale.pack(side=TOP)
+        self.relativemoveScale.pack(side=TOP)
         relativemoveindicatorLabel.pack(side=TOP)
         relativemoveFrame.pack(side=RIGHT, fill=NONE)
+        unitOptionMenu.pack(side=BOTTOM)
         self.upButton.pack(side=TOP)
         self.downButton.pack(side=BOTTOM)
         self.leftButton.pack(side=LEFT)
@@ -127,11 +134,22 @@ class StageControls(tk.Frame):
         self.backButton.after('100', lambda: self._waitformotion(self.backButton))
         self.stage.moveMin(self.Xaxis)
 
+    def _handleunitchange(self, *args):
+        for key in self.units:
+            if self.units[key] == self.unitStr.get():
+                self.unit = key
+                self.relativemoveScaleChange(self.relativemoveScale.get())
+
     def relativemoveScaleChange(self, distance):
         distance = float(distance)
         if self.unit in (1,3):
             _distance = f'{distance:.0f}'
+            self.relativemoveScale['to'] = 1000
         else:
             _distance = f'{distance:.2f}'
-        self.relative_move_label.set(f'{_distance} {self.units[self.unit]}')
+            self.relativemoveScale['to'] = 20
+        _labelstring = f'{_distance} {self.units[self.unit]}'
+        if distance > 1 and self.unit == 1:
+            _labelstring += 's'
+        self.relative_move_label.set(_labelstring)
         self.relative_move = distance
