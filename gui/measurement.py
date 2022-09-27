@@ -6,7 +6,7 @@ import tkinter.ttk as tk
 from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import filedialog
-from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
+from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry, messagebox
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
 from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
@@ -20,15 +20,95 @@ def measureClick():
     return
     
 class MeasurementControl(tk.Frame):
-    
-    def __init(self, root):
+
+    error = False
+    sweep = {'sweepLow': -1.0,
+             'sweepHigh': 1.0,
+             'stepSize': 0.25,
+             'Sweeps': 5,
+             }
+
+    meas = {'GPBIB': 25,
+            'NPLC': 25
+            }
+
+    def __init__(self, root):
         self.master = root
+        super().__init__(self.master)
+        self.labelFont = Font(size=8)
+        self.createWidgets()
     
-    def __createWidgets(self):
-        return
+    def createWidgets(self):
+        for _StringVar in self.sweep:
+            setattr(self, _StringVar, StringVar(value=str(self.sweep[_StringVar])))
+            getattr(self, _StringVar).trace_add('write', self.__validateSweep)
+        sweepFrame = tk.LabelFrame(self, text='Sweep Settings')
+        sweepLowEntry = tk.Entry(sweepFrame, textvariable=self.sweepLow, width=4)
+        sweepHighEntry = tk.Entry(sweepFrame, textvariable=self.sweepHigh, width=4)
+        sweepStepSizeEntry = tk.Entry(sweepFrame, textvariable=self.stepSize, width=4)
+        sweepSweepsEntry = tk.Entry(sweepFrame, textvariable=self.Sweeps, width=4)
+
+        sweepFrame.pack(side=LEFT, fill=BOTH)
+        sweepLowEntryLabel = tk.Label(sweepFrame, text='From:', font=self.labelFont)
+        sweepLowEntryLabel.pack(side=LEFT)
+        sweepLowEntry.pack(side=LEFT)
+        sweepHighEntryLabel = tk.Label(sweepFrame, text='To:', font=self.labelFont)
+        sweepHighEntryLabel.pack(side=LEFT)
+        sweepHighEntry.pack(side=LEFT)
+        sweepHighEntryLabel = tk.Label(sweepFrame, text='Step Size:', font=self.labelFont)
+        sweepHighEntryLabel.pack(side=LEFT)
+        sweepStepSizeEntry.pack(side=LEFT)
+        sweepSweepsLabel = tk.Label(sweepFrame, text='Sweeps:', font=self.labelFont)
+        sweepSweepsLabel.pack(side=LEFT)
+        sweepSweepsEntry.pack(side=LEFT)
+
+        for _StringVar in self.meas:
+            setattr(self, _StringVar, StringVar(value=str(self.meas[_StringVar])))
+            getattr(self, _StringVar).trace_add('write', self.__validateMeas)
+        measFrame = tk.LabelFrame(self, text='Sourcemeter Settings')
+
+        measFrame.pack(side=LEFT, fill=BOTH)
+        measNPLC = tk.Entry(measFrame, textvariable=self.NPLC, width=4)
+        measGPBIB = tk.Entry(measFrame, textvariable=self.GPBIB, width=4)
+
+        measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
+        measNPLCLabel.pack(side=LEFT)
+        measNPLC.pack(side=LEFT)
+        measGPBIBLabel = tk.Label(measFrame, text='GPBIB:', font=self.labelFont)
+        measGPBIBLabel.pack(side=LEFT)
+        measGPBIB.pack(side=LEFT)
+
+        
+    def __validateSweep(self, *args):
+        try:
+            for _StringVar in self.sweep:
+                self.sweep[_StringVar] = float(getattr(self, _StringVar).get())
+        except ValueError:
+            # print(f'{getattr(self, _StringVar).get()} is invalid input.')
+            self.error = True
+            # self.sweep[_StringVar] = getattr(self, _StringVar).set(self.sweep[_StringVar])
+            return
+        self.error = False
+    
+    def __validateMeas(self, *args):
+        try:
+            for _StringVar in self.meas:
+                self.meas[_StringVar] = int(getattr(self, _StringVar).get())
+        except ValueError:
+            # print(f'{getattr(self, _StringVar).get()} is invalid input.')
+            self.error = True
+            # self.sweep[_StringVar] = getattr(self, _StringVar).set(self.sweep[_StringVar])
+            return
+        self.error = False
+
+    def startSweepButtonClick(self):
+        if self.error:
+            messagebox.showinfo("Invalid settings, cannot start sweep.")
+            return
         
 
 if __name__ == '__main__':
         root = Tk()
         main = MeasurementControl(root)
+        main.pack()
         root.mainloop()

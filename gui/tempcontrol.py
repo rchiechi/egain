@@ -66,7 +66,7 @@ class TempControl(tk.Frame):
         lowerTemp.pack(side=BOTTOM)
         setFrame.pack(side=TOP)
         self.tempFrame.pack(side=TOP)
-        self.pack()
+        # self.pack()
         self._readTemps()
 
     def _setPeltier(self):
@@ -184,4 +184,5 @@ def _enumerateDevices():
 if __name__ == '__main__':
     root = Tk()
     main = TempControl(root)
+    main.pack()
     root.mainloop()

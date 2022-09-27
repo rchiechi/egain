@@ -39,6 +39,7 @@ from gui.datacanvas import dataCanvas
 from gui.measurement import measureClick
 from gui.stagecontrol import StageControls
 from gui.tempcontrol import TempControl
+from gui.measurement import MeasurementControl
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -52,10 +53,8 @@ class MainFrame(tk.Frame):
         self.root = root
         super().__init__(self.root)
         self.opts = opts
-        if not os.path.exists(os.path.join(absdir, 'RCCLabFluidic.png')):
-            print(f"{os.path.join(absdir, 'RCCLabFluidic.png')} does not exist.")
-        bgimg = PhotoImage(file=os.path.join(absdir, 'RCCLabFluidic.png'))
-        limg = Label(self.root, i=bgimg, background=GREY)
+        self.bgimg = PhotoImage(file=os.path.join(absdir, 'RCCLabFluidic.png'))
+        limg = Label(self.root, i=self.bgimg)
         limg.pack(side=TOP)
         self.root.title("RCCLab EGaIn Data Parser")
         self.root.geometry('800x850+250+250')
@@ -76,6 +75,7 @@ class MainFrame(tk.Frame):
     def __createWidgets(self):
         dataFrame = tk.Frame(self)
         controlsFrame = tk.Frame(self)
+        measurementFrame = MeasurementControl(dataFrame)
         self.stagecontrolFrame = StageControls(controlsFrame)
         tempcontrols = TempControl(controlsFrame)
         # self.stagecontrolFrame.createWidgets()
@@ -105,6 +105,7 @@ class MainFrame(tk.Frame):
         quitButton.pack(side=BOTTOM)
 
         dataFrame.pack(side=TOP, fill=BOTH)
+        measurementFrame.pack(side=TOP, fill=BOTH)
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         controlsFrame.pack(side=TOP)
         self.stagecontrolFrame.pack(side=LEFT, fill=Y)
