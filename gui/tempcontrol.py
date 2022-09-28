@@ -177,7 +177,7 @@ def _enumerateDevices():
     for _dev in os.listdir('/dev'):
         if _filter.lower() in _dev.lower():
             _devs.append(_dev)
-    _devs.append(DEFAULTUSBDEVICE)
+    # _devs.append(DEFAULTUSBDEVICE)
     return _devs
 
 

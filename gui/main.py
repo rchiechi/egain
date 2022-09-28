@@ -36,7 +36,6 @@ from tkinter import PhotoImage
 from tkinter.font import Font
 from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from gui.datacanvas import dataCanvas
-from gui.measurement import measureClick
 from gui.stagecontrol import StageControls
 from gui.tempcontrol import TempControl
 from gui.measurement import MeasurementControl
@@ -75,9 +74,11 @@ class MainFrame(tk.Frame):
     def __createWidgets(self):
         dataFrame = tk.Frame(self)
         controlsFrame = tk.Frame(self)
-        measurementFrame = MeasurementControl(dataFrame)
-        self.stagecontrolFrame = StageControls(controlsFrame)
-        tempcontrols = TempControl(controlsFrame)
+        measurementFrame = MeasurementControl(controlsFrame)
+        stagecontrolFrame = tk.LabelFrame(controlsFrame, text='Stage Controls')
+        self.stagecontrolFrame = StageControls(stagecontrolFrame)
+        tempcontrolFrame = tk.LabelFrame(controlsFrame, text='Temperature Controls')
+        tempcontrols = TempControl(tempcontrolFrame)
         # self.stagecontrolFrame.createWidgets()
         optionsFrame = tk.Frame(self)
         outputfilenameFrame = tk.Frame(optionsFrame)
@@ -99,7 +100,8 @@ class MainFrame(tk.Frame):
 
         saveButton = tk.Button(master=buttonFrame, text="Save To", command=self.SpawnSaveDialogClick)
         saveButton.pack(side=LEFT)
-        measButton = tk.Button(master=buttonFrame, text="Measure", command=measureClick)
+        measButton = tk.Button(master=buttonFrame, text="Measure",
+                               command=measurementFrame.startMeasurementButtonClick)
         measButton.pack(side=LEFT)
         quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.quitButtonClick)
         quitButton.pack(side=BOTTOM)
@@ -108,6 +110,8 @@ class MainFrame(tk.Frame):
         measurementFrame.pack(side=TOP, fill=BOTH)
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         controlsFrame.pack(side=TOP)
+        stagecontrolFrame.pack(side=LEFT)
+        tempcontrolFrame.pack(side=LEFT)
         self.stagecontrolFrame.pack(side=LEFT, fill=Y)
         tempcontrols.pack(side=RIGHT, fill=Y)
         outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)

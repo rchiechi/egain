@@ -13,12 +13,17 @@ from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-im
 from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused-import
 from tkinter import PhotoImage
 from tkinter.font import Font
+from meas.k6430 import K6430
+from meas.visa_subs import enumerateDevices
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 
 
-def measureClick():
-    return
-    
+# def measureClick(sweep, meas):
+#     smu = K6430(meas['GPIB'])
+#     try:
+#         smu.initialize()
+#     except ValueError:
+        
 class MeasurementControl(tk.Frame):
 
     error = False
@@ -28,7 +33,7 @@ class MeasurementControl(tk.Frame):
              'Sweeps': 5,
              }
 
-    meas = {'GPBIB': 25,
+    meas = {'GPIB': 24,
             'NPLC': 25
             }
 
@@ -36,8 +41,9 @@ class MeasurementControl(tk.Frame):
         self.master = root
         super().__init__(self.master)
         self.labelFont = Font(size=8)
+        self.device = StringVar()
         self.createWidgets()
-    
+
     def createWidgets(self):
         for _StringVar in self.sweep:
             setattr(self, _StringVar, StringVar(value=str(self.sweep[_StringVar])))
@@ -69,16 +75,20 @@ class MeasurementControl(tk.Frame):
 
         measFrame.pack(side=LEFT, fill=BOTH)
         measNPLC = tk.Entry(measFrame, textvariable=self.NPLC, width=4)
-        measGPBIB = tk.Entry(measFrame, textvariable=self.GPBIB, width=4)
-
+        devicePicker = tk.OptionMenu(measFrame,
+                                     self.device,
+                                     'Choose VISA device',
+                                     *enumerateDevices())
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
         measNPLC.pack(side=LEFT)
-        measGPBIBLabel = tk.Label(measFrame, text='GPBIB:', font=self.labelFont)
-        measGPBIBLabel.pack(side=LEFT)
-        measGPBIB.pack(side=LEFT)
+        measdevicePickerLabel = tk.Label(measFrame, text='GPIB:', font=self.labelFont)
+        measdevicePickerLabel.pack(side=LEFT)
+        devicePicker.pack(side=LEFT)
 
-        
+
+        # measurementButton = tk.Button(self, text='Measure')
+
     def __validateSweep(self, *args):
         try:
             for _StringVar in self.sweep:
@@ -89,7 +99,7 @@ class MeasurementControl(tk.Frame):
             # self.sweep[_StringVar] = getattr(self, _StringVar).set(self.sweep[_StringVar])
             return
         self.error = False
-    
+
     def __validateMeas(self, *args):
         try:
             for _StringVar in self.meas:
@@ -101,14 +111,21 @@ class MeasurementControl(tk.Frame):
             return
         self.error = False
 
-    def startSweepButtonClick(self):
+    def startMeasurementButtonClick(self):
         if self.error:
-            messagebox.showinfo("Invalid settings, cannot start sweep.")
+            messagebox.showerror("Error", "Invalid settings, cannot start sweep.")
             return
-        
+        smu = K6430(self.meas['GPIB'])
+        try:
+            smu.initialize()
+        except AttributeError:
+            messagebox.showerror("Error", "Sourcemeter is not configured correctly.")
+            return
+
+
 
 if __name__ == '__main__':
-        root = Tk()
-        main = MeasurementControl(root)
-        main.pack()
-        root.mainloop()
+    root = Tk()
+    main = MeasurementControl(root)
+    main.pack()
+    root.mainloop()

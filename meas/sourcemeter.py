@@ -151,3 +151,5 @@ class Keithley(Instrument):
                 time.sleep(0.01)
 
             self.read_data()
+
+
