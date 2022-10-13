@@ -37,7 +37,7 @@ class GenericBackEnd:
 
 class NetHost(GenericBackEnd):
 
-    IP_ADDRESS = '192.168.254.254'
+    IP_ADDRESS = '192.168.42.2'
     PORT = '5001'
 
     def connect(self):
