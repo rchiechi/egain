@@ -74,7 +74,7 @@ def enumerateDevices():
     # if platform.system() == "Linux":
     #     _filter = 'ttyACM'
     _devs = []
-    rm = visa.ResourceManager()
+    rm = visa.ResourceManager('@py')
     for _dev in rm.list_resources():
         # if _filter.lower() in _dev.lower():
         _devs.append(_dev)
