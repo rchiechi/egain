@@ -17,6 +17,8 @@ Functions written:
     InitialIzeSerial
 
 """
+import os
+from contextlib import contextmanager
 import pyvisa as visa
 rm = visa.ResourceManager()
 
@@ -67,6 +69,16 @@ def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
         serial_visa = None
     return serial_visa
 
+@contextmanager
+def _mutestderr():
+    original_stderr = os.dup(2)  # stderr stream is linked to file descriptor 2, save a copy of the real stderr so later we can restore it
+    blackhole = os.open(os.devnull, os.O_WRONLY)  # anything written to /dev/null will be discarded
+    os.dup2(blackhole, 2)  # duplicate the blackhole to file descriptor 2, which the C library uses as stderr
+    os.close(blackhole)  # blackhole was duplicated from the line above, so we don't need this anymore
+    yield
+    os.dup2(original_stderr, 2)  # restoring the original stderr
+    os.close(original_stderr)
+
 def enumerateDevices():
     # _filter = ''
     # if platform.system() == "Darwin":
@@ -75,8 +87,9 @@ def enumerateDevices():
     #     _filter = 'ttyACM'
     _devs = []
     rm = visa.ResourceManager('@py')
-    for _dev in rm.list_resources():
-        # if _filter.lower() in _dev.lower():
-        _devs.append(_dev)
-    # _devs.append(DEFAULTUSBDEVICE)
+    with _mutestderr():
+        for _dev in rm.list_resources():
+            # if _filter.lower() in _dev.lower():
+            _devs.append(_dev)
+        # _devs.append(DEFAULTUSBDEVICE)
     return _devs
