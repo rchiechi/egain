@@ -85,6 +85,8 @@ void checkPeltier() {
   }else{
     Serial.print("false");
   }
+  Serial.print(", \"Power\":");
+  Serial.print(analogRead(PELTIER));
 }
 
 void setLower(){
