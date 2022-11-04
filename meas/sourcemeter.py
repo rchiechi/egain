@@ -4,13 +4,13 @@ forked from https://github.com/HuangJunye/GrapheneLab-Measurement-Code.git
 import time
 import numpy as np
 import meas.visa_subs as visa_subs
-import serial
+from meas.visa_subs import MODE_GPIB, MODE_SERIAL
+# import serial
 
 VOLT = 'VOLT'
 CURR = 'CURR'
 DEFAULTMODE = VOLT
-MODE_GPIB = 'GPIB'
-MODE_SERIAL = 'SERIAL'
+
 
 class Instrument:
     """Implement a generic instrument which does the following:

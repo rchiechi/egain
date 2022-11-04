@@ -21,9 +21,10 @@ import os
 import platform
 from contextlib import contextmanager
 import pyvisa as visa
-from meas.sourcemeter import MODE_GPIB, MODE_SERIAL
 rm = visa.ResourceManager()
 
+MODE_GPIB = 'GPIB'
+MODE_SERIAL = 'SERIAL'
 
 def initialize_gpib(address, board, query_id=True, read_termination="LF", **kwargs):
     """ Initalize GPIB devices using PyVisa """

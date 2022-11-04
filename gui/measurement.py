@@ -15,7 +15,7 @@ from tkinter import PhotoImage
 from tkinter.font import Font
 from meas.k6430 import K6430
 from meas.visa_subs import enumerateDevices
-from meas.sourcemeter import MODE_GPIB, MODE_SERIAL
+from meas.visa_subs import MODE_GPIB, MODE_SERIAL
 
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 
@@ -82,7 +82,7 @@ class MeasurementControl(tk.Frame):
         measNPLC = tk.Entry(measFrame, textvariable=self.NPLC, width=4)
         devicePicker = tk.OptionMenu(measFrame,
                                      self.device,
-                                     'Choose VISA device',
+                                     'Choose SMU device',
                                      *enumerateDevices(MEAS_MODE))
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
