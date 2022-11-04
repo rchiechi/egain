@@ -32,7 +32,7 @@
 Adafruit_MAX31855 lowerThermocouple(LOWCLK, LOWCS, LOWDO);
 Adafruit_MAX31855 upperThermocouple(HICLK, HICS, HIDO);
 
-#define PELTIER 6
+#define PELTIER 2
 #define PELTIER_RELAY 13
 
 // Example creating a thermocouple instance with hardware SPI
@@ -85,8 +85,10 @@ void checkPeltier() {
   }else{
     Serial.print("false");
   }
+  int peltier_level = analogRead(PELTIER);
+  int power = map(peltier_level, 0, 255, 0, 99);
   Serial.print(", \"Power\":");
-  Serial.print(analogRead(PELTIER));
+  Serial.print(power);
 }
 
 void setLower(){

@@ -151,7 +151,7 @@ class TempControl(tk.Frame):
                 _json = str(self.controller.readline(), encoding='utf8').strip()
                 try:
                     msg = json.loads(_json)
-                    print(msg)
+                    # print(msg)
                     if 'message' in msg:
                         print(msg)
                         self.initialized = False

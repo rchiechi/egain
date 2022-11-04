@@ -57,6 +57,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
 
     try:
         serial_visa = rm.open_resource(name)
+        serial_visa.timeout = 30000  # 3s
         if read_termination == "LF":
             serial_visa.read_termination = "\n"
         elif read_termination == "CR":
