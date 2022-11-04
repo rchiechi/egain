@@ -83,7 +83,7 @@ class MeasurementControl(tk.Frame):
         devicePicker = tk.OptionMenu(measFrame,
                                      self.device,
                                      'Choose SMU device',
-                                     *enumerateDevices(MEAS_MODE))
+                                     *enumerateDevices())
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
         measNPLC.pack(side=LEFT)

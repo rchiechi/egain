@@ -18,7 +18,7 @@ Functions written:
 
 """
 import os
-import platform
+# import platform
 from contextlib import contextmanager
 import pyvisa as visa
 rm = visa.ResourceManager()
@@ -82,30 +82,37 @@ def _mutestderr():
     os.dup2(original_stderr, 2)  # restoring the original stderr
     os.close(original_stderr)
 
-def enumerateDevices(MEAS_MODE):
-    if MEAS_MODE == MODE_GPIB:
-        return _enumerateVISA()
-    elif MEAS_MODE == MODE_SERIAL:
-        return _enumerateSERIAL()
-    else:
-        return []
-
-def _enumerateSERIAL():
-    _filter = ''
-    if platform.system() == "Darwin":
-        _filter = 'usbmodem'
-    if platform.system() == "Linux":
-        _filter = 'ttyUSB'
-    _devs = []
-    for _dev in os.listdir('/dev'):
-        if _filter.lower() in _dev.lower():
-            _devs.append(_dev)
-    return _devs
-
-def _enumerateVISA():
+def enumerateDevices():
     _devs = []
     rm = visa.ResourceManager('@py')
     with _mutestderr():
         for _dev in rm.list_resources():
             _devs.append(_dev)
     return _devs
+
+#     if MEAS_MODE == MODE_GPIB:
+#         return _enumerateVISA()
+#     elif MEAS_MODE == MODE_SERIAL:
+#         return _enumerateSERIAL()
+#     else:
+#         return []
+# 
+# def _enumerateSERIAL():
+#     _filter = ''
+#     if platform.system() == "Darwin":
+#         _filter = 'usbmodem'
+#     if platform.system() == "Linux":
+#         _filter = 'ttyUSB'
+#     _devs = []
+#     for _dev in os.listdir('/dev'):
+#         if _filter.lower() in _dev.lower():
+#             _devs.append(_dev)
+#     return _devs
+# 
+# def _enumerateVISA():
+#     _devs = []
+#     rm = visa.ResourceManager('@py')
+#     with _mutestderr():
+#         for _dev in rm.list_resources():
+#             _devs.append(_dev)
+#     return _devs
