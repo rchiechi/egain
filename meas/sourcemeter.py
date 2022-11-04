@@ -4,10 +4,13 @@ forked from https://github.com/HuangJunye/GrapheneLab-Measurement-Code.git
 import time
 import numpy as np
 import meas.visa_subs as visa_subs
+import serial
 
 VOLT = 'VOLT'
 CURR = 'CURR'
 DEFAULTMODE = VOLT
+MODE_GPIB = 'GPIB'
+MODE_SERIAL = 'SERIAL'
 
 class Instrument:
     """Implement a generic instrument which does the following:
@@ -18,7 +21,13 @@ class Instrument:
     def __init__(self, address):
         self.name = "Instrument Name"
         self.address = address
-        self.visa = visa_subs.initialize_gpib(address, 0)
+        if isinstance(address, int):
+            self.visa = visa_subs.initialize_gpib(address, 0)
+            self.backend = MODE_GPIB
+        else:
+            # self.visa = serial.Serial(address, 9600, timeout=0.5)
+            self.visa = visa_subs.initialize_serial(address)
+            self.backend = MODE_SERIAL
 
     def description(self):
         """ Print a description string to data file"""

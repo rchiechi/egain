@@ -15,6 +15,8 @@ from tkinter import PhotoImage
 from tkinter.font import Font
 from meas.k6430 import K6430
 from meas.visa_subs import enumerateDevices
+from meas.sourcemeter import MODE_GPIB, MODE_SERIAL
+
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 
 
@@ -23,7 +25,9 @@ from meas.visa_subs import enumerateDevices
 #     try:
 #         smu.initialize()
 #     except ValueError:
-        
+
+MEAS_MODE = MODE_SERIAL
+
 class MeasurementControl(tk.Frame):
 
     error = False
@@ -33,7 +37,8 @@ class MeasurementControl(tk.Frame):
              'Sweeps': 5,
              }
 
-    meas = {'GPIB': 24,
+    meas = {'MODE': MEAS_MODE,
+            'ADDRESS': 24,
             'NPLC': 25
             }
 
@@ -78,7 +83,7 @@ class MeasurementControl(tk.Frame):
         devicePicker = tk.OptionMenu(measFrame,
                                      self.device,
                                      'Choose VISA device',
-                                     *enumerateDevices())
+                                     *enumerateDevices(MEAS_MODE))
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
         measNPLC.pack(side=LEFT)
