@@ -27,6 +27,7 @@ class TempControl(tk.Frame):
         super().__init__(self.master)
         self.upperTempString = StringVar()
         self.lowerTempString = StringVar()
+        self.peltierPowerString = StringVar()
         self.device = StringVar()
         self.targettemp = StringVar()
         self.peltier_on = IntVar()
@@ -51,6 +52,11 @@ class TempControl(tk.Frame):
                                            text='Peliter On',
                                            variable=self.peltier_on,
                                            command=self._setPeltier)
+
+        peltierPower = tk.Label(master=setFrame,
+                                textvariable=self.peltierPowerString,
+                                width=4)
+
         self.peltierCheck.after(100, self._checkPeltier)
 
         devicePicker = tk.OptionMenu(self,
@@ -60,6 +66,7 @@ class TempControl(tk.Frame):
         self.device.trace_add('write', self._initdevice)
 
         setTemp.pack(side=LEFT)
+        peltierPower.pack(side=LEFT)
         self.peltierCheck.pack(side=RIGHT)
         devicePicker.pack()
         upperTemp.pack(side=TOP, expand=False)
@@ -80,6 +87,8 @@ class TempControl(tk.Frame):
     def _checkPeltier(self):
         self.peltierCheck.after('2000', self._checkPeltier)
         _msg = self.readserial()
+        power = _msg.get('Power', 0)
+        self.peltierPowerString.set(str(power))
         _state = _msg.get('Peltier_on', None)
         if _state is None:
             self.peltierCheck.configure(state='disabled')
@@ -97,10 +106,12 @@ class TempControl(tk.Frame):
     def _readTemps(self):
         self.tempFrame.after('500', self._readTemps)
         _temps = self.readserial()
-        upper = _temps.get('UPPER', -999)
-        lower = _temps.get('LOWER', -999)
-        self.upperTempString.set('Upper: %0.2f °C' % upper)
-        self.lowerTempString.set('Lower: %0.2f °C' % lower)
+        upper = _temps.get('UPPER', -999.9)
+        lower = _temps.get('LOWER', -999.9)
+        if upper != -999.9:
+            self.upperTempString.set('Upper: %0.2f °C' % upper)
+        if lower != -999.0:
+            self.lowerTempString.set('Lower: %0.2f °C' % lower)
 
     def _initdevice(self, *args):
         if self.device.get() == DEFAULTUSBDEVICE:

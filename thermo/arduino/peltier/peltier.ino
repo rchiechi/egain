@@ -137,14 +137,14 @@ void loop() {
     if (!isnan(c)){
       Serial.print(c);
     } else{
-      Serial.print(-100.0);
+      Serial.print(-999.9);
     }
     Serial.print(",\"UPPER\":");
     c = upperThermocouple.readCelsius();
     if (!isnan(c)){
       Serial.print(c);
     } else{
-      Serial.print(-100.0);
+      Serial.print(-999.9);
     }
     Serial.print(",");
     Serial.print("\"TARGET\":");
