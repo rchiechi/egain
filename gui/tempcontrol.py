@@ -100,7 +100,7 @@ class TempControl(tk.Frame):
             self.peltier_on.set(0)
 
     def _setTemp(self, *args):
-        print(f"Setting {self.controller.name} to {self.targettemp.get()} °C")
+        print(f"Setting peltier to {self.targettemp.get()} °C")
         self.writeserial('SETTEMP', self.targettemp.get())
 
     def _readTemps(self):
@@ -108,9 +108,9 @@ class TempControl(tk.Frame):
         _temps = self.readserial()
         upper = _temps.get('UPPER', -999.9)
         lower = _temps.get('LOWER', -999.9)
-        if upper != -999.9:
+        if upper > -1000:
             self.upperTempString.set('Upper: %0.2f °C' % upper)
-        if lower != -999.0:
+        if lower > -1000:
             self.lowerTempString.set('Lower: %0.2f °C' % lower)
 
     def _initdevice(self, *args):
@@ -170,11 +170,11 @@ class TempControl(tk.Frame):
             return
         try:
             self.controller.write(bytes(cmd, encoding='utf8')+b';')
-            print(f"Wrote {cmd};", end="")
+            # print(f"Wrote {cmd};", end="")
             if val is not None:
                 self.controller.write(bytes(val, encoding='utf8'))
                 print(f"{val}", end="")
-            print(f" to {self.controller.name}.")
+            # print(f" to {self.controller.name}.")
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
 

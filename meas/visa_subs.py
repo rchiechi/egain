@@ -18,7 +18,7 @@ Functions written:
 
 """
 import os
-# import platform
+import platform
 from contextlib import contextmanager
 import pyvisa as visa
 rm = visa.ResourceManager()
@@ -85,10 +85,15 @@ def _mutestderr():
 
 def enumerateDevices():
     _devs = []
+    _filter = ['']
+    if platform.system() == 'Linux':
+        _filter == ['ttyUSB', 'GPIB']
     rm = visa.ResourceManager('@py')
     with _mutestderr():
         for _dev in rm.list_resources():
-            _devs.append(_dev)
+            for _f in _filter:
+                if _f.lower() in _dev.lower():
+                    _devs.append(_dev)
     return _devs
 
 #     if MEAS_MODE == MODE_GPIB:
