@@ -95,7 +95,7 @@ def _enumerateSERIAL():
     if platform.system() == "Darwin":
         _filter = 'usbmodem'
     if platform.system() == "Linux":
-        _filter = 'ttyACM'
+        _filter = 'ttyUSB'
     _devs = []
     for _dev in os.listdir('/dev'):
         if _filter.lower() in _dev.lower():
