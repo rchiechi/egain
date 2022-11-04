@@ -32,7 +32,7 @@
 Adafruit_MAX31855 lowerThermocouple(LOWCLK, LOWCS, LOWDO);
 Adafruit_MAX31855 upperThermocouple(HICLK, HICS, HIDO);
 
-#define PELTIER 2
+#define PELTIER 6
 #define PELTIER_RELAY 13
 
 // Example creating a thermocouple instance with hardware SPI
@@ -49,6 +49,7 @@ Adafruit_MAX31855 upperThermocouple(HICLK, HICS, HIDO);
 //int peltier_level = 0;
 //int peltier_level = map(power, 0, 99, 0, 255); //This is a value from 0 to 255 that actually controls the MOSFET
 int lowerDegC = 25;
+int power = 0;
 bool peltier_on = false;
 bool initialized = false;
 
@@ -73,7 +74,8 @@ void setup() {
   Serial.println("{\"message\":\"Done initializing\"}");
   initialized = true;
 
-  pinMode(13, OUTPUT);    // sets the digital pin 13 as output
+  pinMode(PELTIER_RELAY, OUTPUT);    // sets the digital pin 13 as output
+  pinMode(PELTIER, OUTPUT); // sets the PWM pin as output
   
 }
 
@@ -85,19 +87,29 @@ void checkPeltier() {
   }else{
     Serial.print("false");
   }
-  int peltier_level = analogRead(PELTIER);
-  int power = map(peltier_level, 0, 255, 0, 99);
+  // int peltier_level = analogRead(PELTIER);
+  // int power = map(peltier_level, 0, 1024, 0, 100);
   Serial.print(", \"Power\":");
   Serial.print(power);
 }
 
 void setLower(){
-
+  int setpower = 0;
   double c = lowerThermocouple.readCelsius();
   if (!isnan(c)){
-    int power = (1 - (lowerDegC / c)) * 100;
+    double lowerDegK = lowerDegC + 273.15;
+    int k = c + 273.15;
+    setpower = (1 - (lowerDegK / k)) * 100;
+    int deltaK = abs(lowerDegK - k);
+    if (deltaK < 5){
+      setpower += 50;
+    }else if (deltaK < 10){
+      setpower += 75;
+    }else{
+      setpower = 100;
+    }
     if (c >= lowerDegC){
-      setPeltier(power);
+      setPeltier(setpower);
     }
     else {
       setPeltier(0);
@@ -105,11 +117,16 @@ void setLower(){
   }
 }
 
-void setPeltier(int power){
-  if(power > 99) power = 99;
-  if(power < 0) power = 0;
+void setPeltier(int setpower){
+  if(setpower > 100){
+    power = 100;
+  }else if(setpower < 0) {
+    power = 0;
+  }else {
+    power = setpower;
+  }
   if (peltier_on){
-    int peltier_level = map(power, 0, 99, 0, 255);
+    int peltier_level = map(power, 0, 100, 0, 255);
     analogWrite(PELTIER, peltier_level); //Write this new value out to the port
   }else{
     analogWrite(PELTIER, 0);
