@@ -42,11 +42,13 @@ class MeasurementControl(tk.Frame):
             'NPLC': 25
             }
 
+    smu = None
+
     def __init__(self, root):
         self.master = root
         super().__init__(self.master)
         self.labelFont = Font(size=8)
-        self.device = StringVar()
+        self.deviceString = StringVar()
         self.createWidgets()
 
     def createWidgets(self):
@@ -81,9 +83,10 @@ class MeasurementControl(tk.Frame):
         measFrame.pack(side=LEFT, fill=BOTH)
         measNPLC = tk.Entry(measFrame, textvariable=self.NPLC, width=4)
         devicePicker = tk.OptionMenu(measFrame,
-                                     self.device,
+                                     self.deviceString,
                                      'Choose SMU device',
                                      *enumerateDevices())
+        self.deviceString.trace('w', self.__initdevice)
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
         measNPLC.pack(side=LEFT)
@@ -93,6 +96,9 @@ class MeasurementControl(tk.Frame):
 
 
         # measurementButton = tk.Button(self, text='Measure')
+
+    def __initdevice(self):
+        self.smu = K6430(self.deviceString.get())
 
     def __validateSweep(self, *args):
         try:
