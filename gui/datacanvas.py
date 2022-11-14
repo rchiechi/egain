@@ -14,20 +14,20 @@ class dataCanvas(FigureCanvasTkAgg):
     def __init__(self, root):
         fig = Figure(figsize=(5, 4), dpi=100)
         t = np.arange(0, 3, .01)
-        ax = fig.add_subplot()
-        line, = ax.plot(t, 2 * np.sin(2 * np.pi * t))
-        ax.set_xlabel("time [s]")
-        ax.set_ylabel("f(t)")
-        canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
-        canvas.draw()
+        self.ax = fig.add_subplot()
+        line, = self.ax.plot(t, 2 * np.sin(2 * np.pi * t))
+        self.ax.set_xlabel("Voltage")
+        self.ax.set_ylabel("Current")
+        self.canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
+        self.canvas.draw()
 
         # pack_toolbar=False will make it easier to use a layout manager later on.
-        toolbar = NavigationToolbar2Tk(canvas, root, pack_toolbar=False)
+        toolbar = NavigationToolbar2Tk(self.canvas, root, pack_toolbar=False)
         toolbar.update()
 
-        canvas.mpl_connect(
+        self.canvas.mpl_connect(
             "key_press_event", lambda event: print(f"you pressed {event.key}"))
-        canvas.mpl_connect("key_press_event", key_press_handler)
+        self.canvas.mpl_connect("key_press_event", key_press_handler)
 
         # button_quit = tkinter.Button(master=root, text="Quit", command=root.quit)
 
@@ -39,7 +39,7 @@ class dataCanvas(FigureCanvasTkAgg):
             y = 2 * np.sin(2 * np.pi * f * t)
             line.set_data(t, y)
             # required to update canvas and attached toolbar!
-            canvas.draw()
+            self.canvas.draw()
 
         #  slider_update = tkinter.Scale(root, from_=1, to=5, orient=tkinter.HORIZONTAL,
                                       # command=update_frequency, label="Frequency [Hz]")
@@ -51,4 +51,9 @@ class dataCanvas(FigureCanvasTkAgg):
         # button_quit.pack(side=tkinter.BOTTOM)
         # slider_update.pack(side=tkinter.BOTTOM)
         toolbar.pack(side=tkinter.BOTTOM, fill=tkinter.X)
-        canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+        self.canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
+
+    def displayData(self, data):
+        self.ax.cla()
+        self.ax.plot('x', 'y', '', data=data)
+        self.canvas.draw()
