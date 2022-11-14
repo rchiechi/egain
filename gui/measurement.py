@@ -44,8 +44,11 @@ class MeasurementControl(tk.Frame):
 
     smu = None
 
-    def __init__(self, root):
+    def __init__(self, root, **kwargs):
         self.master = root
+        self.measdone = kwargs['measdone']
+        self.busy = kwargs['busy']
+        self.measdone.set(False)
         super().__init__(self.master)
         self.labelFont = Font(size=8)
         self.deviceString = StringVar()
@@ -90,7 +93,7 @@ class MeasurementControl(tk.Frame):
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
         measNPLC.pack(side=LEFT)
-        measdevicePickerLabel = tk.Label(measFrame, text='GPIB:', font=self.labelFont)
+        measdevicePickerLabel = tk.Label(measFrame, text='Adress:', font=self.labelFont)
         measdevicePickerLabel.pack(side=LEFT)
         devicePicker.pack(side=LEFT)
 
@@ -123,15 +126,18 @@ class MeasurementControl(tk.Frame):
         self.error = False
 
     def startMeasurementButtonClick(self):
+        self.busy.set(True)
         if self.error:
             messagebox.showerror("Error", "Invalid settings, cannot start sweep.")
             return
-        smu = K6430(self.meas['GPIB'])
+        smu = K6430(self.meas['ADDRESS'])
         try:
             smu.initialize()
         except AttributeError:
             messagebox.showerror("Error", "Sourcemeter is not configured correctly.")
             return
+        self.measdone.set(True)
+        self.busy.set(False)
 
 
 

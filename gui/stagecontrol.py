@@ -29,8 +29,9 @@ class StageControls(tk.Frame):
              2:'mm',
              3:'μm'}
 
-    def __init__(self, root):
+    def __init__(self, root, **kwargs):
         self.master = root
+        self.busy = kwargs['busy']
         super().__init__(self.master)
         self.relative_move_label = StringVar()
         self.unitStr = StringVar()
@@ -101,9 +102,11 @@ class StageControls(tk.Frame):
 
     def _waitformotion(self, widget):
         if self.stage.isMoving:
+            self.busy.set(True)
             widget.after('100', lambda: self._waitformotion(widget))
         else:
             widget['state'] = NORMAL
+            self.busy.set(False)
 
     def upButtonClick(self):
         self.upButton['state'] = DISABLED

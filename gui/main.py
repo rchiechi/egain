@@ -27,7 +27,7 @@ import tkinter.ttk as tk
 # from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import filedialog
-from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
+from tkinter import Text, IntVar, StringVar, BooleanVar, Listbox, Label, Entry
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
 from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
@@ -72,9 +72,14 @@ class MainFrame(tk.Frame):
         self.master.lift()
 
     def __createWidgets(self):
+        self.measdone = BooleanVar(value=False)
+        self.busy = BooleanVar(value=False)
+        self.busy.trace_add('write', self._checkbusy)
         dataFrame = tk.Frame(self)
         controlsFrame = tk.Frame(self)
-        measurementFrame = MeasurementControl(controlsFrame)
+        measurementFrame = MeasurementControl(controlsFrame,
+                                              measdone=self.measdone,
+                                              busy=self.busy)
         stagecontrolFrame = tk.LabelFrame(controlsFrame, text='Stage Controls')
         self.stagecontrolFrame = StageControls(stagecontrolFrame)
         tempcontrolFrame = tk.LabelFrame(controlsFrame, text='Temperature Controls')
@@ -84,7 +89,8 @@ class MainFrame(tk.Frame):
         outputfilenameFrame = tk.Frame(optionsFrame)
         buttonFrame = tk.Frame(self)
 
-        dataCanvas(dataFrame)
+        self.dataplot = dataCanvas(dataFrame)
+        self.measdone.trace_add('write', self._updateData)
 
         outputfilenameEntryLabel = Label(master=outputfilenameFrame,
                                          text='Output Filename Prefix:')
@@ -138,3 +144,13 @@ class MainFrame(tk.Frame):
         return
         # self.outputfilenameEntry.delete(0, END)
         # self.outputfilenameEntry.insert(0, self.opts.output_file_name)
+
+    def _updateData(self, *args):
+        self.measdone.set(False)
+        self.dataplot.displayData({'x':[1,2,3], 'y':[4,5,6]})
+
+    def _checkbusy(self, *args):
+        if self.busy.get():
+            self.quitButton['state'] = DISABLED
+        else:
+            self.quitButton['sate'] = NORMAL
