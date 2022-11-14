@@ -76,6 +76,9 @@ class TempControl(tk.Frame):
         # self.pack()
         self._readTemps()
 
+    def shutdown(self):
+        self.writeserial('OFF')
+
     def _setPeltier(self):
         if self.peltier_on.get():
             cmd = 'ON'

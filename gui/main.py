@@ -21,6 +21,7 @@ Description:
 '''
 import os
 import platform
+import time
 # import logging
 # import threading
 import tkinter.ttk as tk
@@ -45,8 +46,8 @@ absdir = os.path.dirname(os.path.realpath(__file__))
 class MainFrame(tk.Frame):
     '''The main frame for collecting EGaIn data.'''
 
-    # dataCanvas = None
-    stagecontrolFrame = None
+    widgets = {}
+    variabels = {}
 
     def __init__(self, root, opts):
         self.root = root
@@ -72,25 +73,36 @@ class MainFrame(tk.Frame):
         self.master.lift()
 
     def __createWidgets(self):
-        self.measdone = BooleanVar(value=False)
-        self.busy = BooleanVar(value=False)
-        self.busy.trace_add('write', self._checkbusy)
+        measdone = BooleanVar(value=False)
+        self.variabels['measdone'] = measdone
+        busy = BooleanVar(value=False)
+        self.variabels['busy'] = busy
+
         dataFrame = tk.Frame(self)
         controlsFrame = tk.Frame(self)
         measurementFrame = MeasurementControl(controlsFrame,
-                                              measdone=self.measdone,
-                                              busy=self.busy)
+                                              measdone=measdone,
+                                              busy=busy)
         stagecontrolFrame = tk.LabelFrame(controlsFrame, text='Stage Controls')
-        self.stagecontrolFrame = StageControls(stagecontrolFrame)
+        stagecontroller = StageControls(stagecontrolFrame, busy=busy)
+        self.widgets['stagecontroller'] = stagecontroller
         tempcontrolFrame = tk.LabelFrame(controlsFrame, text='Temperature Controls')
         tempcontrols = TempControl(tempcontrolFrame)
+        self.widgets['tempcontrols'] = tempcontrols
         # self.stagecontrolFrame.createWidgets()
         optionsFrame = tk.Frame(self)
         outputfilenameFrame = tk.Frame(optionsFrame)
         buttonFrame = tk.Frame(self)
 
-        self.dataplot = dataCanvas(dataFrame)
-        self.measdone.trace_add('write', self._updateData)
+        dataplot = dataCanvas(dataFrame)
+        self.widgets['dataplot'] = dataplot
+
+        statusFrame = tk.Frame(controlsFrame)
+        sattusLabelprefix = Label(master=statusFrame, text="Status: ")
+        statusVar = StringVar(value='Not Initialized')
+        statusLabel = Label(master=statusFrame,
+                            textvariable=statusVar)
+        self.variabels['statusVar'] = statusVar
 
         outputfilenameEntryLabel = Label(master=outputfilenameFrame,
                                          text='Output Filename Prefix:')
@@ -110,15 +122,23 @@ class MainFrame(tk.Frame):
                                command=measurementFrame.startMeasurementButtonClick)
         measButton.pack(side=LEFT)
         quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.quitButtonClick)
+        self.widgets['quitButton'] = quitButton
+
+        measdone.trace_add('write', self._updateData)
+        busy.trace_add('write', self._checkbusy)
+
         quitButton.pack(side=BOTTOM)
 
         dataFrame.pack(side=TOP, fill=BOTH)
         measurementFrame.pack(side=TOP, fill=BOTH)
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
+        sattusLabelprefix.pack(side=LEFT)
+        statusLabel.pack(side=LEFT)
+        statusFrame.pack(side=BOTTOM)
         controlsFrame.pack(side=TOP)
         stagecontrolFrame.pack(side=LEFT)
         tempcontrolFrame.pack(side=LEFT)
-        self.stagecontrolFrame.pack(side=LEFT, fill=Y)
+        stagecontroller.pack(side=LEFT, fill=Y)
         tempcontrols.pack(side=RIGHT, fill=Y)
         outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)
         optionsFrame.pack(side=BOTTOM, fill=Y)
@@ -126,7 +146,14 @@ class MainFrame(tk.Frame):
         buttonFrame.pack(side=BOTTOM, fill=X)
 
     def quitButtonClick(self):
-        self.stagecontrolFrame.shutdown()
+        self.widgets['quitButton']['state'] = DISABLED
+        self.variabels['statusVar'].set('Shutting down')
+        self.__quit()
+
+    def __quit(self):
+        self.widgets['tempcontrols'].shutdown()
+        self.widgets['stagecontroller'].shutdown()
+        time.sleep(3)
         self.root.quit()
 
     def SpawnSaveDialogClick(self):
@@ -146,11 +173,11 @@ class MainFrame(tk.Frame):
         # self.outputfilenameEntry.insert(0, self.opts.output_file_name)
 
     def _updateData(self, *args):
-        self.measdone.set(False)
-        self.dataplot.displayData({'x':[1,2,3], 'y':[4,5,6]})
+        self.variabels['measdone'].set(False)
+        self.widgets['dataplot']({'x':[1,2,3], 'y':[4,5,6]})
 
     def _checkbusy(self, *args):
-        if self.busy.get():
-            self.quitButton['state'] = DISABLED
+        if self.variabels['busy'].get():
+            self.widgets['quitButton']['state'] = DISABLED
         else:
-            self.quitButton['sate'] = NORMAL
+            self.widgets['quitButton']['state'] = NORMAL
