@@ -21,6 +21,7 @@ import os
 import platform
 from contextlib import contextmanager
 import pyvisa as visa
+import serial
 rm = visa.ResourceManager()
 
 MODE_GPIB = 'GPIB'
@@ -52,12 +53,15 @@ def initialize_gpib(address, board, query_id=True, read_termination="LF", **kwar
     return gpib_visa
 
 
-def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
+def initialize_serial_visa(name, idn="*IDN?", read_termination="LF", **kwargs):
     """ Initialize Serial devices using PyVisa """
 
     try:
+        print(f"Opening {name}")
         serial_visa = rm.open_resource(name)
-        serial_visa.timeout = 30000  # 3s
+        print("Setting timeout")
+        serial_visa.timeout = 5000  # 5s
+        print("Setting read_termination")
         if read_termination == "LF":
             serial_visa.read_termination = "\n"
         elif read_termination == "CR":
@@ -67,6 +71,32 @@ def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
         for kw in list(kwargs.keys()):
             tmp = "".join(("serial_visa.", kw, "=", kwargs[kw]))
             exec(tmp)
+        print(f"Sending {idn}")
+        print(serial_visa.query(idn))
+    except Exception:
+        print("Failed opening serial port %s\n" % name)
+        serial_visa = None
+    return serial_visa
+
+def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
+    """ Initialize Serial devices using PyVisa """
+
+    try:
+        print(f"Opening {name}")
+        serial_visa = rm.open_resource(name)
+        print("Setting timeout")
+        serial_visa.timeout = 5000  # 5s
+        print("Setting read_termination")
+        if read_termination == "LF":
+            serial_visa.read_termination = "\n"
+        elif read_termination == "CR":
+            serial_visa.read_termination = "\r"
+        elif read_termination == "CRLF":
+            serial_visa.read_termination = "\r\n"
+        for kw in list(kwargs.keys()):
+            tmp = "".join(("serial_visa.", kw, "=", kwargs[kw]))
+            exec(tmp)
+        print(f"Sending {idn}")
         print(serial_visa.query(idn))
     except Exception:
         print("Failed opening serial port %s\n" % name)
@@ -122,3 +152,11 @@ def enumerateDevices():
 #         for _dev in rm.list_resources():
 #             _devs.append(_dev)
 #     return _devs
+
+class SerialVisa():
+
+    def __init__(self, address, baud=9600, timeout=1):
+        self.address = address
+        self.baud = baud
+        self.timeout = timeout
+        self.smu = serial.Serial(address, baud, timeout=timeout)
