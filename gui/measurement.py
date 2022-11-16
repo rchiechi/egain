@@ -43,6 +43,7 @@ class MeasurementControl(tk.Frame):
             }
 
     smu = None
+    is_initialized = False
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -53,6 +54,12 @@ class MeasurementControl(tk.Frame):
         self.labelFont = Font(size=8)
         self.deviceString = StringVar()
         self.createWidgets()
+
+    @property
+    def initialized(self):
+        if not self.error and self.is_initialized:
+            return True
+        return False
 
     def createWidgets(self):
         for _StringVar in self.sweep:
@@ -100,8 +107,9 @@ class MeasurementControl(tk.Frame):
 
         # measurementButton = tk.Button(self, text='Measure')
 
-    def __initdevice(self):
+    def __initdevice(self, *args):
         self.smu = K6430(self.deviceString.get())
+        self.is_initialized = True
 
     def __validateSweep(self, *args):
         try:

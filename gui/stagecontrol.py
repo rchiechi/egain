@@ -7,7 +7,7 @@ import tkinter.ttk as tk
 from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import filedialog
-from tkinter import Text, IntVar, StringVar, DoubleVar, Listbox, Label, Entry
+from tkinter import Text, IntVar, StringVar, DoubleVar, Listbox, Label, Entry, messagebox
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
 from tkinter import END, BOTH, NONE, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
@@ -15,7 +15,7 @@ from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused
 from tkinter import PhotoImage
 from tkinter.font import Font
 from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
-from stage.backend import NetHost, GenericBackEnd
+from stage.backend import NetHost, GenericBackEnd, IP_ADDRESS, PORT
 from stage.mks import ESP302
 
 class StageControls(tk.Frame):
@@ -28,6 +28,12 @@ class StageControls(tk.Frame):
     units = {1:'step',
              2:'mm',
              3:'μm'}
+    xyzstage = {'address':IP_ADDRESS,
+                'port':PORT,
+                'nethost': None,
+                'stage': None,
+                'initialized': False}
+    widgets = {}
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -38,9 +44,15 @@ class StageControls(tk.Frame):
         self.createWidgets()
         self.alive = threading.Event()
         self.alive.set()
-        nethost = GenericBackEnd()
-        self.stage = ESP302(self.alive, nethost)
-        self.stage.start()
+        # self.smuaddressvar = StringVar(value=IP_ADDRESS)
+        # self.smuportvar = StringVar(value=PORT)
+        # nethost = GenericBackEnd()
+        # self.stage = ESP302(self.alive, nethost)
+        # self.stage.start()
+
+    @property
+    def initialized(self):
+        return self.xyzstage['initialized']
 
     def shutdown(self):
         self.alive.clear()
@@ -84,6 +96,27 @@ class StageControls(tk.Frame):
                                        *list(self.units.values()))
         self.unitStr.trace_add('write', self._handleunitchange)
         self.relativemoveScaleChange(self.relativemoveScale.get())
+
+        stageFrame = tk.Frame(master=self)
+        stageaddressvar = StringVar(value=IP_ADDRESS)
+        stageportvar = StringVar(value=PORT)
+        stageaddressLabel = tk.Label(master=stageFrame, text='Address:')
+        stageaddressEntry = tk.Entry(master=stageFrame,
+                                     textvariable=stageaddressvar,
+                                     width=12)
+        stageportlLabel = tk.Label(master=stageFrame, text='Port:')
+        stageportEntry = tk.Entry(master=stageFrame,
+                                  textvariable=stageportvar,
+                                  width=4)
+        self.xyzstage['address'] = stageaddressvar
+        self.xyzstage['port'] = stageportvar
+        initButton = tk.Button(master=stageFrame,
+                               text='Initialize',
+                               command=self.initButtonClick)
+        self.widgets['initButton'] = initButton
+        self.widgets['stageaddressEntry'] = stageaddressEntry
+        self.widgets['stageportEntry'] = stageportEntry
+
         relativemoveLabel.pack(side=TOP)
         self.relativemoveScale.pack(side=TOP)
         relativemoveindicatorLabel.pack(side=TOP)
@@ -96,9 +129,15 @@ class StageControls(tk.Frame):
         self.backButton.pack(side=BOTTOM)
         self.forwardButton.pack(side=BOTTOM)
 
+        stageaddressLabel.pack(side=LEFT)
+        stageaddressEntry.pack(side=LEFT)
+        stageportlLabel.pack(side=LEFT)
+        stageportEntry.pack(side=LEFT)
+        initButton.pack(side=BOTTOM)
+        stageFrame.pack(side=BOTTOM)
+
         xyzFrame.pack(side=TOP)
         # commandFrame.pack(side=BOTTOM)
-        print("Yo")
 
     def _waitformotion(self, widget):
         if self.stage.isMoving:
@@ -107,6 +146,41 @@ class StageControls(tk.Frame):
         else:
             widget['state'] = NORMAL
             self.busy.set(False)
+
+    def initButtonClick(self):
+        _address, _port = self.xyzstage['address'].get(), self.xyzstage['port'].get()
+        _ok = True
+        for _i in _address.split('.'):
+            try:
+                int(_i)
+            except ValueError:
+                _ok = False
+        try:
+            int(_port)
+        except ValueError:
+            _ok = False
+        if len(_address.split('.')) != 4:
+            _ok = False
+        if _ok:
+            self._initstage()
+        else:
+            messagebox.showerror("Error", "Invalid address settings.")
+
+    def _initstage(self):
+        self.xyzstage['nethost'] = GenericBackEnd()
+        self.xyzstage['nethost'].initialize(address=self.xyzstage['address'].get(),
+                                            port=self.xyzstage['port'].get())
+        self.xyzstage['stage'] = ESP302(self.alive, self.xyzstage['nethost'])
+        try:
+            self.xyzstage['stage'].start()
+            self.xyzstage['initalized'] = True
+            for _widget in 'initButton', 'stageaddressEntry', 'stageportEntry':
+                self.widgets[_widget]['state'] = DISABLED
+        except IOError:
+            self.xyzstage['initalized'] = False
+        # nethost = GenericBackEnd()
+        # self.stage = ESP302(self.alive, nethost)
+        # self.stage.start()
 
     def upButtonClick(self):
         self.upButton['state'] = DISABLED

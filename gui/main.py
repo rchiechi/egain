@@ -57,7 +57,7 @@ class MainFrame(tk.Frame):
         limg = Label(self.root, i=self.bgimg)
         limg.pack(side=TOP)
         self.root.title("RCCLab EGaIn Data Parser")
-        self.root.geometry('800x850+250+250')
+        # self.root.geometry('800x850+250+250')
         self.pack(fill=BOTH)
         self.__createWidgets()
         self.checkOptions()
@@ -83,6 +83,7 @@ class MainFrame(tk.Frame):
         measurementFrame = MeasurementControl(controlsFrame,
                                               measdone=measdone,
                                               busy=busy)
+        self.widgets['measurementFrame'] = measurementFrame
         stagecontrolFrame = tk.LabelFrame(controlsFrame, text='Stage Controls')
         stagecontroller = StageControls(stagecontrolFrame, busy=busy)
         self.widgets['stagecontroller'] = stagecontroller
@@ -120,7 +121,10 @@ class MainFrame(tk.Frame):
         saveButton.pack(side=LEFT)
         measButton = tk.Button(master=buttonFrame, text="Measure",
                                command=measurementFrame.startMeasurementButtonClick)
+        self.widgets['measButton'] = measButton
         measButton.pack(side=LEFT)
+        measButton['state'] = DISABLED
+        measButton.after(100, self.checkOptions)
         quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.quitButtonClick)
         self.widgets['quitButton'] = quitButton
 
@@ -153,7 +157,7 @@ class MainFrame(tk.Frame):
     def __quit(self):
         self.widgets['tempcontrols'].shutdown()
         self.widgets['stagecontroller'].shutdown()
-        time.sleep(3)
+        time.sleep(1)
         self.root.quit()
 
     def SpawnSaveDialogClick(self):
@@ -167,8 +171,15 @@ class MainFrame(tk.Frame):
         self.checkOptions()
 
     def checkOptions(self):
+        _initialized = False
+        for _widget in 'measurementFrame', 'stagecontroller':
+            _initialized = self.widgets[_widget].initialized
+        if _initialized:
+            self.widgets['measButton']['state'] = NORMAL
+            self.variabels['statusVar'].set('Initialized')
+        else:
+            self.widgets['measButton'].after(100, self.checkOptions)
         # print(self.opts)
-        return
         # self.outputfilenameEntry.delete(0, END)
         # self.outputfilenameEntry.insert(0, self.opts.output_file_name)
 

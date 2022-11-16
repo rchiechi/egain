@@ -1,13 +1,27 @@
 import socket
 
+IP_ADDRESS = '192.168.42.2'
+PORT = '5001'
+
+
 class GenericBackEnd:
 
     _connected = False
     _message_queue = []
+    address = IP_ADDRESS
+    port = PORT
 
     @property
     def connected(self):
         return self._connected
+
+    @property
+    def getaddress(self):
+        return (self.address, self.port)
+
+    def initialize(self, **kwargs):
+        self.address = kwargs.get('address', IP_ADDRESS)
+        self.port = kwargs.get('port', PORT)
 
     def connect(self):
         self._connected = True
@@ -37,12 +51,9 @@ class GenericBackEnd:
 
 class NetHost(GenericBackEnd):
 
-    IP_ADDRESS = '192.168.42.2'
-    PORT = '5001'
-
     def connect(self):
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.conn.connect((self.IP_ADDRESS, int(self.PORT)))
+        self.conn.connect((self.address, int(self.port)))
         self._connected = True
 
     def disconnect(self):

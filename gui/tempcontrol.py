@@ -20,7 +20,7 @@ DEFAULTUSBDEVICE = 'Choose USB Device'
 class TempControl(tk.Frame):
 
     controller = None
-    initialized = False
+    is_initialized = False
 
     def __init__(self, root):
         self.master = root
@@ -32,6 +32,10 @@ class TempControl(tk.Frame):
         self.targettemp = StringVar()
         self.peltier_on = IntVar()
         self.createWidgets()
+        
+    @property
+    def initialized(self):
+        return self.is_initialized
 
     def createWidgets(self):
         setFrame = tk.LabelFrame(self,
@@ -84,7 +88,7 @@ class TempControl(tk.Frame):
             cmd = 'ON'
         else:
             cmd = 'OFF'
-        if self.initialized:
+        if self.is_initialized:
             self.writeserial(cmd)
 
     def _checkPeltier(self):
@@ -135,7 +139,7 @@ class TempControl(tk.Frame):
                     _val = _msg.get('message', '')
                     if _val == 'Done initializing':
                         print("Device initalized")
-                        self.initialized = True
+                        self.is_initialized = True
                         return
                 except json.decoder.JSONDecodeError:
                     continue
@@ -145,7 +149,7 @@ class TempControl(tk.Frame):
         print("Empty reply from device.")
 
     def readserial(self):
-        if not self.initialized:
+        if not self.is_initialized:
             return {}
         try:
             _json = ''
@@ -157,7 +161,7 @@ class TempControl(tk.Frame):
                     # print(msg)
                     if 'message' in msg:
                         print(msg)
-                        self.initialized = False
+                        self.is_initialized = False
                     return msg
                 except json.decoder.JSONDecodeError as err:
                     print(f'JSON Error: {err}')
@@ -167,7 +171,7 @@ class TempControl(tk.Frame):
         return {}
 
     def writeserial(self, cmd, val=None):
-        if not self.initialized:
+        if not self.is_initialized:
             return
         if not cmd:
             return
