@@ -19,6 +19,7 @@ Functions written:
 """
 import os
 import platform
+import time
 from contextlib import contextmanager
 import pyvisa as visa
 import serial
@@ -83,7 +84,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
 
     try:
         print(f"Opening {name}")
-        serial_visa = rm.open_resource(name)
+        serial_visa = SerialVisa(visatoserial(name))
         print("Setting timeout")
         serial_visa.timeout = 5000  # 5s
         print("Setting read_termination")
@@ -98,8 +99,9 @@ def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
             exec(tmp)
         print(f"Sending {idn}")
         print(serial_visa.query(idn))
-    except Exception:
+    except Exception as msg:
         print("Failed opening serial port %s\n" % name)
+        print(str(msg))
         serial_visa = None
     return serial_visa
 
@@ -125,6 +127,10 @@ def enumerateDevices():
                 if _f.lower() in _dev.lower():
                     _devs.append(_dev)
     return _devs
+
+def visatoserial(visa_address):
+    _path = visa_address.split(':')[0].split('/')
+    return f"/{'/'.join(_path[1:])}"
 
 #     if MEAS_MODE == MODE_GPIB:
 #         return _enumerateVISA()
@@ -155,8 +161,42 @@ def enumerateDevices():
 
 class SerialVisa():
 
+    buffer = []
+    timeout_s = 1
+    read_termination = "\n"
+    write_termination = "\r\n"
+    smu = None
+
     def __init__(self, address, baud=9600, timeout=1):
+        self.delta = time.time()
         self.address = address
         self.baud = baud
         self.timeout = timeout
         self.smu = serial.Serial(address, baud, timeout=timeout)
+
+    @property
+    def timeout(self):
+        return self.timeout_s*1000
+
+    @timeout.setter
+    def timeout(self, ms):
+        self.timeout_s = ms/1000.0
+        if self.smu is not None:
+            self.smu.timeout = self.timeout_s
+
+    def __delay(self):
+        if time.time() - self.delta < 1:
+            time.sleep(1)
+        self.delta = time.time()
+
+    def write(self, cmd):
+        self.__delay()
+        self.smu.write(bytes(cmd, encoding='ascii'))
+
+    def query(self, cmd):
+        self.__delay()
+        result = self.smu.write(bytes(cmd, encoding='ascii'))
+        if len(self.buffer) > 100:
+            self.buffer = self.buffer[-100:]
+        self.buffer.append(str(result))
+        return self.buffer[-1]

@@ -105,11 +105,10 @@ class MeasurementControl(tk.Frame):
         devicePicker.pack(side=LEFT)
 
 
-        # measurementButton = tk.Button(self, text='Measure')
-
     def __initdevice(self, *args):
-        self.smu = K6430(self.deviceString.get())
-        self.is_initialized = True
+        if not self.is_initialized:
+            self.smu = K6430(self.deviceString.get())
+            self.is_initialized = True
 
     def __validateSweep(self, *args):
         try:
