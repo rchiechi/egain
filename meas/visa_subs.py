@@ -54,7 +54,7 @@ def initialize_gpib(address, board, query_id=True, read_termination="LF", **kwar
     return gpib_visa
 
 
-def initialize_serial_visa(name, idn="*IDN?", read_termination="LF", **kwargs):
+def initialize_serial_pyvisa(name, idn="*IDN?", read_termination="LF", **kwargs):
     """ Initialize Serial devices using PyVisa """
 
     try:
@@ -80,7 +80,7 @@ def initialize_serial_visa(name, idn="*IDN?", read_termination="LF", **kwargs):
     return serial_visa
 
 def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
-    """ Initialize Serial devices using PyVisa """
+    """ Initialize Serial devices using SerialVisa """
 
     try:
         print(f"Opening {name}")
@@ -100,7 +100,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
         print(f"Sending {idn}")
         print(serial_visa.query(idn))
     except Exception as msg:
-        print("Failed opening serial port %s\n" % name)
+        print("Failed opening serial port %s" % name)
         print(str(msg))
         serial_visa = None
     return serial_visa
@@ -115,6 +115,7 @@ def _mutestderr():
     os.dup2(original_stderr, 2)  # restoring the original stderr
     os.close(original_stderr)
 
+
 def enumerateDevices():
     _devs = []
     _filter = ['']
@@ -128,36 +129,11 @@ def enumerateDevices():
                     _devs.append(_dev)
     return _devs
 
+
 def visatoserial(visa_address):
     _path = visa_address.split(':')[0].split('/')
     return f"/{'/'.join(_path[1:])}"
 
-#     if MEAS_MODE == MODE_GPIB:
-#         return _enumerateVISA()
-#     elif MEAS_MODE == MODE_SERIAL:
-#         return _enumerateSERIAL()
-#     else:
-#         return []
-# 
-# def _enumerateSERIAL():
-#     _filter = ''
-#     if platform.system() == "Darwin":
-#         _filter = 'usbmodem'
-#     if platform.system() == "Linux":
-#         _filter = 'ttyUSB'
-#     _devs = []
-#     for _dev in os.listdir('/dev'):
-#         if _filter.lower() in _dev.lower():
-#             _devs.append(_dev)
-#     return _devs
-# 
-# def _enumerateVISA():
-#     _devs = []
-#     rm = visa.ResourceManager('@py')
-#     with _mutestderr():
-#         for _dev in rm.list_resources():
-#             _devs.append(_dev)
-#     return _devs
 
 class SerialVisa():
 

@@ -18,6 +18,8 @@ class Instrument:
     description
     """
 
+    visa = None
+
     def __init__(self, address):
         self.name = "Instrument Name"
         self.address = address
@@ -28,6 +30,12 @@ class Instrument:
             # self.visa = serial.Serial(address, 9600, timeout=0.5)
             self.visa = visa_subs.initialize_serial(address)
             self.backend = MODE_SERIAL
+
+    @property
+    def initialized(self):
+        if self.visa is not None:
+            return True
+        return False
 
     def description(self):
         """ Print a description string to data file"""
@@ -73,6 +81,9 @@ class Keithley(Instrument):
                  ramp_step=0.1, auto_sense_range=False, reset=True
         """
 
+        if self.visa is None:
+            return False
+
         if self.mode == VOLT:
             self.source = VOLT
             self.sense = CURR
@@ -97,7 +108,6 @@ class Keithley(Instrument):
             self.visa.write(":OUTP 0")
             self.visa.write("*RST")
             self.visa.write(":SYST:BEEP:STAT 0")
-            time.sleep(.1)
 
             self.visa.write(f":SOUR:FUNC:MODE {self.source}")
             self.visa.write(f":SOUR:{self.source}:RANG {self.source_range:.2e}")
@@ -123,6 +133,22 @@ class Keithley(Instrument):
             self.output = bool(int(self.visa.query(":OUTP:STAT?")))
             compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
             self.read_data()
+
+    def voltage_sweep(self, v_list):
+        self.visa.write('*RST')
+        self.visa.write('SOUR:FUNC:MODE VOLT')
+        self.visa.write(f'SOUR:LIST:VOLT {",".join(v_list)}')
+        _points = self.visa.query('SOUR:LIST:VOLT:POIN?')
+        self.visa.write(f'TRIG:COUN {_points}')
+        self.visa.write('SOUR:VOLT:MODE LIST')
+        self.visa.write('OUTP ON')
+        self.visa.write('INIT')
+    
+    def fetch_data(self):
+        return self.visa.query('FETC?')
+
+    def setNPLC(self, nplc):
+        self.visa.write(f":SENS:{self.sense}:NPLC {nplc}")
 
     def read_numeric(self, command):
         reply = self.visa.query(command)

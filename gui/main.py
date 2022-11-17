@@ -190,5 +190,7 @@ class MainFrame(tk.Frame):
     def _checkbusy(self, *args):
         if self.variabels['busy'].get():
             self.widgets['quitButton']['state'] = DISABLED
+            self.widgets['measButton'] = DISABLED
         else:
             self.widgets['quitButton']['state'] = NORMAL
+            self.widgets['measButton'] = NORMAL

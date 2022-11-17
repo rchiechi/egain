@@ -64,7 +64,7 @@ class ESP302(threading.Thread):
         self.dev.connect()
         if not self.dev.connected:
             raise IOError('Could not connect backend.')
-        for axis in (1,2,3):
+        for axis in (1, 2, 3):
             if not self.motorOn(axis):
                 self._error = True
                 print(f"Error starting up axis {axis} motor!")
@@ -87,18 +87,18 @@ class ESP302(threading.Thread):
                 print(f'Executing command {_cmd[0]}.')
                 _func(*_cmd[1:])
             time.sleep(0.1)
-        for axis in (1,2,3):
+        for axis in (1, 2, 3):
             if not self.motorOff(axis):
                 self._error = True
                 print(f"Error shutting down axis {axis} motor!")
 
     def _cmd(self, axis, cmd, param=None):
         if param is None:
-            _cmdstr = b"%d%s;%dTS\r" % (axis,cmd,axis)
+            _cmdstr = b"%d%s;%dTS\r" % (axis, cmd, axis)
         elif isinstance(param, int) or isinstance(param, float):
-            _cmdstr = b"%d%s%d;%dTS\r" % (axis,cmd,param,axis)
+            _cmdstr = b"%d%s%d;%dTS\r" % (axis, cmd, param, axis)
         else:
-            _cmdstr = b"%d%s%s;%dTS\r" % (axis,cmd,param,axis)
+            _cmdstr = b"%d%s%s;%dTS\r" % (axis, cmd, param, axis)
         self.dev.write(_cmdstr)
         return asciitobinary(self.dev.read())
 
