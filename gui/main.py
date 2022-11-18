@@ -43,11 +43,16 @@ from gui.measurement import MeasurementControl
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
+MEASURING = 'Measuring'
+READY = 'Ready'
+NOT_INITIALIZED = 'Not initalized'
+
 class MainFrame(tk.Frame):
     '''The main frame for collecting EGaIn data.'''
 
     widgets = {}
-    variabels = {}
+    variables = {}
+    traces = []
 
     def __init__(self, root, opts):
         self.root = root
@@ -74,9 +79,9 @@ class MainFrame(tk.Frame):
 
     def __createWidgets(self):
         measdone = BooleanVar(value=False)
-        self.variabels['measdone'] = measdone
+        self.variables['measdone'] = measdone
         busy = BooleanVar(value=False)
-        self.variabels['busy'] = busy
+        self.variables['busy'] = busy
 
         dataFrame = tk.Frame(self)
         controlsFrame = tk.Frame(self)
@@ -100,10 +105,10 @@ class MainFrame(tk.Frame):
 
         statusFrame = tk.Frame(controlsFrame)
         sattusLabelprefix = Label(master=statusFrame, text="Status: ")
-        statusVar = StringVar(value='Not Initialized')
+        statusVar = StringVar(value=NOT_INITIALIZED)
         statusLabel = Label(master=statusFrame,
                             textvariable=statusVar)
-        self.variabels['statusVar'] = statusVar
+        self.variables['statusVar'] = statusVar
 
         outputfilenameEntryLabel = Label(master=outputfilenameFrame,
                                          text='Output Filename Prefix:')
@@ -125,6 +130,10 @@ class MainFrame(tk.Frame):
         measButton.pack(side=LEFT)
         measButton['state'] = DISABLED
         measButton.after(100, self.checkOptions)
+        stopButton = tk.Button(master=buttonFrame, text='Stop',
+                               command=measurementFrame.stop_measurement)
+        self.widgets['stopButton'] = stopButton
+        stopButton.pack(side=LEFT)
         quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.quitButtonClick)
         self.widgets['quitButton'] = quitButton
 
@@ -151,10 +160,11 @@ class MainFrame(tk.Frame):
 
     def quitButtonClick(self):
         self.widgets['quitButton']['state'] = DISABLED
-        self.variabels['statusVar'].set('Shutting down')
+        self.variables['statusVar'].set('Shutting down')
         self.__quit()
 
     def __quit(self):
+        self.widgets['measurementFrame'].shutdown()
         self.widgets['tempcontrols'].shutdown()
         self.widgets['stagecontroller'].shutdown()
         time.sleep(1)
@@ -171,26 +181,47 @@ class MainFrame(tk.Frame):
         self.checkOptions()
 
     def checkOptions(self):
-        _initialized = False
-        for _widget in 'measurementFrame', 'stagecontroller':
-            _initialized = self.widgets[_widget].initialized
-        if _initialized:
-            self.widgets['measButton']['state'] = NORMAL
-            self.variabels['statusVar'].set('Initialized')
-        else:
+        if self.variables['statusVar'].get() in (MEASURING, READY):
             self.widgets['measButton'].after(100, self.checkOptions)
-        # print(self.opts)
-        # self.outputfilenameEntry.delete(0, END)
-        # self.outputfilenameEntry.insert(0, self.opts.output_file_name)
+            return
+        _initialized = [False, False, False]
+        _connected = []
+        if self.widgets['measurementFrame'].initialized:
+            _connected.append('SMU')
+            _initialized[0] = True
+        if self.widgets['stagecontroller'].initialized:
+            _connected.append('Stage')
+            _initialized[1] = True
+        if self.widgets['tempcontrols'].initialized:
+            _connected.append('Peltier')
+            _initialized[2] = True
+        if len(_connected) > 1:
+            _connected = _connected[:-1]+['and', _connected[-1]]
+        if True in _initialized:
+            self.widgets['measButton']['state'] = NORMAL
+            self.variables['statusVar'].set(" ".join(_connected)+" connected")
+        else:
+            self.variables['statusVar'].set('Not Initialized')
+        if False in _initialized and not self.variables['busy'].get():
+            self.widgets['measButton'].after(100, self.checkOptions)
 
     def _updateData(self, *args):
-        self.variabels['measdone'].set(False)
-        self.widgets['dataplot']({'x':[1,2,3], 'y':[4,5,6]})
+        if self.variables['measdone'].get():
+            results = self.widgets['measurementFrame'].results
+            if len(results['V']) == len(results['I']):
+                self.widgets['dataplot'].displayData(results)
+            # self.widgets['dataplot'].displayData({'x':[1,2,3], 'y':[4,5,6]})
 
     def _checkbusy(self, *args):
-        if self.variabels['busy'].get():
+        if self.variables['busy'].get() and not self.variables['measdone'].get():
+            self.variables['statusVar'].set(MEASURING)
+        else:
+            self.variables['statusVar'].set(READY)
+        if self.variables['busy'].get():
             self.widgets['quitButton']['state'] = DISABLED
-            self.widgets['measButton'] = DISABLED
+            self.widgets['measButton']['state'] = DISABLED
         else:
             self.widgets['quitButton']['state'] = NORMAL
-            self.widgets['measButton'] = NORMAL
+            self.widgets['measButton']['state'] = NORMAL
+
+

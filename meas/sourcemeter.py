@@ -105,14 +105,14 @@ class Keithley(Instrument):
 
         if kwargs.get('reset', True):
             self.output = False
-            self.visa.write(":OUTP 0")
+            self.visa.write(":OUTP OFF")
             self.visa.write("*RST")
-            self.visa.write(":SYST:BEEP:STAT 0")
+            # self.visa.write(":SYST:BEEP:STAT OFF")
 
             self.visa.write(f":SOUR:FUNC:MODE {self.source}")
-            self.visa.write(f":SOUR:{self.source}:RANG {self.source_range:.2e}")
+            # self.visa.write(f":SOUR:{self.source}:RANG {self.source_range:.2e}")
             if kwargs.get('auto_sense_range', False):
-                self.visa.write(":SENS:CURR:RANG:AUTO 0")
+                self.visa.write(f":SENS:{self.sense}:RANG:AUTO ON")
             else:
                 self.visa.write(f":SENS:{self.sense}:RANG {self.sense_range:.2e}")
 
@@ -121,12 +121,12 @@ class Keithley(Instrument):
 
             # Configure the auto zero (reference)
             self.visa.write(":SYST:AZER:STAT ON")
-            self.visa.write(":SYST:AZER:CACH:STAT 1")
+            self.visa.write(":SYST:AZER:CACH:STAT ON")
             self.visa.write(":SYST:AZER:CACH:RES")
 
             # Disable concurrent mode, measure I and V (not R)
-            self.visa.write(":SENS:FUNC:CONC 1")
-            self.visa.write(":SENS:FUNC:ON \"VOLT\",\"CURR\"")
+            self.visa.write(":SENS:FUNC:CONC OFF")
+            # self.visa.write(":SENS:FUNC:ON 'VOLT','CURR'")
             self.visa.write(":FORM:ELEM VOLT,CURR")
 
         else:
@@ -134,57 +134,32 @@ class Keithley(Instrument):
             compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
             self.read_data()
 
-    def voltage_sweep(self, v_list):
-        self.visa.write('*RST')
-        self.visa.write('SOUR:FUNC:MODE VOLT')
-        self.visa.write(f'SOUR:LIST:VOLT {",".join(v_list)}')
-        _points = self.visa.query('SOUR:LIST:VOLT:POIN?')
-        self.visa.write(f'TRIG:COUN {_points}')
-        self.visa.write('SOUR:VOLT:MODE LIST')
-        self.visa.write('OUTP ON')
-        self.visa.write('INIT')
-    
+    def setNPLC(self, nplc):
+        self.visa.write(f':SENSE:{self.sense}:NPLC {nplc}')
+
+    def start_voltage_sweep(self, v_list):
+        # self.visa.write('*RST')
+        # print(self.visa.query(':OUTP:STAT?'))
+        self.visa.write(':SYST:TIME:RES')
+        self.visa.write(':SOUR:FUNC:MODE VOLT')
+        self.visa.write(":SENS:FUNC 'CURR:DC'")
+        self.visa.write(':SOUR:DEL:AUTO ON')
+        self.visa.write(f':SOUR:LIST:VOLT {",".join(v_list)}')
+        _points = self.visa.query(':SOUR:LIST:VOLT:POIN?')
+        if not _points:
+            _points = len(v_list)
+        self.visa.write(f':TRIG:COUN {_points}')
+        self.visa.write(':SOUR:VOLT:MODE LIST')
+        self.visa.write(':OUTP ON')
+        self.visa.write(':INIT')
+        return self.visa.get_wait_for_meas()
+
+    def end_voltage_sweep(self):
+        self.visa.write(':OUTP OFF')
+
     def fetch_data(self):
         return self.visa.query('FETC?')
 
-    def setNPLC(self, nplc):
-        self.visa.write(f":SENS:{self.sense}:NPLC {nplc}")
-
-    def read_numeric(self, command):
-        reply = self.visa.query(command)
-        answer = float(reply)
-        return answer
-
-    def read_data(self):
-        reply = self.visa.query(":READ?")
-        self.data = [float(i) for i in reply.split(",")[0:2]]
-
-    def set_output(self, level):
-        self.visa.write(f":SOUR:{self.source} {level:.4e}")
-
-    def switch_output(self):
-        self.output = not self.output
-        self.visa.write(f":OUTP:STAT {self.output:d}")
-
-    def ramp(self, finish_value):
-        """A method to ramp the instrument"""
-        if self.output:
-            self.read_data()
-        start_value = self.data[self.source_column]
-        if abs(start_value - finish_value) > self.ramp_step:
-            step_num = abs((finish_value - start_value) / self.ramp_step)
-            sweep_value = np.linspace(start_value,
-                                      finish_value,
-                                      num=np.ceil(int(step_num)),
-                                      endpoint=True)
-
-            if not self.output:
-                self.switch_output()
-
-            for i in enumerate(sweep_value):
-                self.set_output(sweep_value[i])
-                time.sleep(0.01)
-
-            self.read_data()
-
-
+    def close(self):
+        if self.visa is not None:
+            self.visa.close()

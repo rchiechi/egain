@@ -55,5 +55,7 @@ class dataCanvas(FigureCanvasTkAgg):
 
     def displayData(self, data):
         self.ax.cla()
-        self.ax.plot('x', 'y', '', data=data)
+        self.ax.set_xlabel("Voltage (V)")
+        self.ax.set_ylabel("Current (I)")
+        self.ax.plot('V', 'I', '', data=data)
         self.canvas.draw()

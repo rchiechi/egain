@@ -20,6 +20,7 @@ Functions written:
 import os
 import platform
 import time
+import threading
 from contextlib import contextmanager
 import pyvisa as visa
 import serial
@@ -79,26 +80,36 @@ def initialize_serial_pyvisa(name, idn="*IDN?", read_termination="LF", **kwargs)
         serial_visa = None
     return serial_visa
 
-def initialize_serial(name, idn="*IDN?", read_termination="LF", **kwargs):
+def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
     """ Initialize Serial devices using SerialVisa """
 
     try:
         print(f"Opening {name}")
         serial_visa = SerialVisa(visatoserial(name))
-        print("Setting timeout")
-        serial_visa.timeout = 5000  # 5s
-        print("Setting read_termination")
-        if read_termination == "LF":
-            serial_visa.read_termination = "\n"
-        elif read_termination == "CR":
-            serial_visa.read_termination = "\r"
-        elif read_termination == "CRLF":
-            serial_visa.read_termination = "\r\n"
-        for kw in list(kwargs.keys()):
-            tmp = "".join(("serial_visa.", kw, "=", kwargs[kw]))
-            exec(tmp)
-        print(f"Sending {idn}")
-        print(serial_visa.query(idn))
+        # print("Setting timeout")
+        # serial_visa.timeout = 2000  # 2s
+        # print("Setting read_termination")
+        # if read_termination == "LF":
+        #     serial_visa.read_termination = "\n"
+        # elif read_termination == "CR":
+        #     serial_visa.read_termination = "\r"
+        # elif read_termination == "CRLF":
+        #     serial_visa.read_termination = "\r\n"
+        # for kw in list(kwargs.keys()):
+        #     tmp = "".join(("serial_visa.", kw, "=", kwargs[kw]))
+        #     exec(tmp)
+        i = 0
+        while i < 5:
+            IDN = serial_visa.query(idn)
+            if IDN:
+                print(IDN)
+                break
+            else:
+                serial_visa.close()
+                time.sleep(1)
+                serial_visa.open()
+                i += 1
+
     except Exception as msg:
         print("Failed opening serial port %s" % name)
         print(str(msg))
@@ -137,10 +148,12 @@ def visatoserial(visa_address):
 
 class SerialVisa():
 
-    buffer = []
+    buffer = {}
+    encoding = 'ascii'
     timeout_s = 1
-    read_termination = "\n"
-    write_termination = "\r\n"
+    read_termination_b = b"\n"
+    write_termination_b = b"\r"
+    cmd_delay = 0.5
     smu = None
 
     def __init__(self, address, baud=9600, timeout=1):
@@ -149,6 +162,7 @@ class SerialVisa():
         self.baud = baud
         self.timeout = timeout
         self.smu = serial.Serial(address, baud, timeout=timeout)
+        self.playchord()
 
     @property
     def timeout(self):
@@ -158,21 +172,100 @@ class SerialVisa():
     def timeout(self, ms):
         self.timeout_s = ms/1000.0
         if self.smu is not None:
+            # print(self.timeout_s)
             self.smu.timeout = self.timeout_s
 
+    @property
+    def read_termination(self):
+        return str(self.read_termination_b, encoding=self.encoding)
+
+    @read_termination.setter
+    def read_termination(self, c):
+        # print(bytes(c, encoding=self.encoding))
+        self.read_termination_b = bytes(c, encoding=self.encoding)
+
+    @property
+    def write_termination(self):
+        return str(self.write_termination_b, encoding=self.encoding)
+
+    @write_termination.setter
+    def write_termination(self, c):
+        self.write_termination_b = bytes(c, encoding=self.encoding)
+
     def __delay(self):
-        if time.time() - self.delta < 1:
-            time.sleep(1)
+        if time.time() - self.delta < self.cmd_delay:
+            time.sleep(self.cmd_delay)
         self.delta = time.time()
+
+    def __writebutter(self, cmd_, data_):
+        # print(data_)
+        self.buffer[cmd_] = []
+        for _d in data_.split(self.read_termination_b):
+            # print(_d)
+            if _d not in self.buffer:
+                self.buffer[cmd_].append(str(_d.strip(self.read_termination_b),
+                                         encoding=self.encoding))
+        # print(self.buffer)
+
+    def close(self):
+        self.smu.close()
+
+    def open(self):
+        self.smu.open()
+
+    def playchord(self):
+        self.smu.write(b':SYST:BEEP:STAT ON'+self.write_termination_b)
+        self.smu.write(b'SYST:BEEP:IMM 261.63,0.25'+self.write_termination_b)
+        time.sleep(0.25)
+        # self.smu.write(b'SYST:BEEP:IMM 329.63,0.25'+self.write_termination_b)
+        # time.sleep(0.25)
+        # self.smu.write(b'SYST:BEEP:IMM 392.00,0.25'+self.write_termination_b)
+        # time.sleep(0.25)
+        # self.smu.write(b'SYST:BEEP:IMM 523.25,1'+self.write_termination_b)
+        # time.sleep(1)
 
     def write(self, cmd):
         self.__delay()
-        self.smu.write(bytes(cmd, encoding='ascii'))
+        self.smu.write(bytes(cmd, encoding=self.encoding)+self.write_termination_b)
+        print(f'>> {bytes(cmd, encoding=self.encoding)+self.write_termination_b}')
 
     def query(self, cmd):
         self.__delay()
-        result = self.smu.write(bytes(cmd, encoding='ascii'))
+        self.write(cmd)
         if len(self.buffer) > 100:
             self.buffer = self.buffer[-100:]
-        self.buffer.append(str(result))
-        return self.buffer[-1]
+        self.__writebutter(cmd, self.smu.read_until(self.read_termination_b))
+        print(f'<< {self.buffer[cmd][-1]}')
+        return self.buffer[cmd][-1]
+
+    def get_wait_for_meas(self):
+        self.write('*OPC?')
+        alive = threading.Event()
+        alive.set()
+        opcthread = OPCThread(self.smu, alive)
+        return alive, opcthread
+        # opcthread = OPCThread(self.smu, alive)
+        # # _s = self.smu.read(1)
+        # while self.smu.read(1) != b'1':
+        #     # print(_s)
+        #     time.sleep(1)
+        #     # _s = self.smu.read(1)
+        # self.smu.read(1)  # Trim CR
+
+
+class OPCThread(threading.Thread):
+
+    def __init__(self, smu, alive):
+        super().__init__()
+        self.smu = smu
+        self.alive = alive
+
+    def run(self):
+        while self.alive.is_set():
+            _s = self.smu.read(1)
+            # print(_s)
+            if _s == b'1':
+                print(self.smu.read(1))  # Trim CR
+                break
+            time.sleep(1)
+        # self.smu.end_voltage_sweep()

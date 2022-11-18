@@ -1,7 +1,6 @@
 import os
 import platform
-import logging
-import threading
+import time
 from decimal import Decimal
 import tkinter.ttk as tk
 from tkinter import Tk
@@ -28,6 +27,7 @@ from meas.visa_subs import MODE_GPIB, MODE_SERIAL
 #     except ValueError:
 
 MEAS_MODE = MODE_SERIAL
+DATA_FORMAT = {'V':[], 'I':[], 'R':[], 't':[], 's':[]}
 
 class MeasurementControl(tk.Frame):
 
@@ -45,6 +45,8 @@ class MeasurementControl(tk.Frame):
     mode = MEAS_MODE
     smu = None
     is_initialized = False
+    child_threads = []
+    results = DATA_FORMAT
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -118,6 +120,10 @@ class MeasurementControl(tk.Frame):
         measdevicePickerLabel.pack(side=LEFT)
         devicePicker.pack(side=LEFT)
 
+    def shutdown(self):
+        if self.smu is not None:
+            self.smu.close()
+
     def __initdevice(self, *args):
         if not self.is_initialized:
             self.smu = K6430(self.deviceString.get())
@@ -155,7 +161,13 @@ class MeasurementControl(tk.Frame):
             self.error = True
             return
         self.error = False
-        print(build_sweep(self.sweep))
+
+    def stop_measurement(self):
+        for child in self.child_threads:
+            child[0].clear()
+            while child[1].is_alive():
+                time.sleep(0.1)
+        self._measureinbackground()
 
     def startMeasurementButtonClick(self):
         if self.error:
@@ -164,14 +176,23 @@ class MeasurementControl(tk.Frame):
         if self.smu is None:
             messagebox.showerror("Error", "Sourcemeter is not configured correctly.")
             return
-
-    def _measureinbackground(self):
         self.measdone.set(False)
         self.busy.set(True)
         self.smu.initialize()
+        self.smu.setNPLC(self.meas['NPLC'])
+        self.child_threads.append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
+        self.child_threads[-1][1].start()
+        self._measureinbackground()
+
+    def _measureinbackground(self):
+        for child in self.child_threads:
+            if child[1].is_alive():
+                self.after(100, self._measureinbackground)
+                return
+        self.smu.end_voltage_sweep()
+        self.results = process_data(self.smu.fetch_data().split(','))
         self.measdone.set(True)
         self.busy.set(False)
-
 
 def build_sweep(sweep):
     _sweepup = []
@@ -189,21 +210,25 @@ def build_sweep(sweep):
     _sweepdown += list(reversed(_sweepdown))[1:-1]
 
     if sweep['reversed']:
-        return list(map(float, _sweepdown+_sweepup+[_zero]))
-    return list(map(float, _sweepup+_sweepdown+[_zero]))
+        return list(map(str, _sweepup+_sweepdown+[_zero]))
+    return list(map(str, _sweepdown+_sweepup+[_zero]))
 
-
-class MeasureThread(threading.Thread):
-
-    def __init__(self, smu, sweep):
-        super().__init__()
-        self.smu = smu
-        self.sweep = sweep
-
-    def run(self):
-       # _sweep = 
-        self.smu.voltage_sweep()
-
+def process_data(data_):
+    # b'VOLT,CURR,RES,TIME,STAT\r'
+    _data = DATA_FORMAT
+    _keymap = {}
+    for i, j in enumerate(_data.keys()):
+        _keymap[i] = j
+    i = 0
+    for _d in data_:
+        if i == len(_keymap)-1:
+            i = 0
+        try:
+            _data[_keymap[i]].append(float(_d))
+        except ValueError:
+            _data[_keymap[i]].append(0.0)
+        i += 1
+    return _data
 
 
 if __name__ == '__main__':

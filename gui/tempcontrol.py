@@ -32,7 +32,7 @@ class TempControl(tk.Frame):
         self.targettemp = StringVar()
         self.peltier_on = IntVar()
         self.createWidgets()
-        
+
     @property
     def initialized(self):
         return self.is_initialized
