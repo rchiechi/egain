@@ -5,6 +5,9 @@ class Music():
     notes = NOTE_FREQUENCIES
     bars = []
 
+    def __init__(self, terminator):
+        self.terminator = terminator
+
     def note(self, _note):
         self.notes.get()
 
