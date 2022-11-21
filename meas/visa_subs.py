@@ -25,6 +25,7 @@ from contextlib import contextmanager
 import pyvisa as visa
 import serial
 from gui.main import DEBUG
+from meas.notes import Music
 rm = visa.ResourceManager()
 
 MODE_GPIB = 'GPIB'
