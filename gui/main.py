@@ -43,6 +43,10 @@ from gui.measurement import MeasurementControl
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
+#############
+DEBUG = True
+#############
+
 MEASURING = 'Measuring'
 READY = 'Ready'
 NOT_INITIALIZED = 'Not initalized'
@@ -53,6 +57,7 @@ class MainFrame(tk.Frame):
     widgets = {}
     variables = {}
     traces = []
+    initialized = False
 
     def __init__(self, root, opts):
         self.root = root
@@ -138,7 +143,8 @@ class MainFrame(tk.Frame):
         self.widgets['quitButton'] = quitButton
 
         measdone.trace_add('write', self._updateData)
-        busy.trace_add('write', self._checkbusy)
+        measdone.trace_add(('read', 'write'), self._checkbusy)
+        busy.trace_add(('read', 'write'), self._checkbusy)
 
         quitButton.pack(side=BOTTOM)
 
@@ -200,6 +206,7 @@ class MainFrame(tk.Frame):
         if True in _initialized:
             self.widgets['measButton']['state'] = NORMAL
             self.variables['statusVar'].set(" ".join(_connected)+" connected")
+            self.initialized = True
         else:
             self.variables['statusVar'].set('Not Initialized')
         if False in _initialized and not self.variables['busy'].get():
@@ -207,14 +214,22 @@ class MainFrame(tk.Frame):
 
     def _updateData(self, *args):
         if self.variables['measdone'].get():
-            results = self.widgets['measurementFrame'].results
+            results = self.widgets['measurementFrame'].data
             if len(results['V']) == len(results['I']):
                 self.widgets['dataplot'].displayData(results)
             # self.widgets['dataplot'].displayData({'x':[1,2,3], 'y':[4,5,6]})
+        if not self.variables['busy'].get():
+            self._writedata()
+
+    def _writedata(self):
+        # Save data to disk and then delete them
+        del self.widgets['measurementFrame'].data
 
     def _checkbusy(self, *args):
-        if self.variables['busy'].get() and not self.variables['measdone'].get():
-            self.variables['statusVar'].set(MEASURING)
+        if not self.initialized:
+            return
+        if self.variables['busy'].get():
+            self.variables['statusVar'].set(f"{MEASURING} sweep {self.widgets['measurementFrame'].sweeps_done+1}")
         else:
             self.variables['statusVar'].set(READY)
         if self.variables['busy'].get():
@@ -223,5 +238,4 @@ class MainFrame(tk.Frame):
         else:
             self.widgets['quitButton']['state'] = NORMAL
             self.widgets['measButton']['state'] = NORMAL
-
 

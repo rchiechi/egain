@@ -46,6 +46,7 @@ class MeasurementControl(tk.Frame):
     smu = None
     is_initialized = False
     child_threads = []
+    sweeps_done = 0
     results = DATA_FORMAT
 
     def __init__(self, root, **kwargs):
@@ -67,6 +68,14 @@ class MeasurementControl(tk.Frame):
     @property
     def voltage_sweep(self):
         return build_sweep(self.sweep)
+
+    @property
+    def data(self):
+        return self.results
+
+    @data.deleter
+    def data(self):
+        self.results = DATA_FORMAT
 
     def createWidgets(self):
         for _StringVar in self.sweep:
@@ -134,8 +143,9 @@ class MeasurementControl(tk.Frame):
         try:
             for _StringVar in self.sweep:
                 _var = getattr(self, _StringVar).get()
-                float(_var)
-                self.sweep[_StringVar] = _var
+                if _var:
+                    float(_var)
+                    self.sweep[_StringVar] = _var
                 # if _StringVar in ('nsweeps', 'reversed'):
                 #    self.sweep[_StringVar] = int(getattr(self, _StringVar).get())
                 # else:
@@ -185,14 +195,41 @@ class MeasurementControl(tk.Frame):
         self._measureinbackground()
 
     def _measureinbackground(self):
-        for child in self.child_threads:
-            if child[1].is_alive():
-                self.after(100, self._measureinbackground)
-                return
+        self.measdone.set(False)
+        self.busy.set(True)
+        if self.child_threads:
+            if not self.child_threads[-1][1].is_alive():
+                self._process_data(self.smu.fetch_data().split(','))
+                self.child_threads.pop()
+                self.sweeps_done += 1
+                if self.sweeps_done < int(self.sweep["nsweeps"]):
+                    self.child_threads.append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
+                    self.measdone.set(True)
+                    self.child_threads[-1][1].start()
+                else:
+                    print(f'Completed {self.sweep["nsweeps"]} sweeps.')
+                    self.sweeps_done = 0
+            self.after(100, self._measureinbackground)
+            return
         self.smu.end_voltage_sweep()
-        self.results = process_data(self.smu.fetch_data().split(','))
         self.measdone.set(True)
         self.busy.set(False)
+
+    def _process_data(self, data_):
+        # b'VOLT,CURR,RES,TIME,STAT\r'
+        # _data = DATA_FORMAT
+        _keymap = {}
+        for i, j in enumerate(self.results.keys()):
+            _keymap[i] = j
+        i = 0
+        for _d in data_:
+            if i == len(_keymap)-1:
+                i = 0
+            try:
+                self.results[_keymap[i]].append(float(_d))
+            except ValueError:
+                self.results[_keymap[i]].append(0.0)
+            i += 1
 
 def build_sweep(sweep):
     _sweepup = []
@@ -213,22 +250,7 @@ def build_sweep(sweep):
         return list(map(str, _sweepup+_sweepdown+[_zero]))
     return list(map(str, _sweepdown+_sweepup+[_zero]))
 
-def process_data(data_):
-    # b'VOLT,CURR,RES,TIME,STAT\r'
-    _data = DATA_FORMAT
-    _keymap = {}
-    for i, j in enumerate(_data.keys()):
-        _keymap[i] = j
-    i = 0
-    for _d in data_:
-        if i == len(_keymap)-1:
-            i = 0
-        try:
-            _data[_keymap[i]].append(float(_d))
-        except ValueError:
-            _data[_keymap[i]].append(0.0)
-        i += 1
-    return _data
+
 
 
 if __name__ == '__main__':

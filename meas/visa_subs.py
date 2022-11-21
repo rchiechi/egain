@@ -24,6 +24,7 @@ import threading
 from contextlib import contextmanager
 import pyvisa as visa
 import serial
+from gui.main import DEBUG
 rm = visa.ResourceManager()
 
 MODE_GPIB = 'GPIB'
@@ -103,6 +104,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
             IDN = serial_visa.query(idn)
             if IDN:
                 print(IDN)
+                serial_visa.playchord()
                 break
             else:
                 serial_visa.close()
@@ -162,7 +164,7 @@ class SerialVisa():
         self.baud = baud
         self.timeout = timeout
         self.smu = serial.Serial(address, baud, timeout=timeout)
-        self.playchord()
+        # self.playchord()
 
     @property
     def timeout(self):
@@ -227,7 +229,8 @@ class SerialVisa():
     def write(self, cmd):
         self.__delay()
         self.smu.write(bytes(cmd, encoding=self.encoding)+self.write_termination_b)
-        print(f'>> {bytes(cmd, encoding=self.encoding)+self.write_termination_b}')
+        if DEBUG:
+            print(f'>> {bytes(cmd, encoding=self.encoding)+self.write_termination_b}')
 
     def query(self, cmd):
         self.__delay()
@@ -235,7 +238,8 @@ class SerialVisa():
         if len(self.buffer) > 100:
             self.buffer = self.buffer[-100:]
         self.__writebutter(cmd, self.smu.read_until(self.read_termination_b))
-        print(f'<< {self.buffer[cmd][-1]}')
+        if DEBUG:
+            print(f'<< {self.buffer[cmd][-1]}')
         return self.buffer[cmd][-1]
 
     def get_wait_for_meas(self):
