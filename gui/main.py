@@ -22,6 +22,8 @@ Description:
 import os
 import platform
 import time
+import math
+import csv
 # import logging
 # import threading
 import tkinter.ttk as tk
@@ -43,20 +45,18 @@ from gui.measurement import MeasurementControl
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
-#############
-DEBUG = True
-#############
-
+JUNCTION_CONVERSION_FACTOR = 0.1  # cm/cm
 MEASURING = 'Measuring'
 READY = 'Ready'
 NOT_INITIALIZED = 'Not initalized'
+csv.register_dialect('JV', delimiter='\t', quoting=csv.QUOTE_MINIMAL)
 
 class MainFrame(tk.Frame):
     '''The main frame for collecting EGaIn data.'''
 
     widgets = {}
     variables = {}
-    traces = []
+    junction_size = 1.0
     initialized = False
 
     def __init__(self, root, opts):
@@ -100,9 +100,8 @@ class MainFrame(tk.Frame):
         tempcontrolFrame = tk.LabelFrame(controlsFrame, text='Temperature Controls')
         tempcontrols = TempControl(tempcontrolFrame)
         self.widgets['tempcontrols'] = tempcontrols
-        # self.stagecontrolFrame.createWidgets()
         optionsFrame = tk.Frame(self)
-        outputfilenameFrame = tk.Frame(optionsFrame)
+        # outputfilenameFrame = tk.Frame(optionsFrame)
         buttonFrame = tk.Frame(self)
 
         dataplot = dataCanvas(dataFrame)
@@ -115,10 +114,10 @@ class MainFrame(tk.Frame):
                             textvariable=statusVar)
         self.variables['statusVar'] = statusVar
 
-        outputfilenameEntryLabel = Label(master=outputfilenameFrame,
+        outputfilenameEntryLabel = Label(master=optionsFrame,
                                          text='Output Filename Prefix:')
         outputfilenameEntryLabel.pack(side=LEFT)
-        outputfilenameEntry = Entry(master=outputfilenameFrame,
+        outputfilenameEntry = Entry(master=optionsFrame,
                                     width=20,
                                     font=Font(size=10))
         outputfilenameEntry.pack(side=LEFT)
@@ -126,6 +125,17 @@ class MainFrame(tk.Frame):
         outputfilenameEntry.insert(0, self.opts.output_file_name)
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
+        junctionsizeEntryLabel = Label(master=optionsFrame,
+                                       text='Junction size (cm):')
+        junctionsizeEntryLabel.pack(side=LEFT)
+        junctionsizeEntry = Entry(master=optionsFrame,
+                                  width=5,
+                                  font=Font(size=10))
+        junctionsizeEntry.pack(side=LEFT)
+        junctionsizeEntry.delete(0, END)
+        junctionsizeEntry.insert(0, self.junction_size)
+        for _ev in ('<Return>', '<Leave>', '<Enter>'):
+            junctionsizeEntry.bind(_ev, self.checkJunctionsize)
 
         saveButton = tk.Button(master=buttonFrame, text="Save To", command=self.SpawnSaveDialogClick)
         saveButton.pack(side=LEFT)
@@ -149,6 +159,9 @@ class MainFrame(tk.Frame):
         quitButton.pack(side=BOTTOM)
 
         dataFrame.pack(side=TOP, fill=BOTH)
+        tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
+        optionsFrame.pack(side=TOP, fill=X)
+        # outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)
         measurementFrame.pack(side=TOP, fill=BOTH)
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         sattusLabelprefix.pack(side=LEFT)
@@ -159,8 +172,7 @@ class MainFrame(tk.Frame):
         tempcontrolFrame.pack(side=LEFT)
         stagecontroller.pack(side=LEFT, fill=Y)
         tempcontrols.pack(side=RIGHT, fill=Y)
-        outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)
-        optionsFrame.pack(side=BOTTOM, fill=Y)
+
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         buttonFrame.pack(side=BOTTOM, fill=X)
 
@@ -185,6 +197,16 @@ class MainFrame(tk.Frame):
     def checkOutputfilename(self, event):
         self.opts.output_file_name = event.widget.get()
         self.checkOptions()
+
+    def checkJunctionsize(self, event):
+        _junction_size = event.widget.get()
+        if not _junction_size:
+            return
+        try:
+            self.junction_size = float(_junction_size)
+        except ValueError:
+            event.widget.delete(0, END)
+            event.widget.insert(0, self.junction_size)
 
     def checkOptions(self):
         if self.variables['statusVar'].get() in (MEASURING, READY):
@@ -217,13 +239,29 @@ class MainFrame(tk.Frame):
             results = self.widgets['measurementFrame'].data
             if len(results['V']) == len(results['I']):
                 self.widgets['dataplot'].displayData(results)
+            self._writedata(False)
             # self.widgets['dataplot'].displayData({'x':[1,2,3], 'y':[4,5,6]})
         if not self.variables['busy'].get():
-            self._writedata()
+            self._writedata(True)
 
-    def _writedata(self):
+    def _writedata(self, finalize=False):
         # Save data to disk and then delete them
-        del self.widgets['measurementFrame'].data
+        # DATA_FORMAT = {'V':[], 'I':[], 'R':[], 't':[], 's':[]}
+        _area = math.pi*(self.junction_size * JUNCTION_CONVERSION_FACTOR)**2
+        results = self.widgets['measurementFrame'].data
+        results['J'] = []
+        for _I in results['I']:
+            results['J'].append(_I/_area)
+        _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
+        if finalize:
+            write_data_to_file(f'{_fn}.txt', results)
+            try:
+                os.remove(f'{_fn}_temp.txt')
+            except FileNotFoundError:
+                pass
+            del self.widgets['measurementFrame'].data
+        else:
+            write_data_to_file(f'{_fn}_temp.txt', results)
 
     def _checkbusy(self, *args):
         if not self.initialized:
@@ -239,3 +277,12 @@ class MainFrame(tk.Frame):
             self.widgets['quitButton']['state'] = NORMAL
             self.widgets['measButton']['state'] = NORMAL
 
+def write_data_to_file(fn, results):
+    with open(fn, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, dialect='JV')
+        writer.writerow(['V (V)', 'I (A)', 'J (A/cm2)', 'Time (s)'])
+        for _idx, V in enumerate(results['V']):
+            writer.writerow([V,
+                             results['I'][_idx],
+                             results['J'][_idx],
+                             results['t'][_idx]])

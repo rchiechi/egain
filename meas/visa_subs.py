@@ -24,9 +24,12 @@ import threading
 from contextlib import contextmanager
 import pyvisa as visa
 import serial
-from gui.main import DEBUG
 from meas.notes import Music
 rm = visa.ResourceManager()
+
+#############
+DEBUG = True
+#############
 
 MODE_GPIB = 'GPIB'
 MODE_SERIAL = 'SERIAL'
@@ -200,7 +203,7 @@ class SerialVisa():
             time.sleep(self.cmd_delay)
         self.delta = time.time()
 
-    def __writebutter(self, cmd_, data_):
+    def __writebuffer(self, cmd_, data_):
         # print(data_)
         self.buffer[cmd_] = []
         for _d in data_.split(self.read_termination_b):
@@ -220,12 +223,12 @@ class SerialVisa():
         self.smu.write(b':SYST:BEEP:STAT ON'+self.write_termination_b)
         self.smu.write(b'SYST:BEEP:IMM 261.63,0.25'+self.write_termination_b)
         time.sleep(0.25)
-        # self.smu.write(b'SYST:BEEP:IMM 329.63,0.25'+self.write_termination_b)
-        # time.sleep(0.25)
-        # self.smu.write(b'SYST:BEEP:IMM 392.00,0.25'+self.write_termination_b)
-        # time.sleep(0.25)
-        # self.smu.write(b'SYST:BEEP:IMM 523.25,1'+self.write_termination_b)
-        # time.sleep(1)
+        self.smu.write(b'SYST:BEEP:IMM 329.63,0.25'+self.write_termination_b)
+        time.sleep(0.25)
+        self.smu.write(b'SYST:BEEP:IMM 392.00,0.25'+self.write_termination_b)
+        time.sleep(0.25)
+        self.smu.write(b'SYST:BEEP:IMM 523.25,1'+self.write_termination_b)
+        time.sleep(0.5)
 
     def write(self, cmd):
         self.__delay()
@@ -238,7 +241,7 @@ class SerialVisa():
         self.write(cmd)
         if len(self.buffer) > 100:
             self.buffer = self.buffer[-100:]
-        self.__writebutter(cmd, self.smu.read_until(self.read_termination_b))
+        self.__writebuffer(cmd, self.smu.read_until(self.read_termination_b))
         if DEBUG:
             print(f'<< {self.buffer[cmd][-1]}')
         return self.buffer[cmd][-1]

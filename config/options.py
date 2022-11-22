@@ -4,11 +4,7 @@ from types import SimpleNamespace
 
 def createOptions():
     opts = SimpleNamespace()
-    save_path = ''
-    try:
-        save_path = os.getcwd()
-    except KeyError:
-        save_path = os.path.expanduser('~')
+    save_path = os.path.expanduser('~')
     opts.save_path = save_path
     dt = datetime.now()
     opts.output_file_name = dt.strftime('%Y%m%d_%H%M_')
