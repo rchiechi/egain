@@ -21,6 +21,7 @@ class TempControl(tk.Frame):
 
     controller = None
     is_initialized = False
+    temps = {'upper':0, 'lower':0}
 
     def __init__(self, root):
         self.master = root
@@ -36,6 +37,18 @@ class TempControl(tk.Frame):
     @property
     def initialized(self):
         return self.is_initialized
+
+    @property
+    def uppertemp(self):
+        return self.temps['upper']
+
+    @property
+    def lowertemp(self):
+        return self.temps['lower']
+
+    @property
+    def peltierstatus(self):
+        return bool(self.plentier_on.get())
 
     def createWidgets(self):
         setFrame = tk.LabelFrame(self,

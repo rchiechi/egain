@@ -70,6 +70,10 @@ class MeasurementControl(tk.Frame):
         return build_sweep(self.sweep)
 
     @property
+    def sweepparams(self):
+        return self.sweep
+
+    @property
     def data(self):
         return self.results
 

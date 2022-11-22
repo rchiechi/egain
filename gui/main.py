@@ -24,6 +24,7 @@ import platform
 import time
 import math
 import csv
+import datetime
 # import logging
 # import threading
 import tkinter.ttk as tk
@@ -49,6 +50,7 @@ JUNCTION_CONVERSION_FACTOR = 0.1  # cm/cm
 MEASURING = 'Measuring'
 READY = 'Ready'
 NOT_INITIALIZED = 'Not initalized'
+STRFTIME = '%Y-%m-%dT%H:%M:%SZ'
 csv.register_dialect('JV', delimiter='\t', quoting=csv.QUOTE_MINIMAL)
 
 class MainFrame(tk.Frame):
@@ -245,6 +247,7 @@ class MainFrame(tk.Frame):
             self._writedata(True)
 
     def _writedata(self, finalize=False):
+        # TEMPERATURE DATA!!!
         # Save data to disk and then delete them
         # DATA_FORMAT = {'V':[], 'I':[], 'R':[], 't':[], 's':[]}
         _area = math.pi*(self.junction_size * JUNCTION_CONVERSION_FACTOR)**2
@@ -254,14 +257,22 @@ class MainFrame(tk.Frame):
             results['J'].append(_I/_area)
         _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
         if finalize:
-            write_data_to_file(f'{_fn}.txt', results)
+            write_data_to_file(f'{_fn}_data.txt', results)
             try:
                 os.remove(f'{_fn}_temp.txt')
             except FileNotFoundError:
                 pass
             del self.widgets['measurementFrame'].data
         else:
-            write_data_to_file(f'{_fn}_temp.txt', results)
+            write_data_to_file(f'{_fn}_tmp.txt', results)
+
+        with open(f'{_fn}_metadata.txt', 'w') as fh:
+            fh.write(f'{datetime.strftime(STRFTIME)}\n')
+            fh.write(f'Onscreen junction size:{self.junction_size}\n')
+            fh.write(f'Junction conversion factor:{JUNCTION_CONVERSION_FACTOR}\n')
+            fh.write(f"Peltier enabled: {self.widgets['tempcontrols'].peltierstatus}\n")
+            fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
+            fh.write(f"Lower temperature (°C): {self.widgets['tempcontrols'].lowertemp}\n")
 
     def _checkbusy(self, *args):
         if not self.initialized:
