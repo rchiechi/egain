@@ -92,15 +92,15 @@ class MeasurementControl(tk.Frame):
         sweepSweepsEntry = tk.Entry(sweepFrame, textvariable=self.nsweeps, width=4)
 
         sweepFrame.pack(side=LEFT, fill=BOTH)
+        reversedCheckbutton = tk.Checkbutton(sweepFrame, text='Reversed',
+                                             variable=self.reversed,
+                                             command=self.__validateMeas)
+        reversedCheckbutton.pack(side=LEFT)
         sweepLowEntryLabel = tk.Label(sweepFrame, text='From:', font=self.labelFont)
         sweepLowEntryLabel.pack(side=LEFT)
         sweepLowEntry.pack(side=LEFT)
         sweepHighEntryLabel = tk.Label(sweepFrame, text='To:', font=self.labelFont)
         sweepHighEntryLabel.pack(side=LEFT)
-        reversedCheckbutton = tk.Checkbutton(sweepFrame, text='Reversed',
-                                             variable=self.reversed,
-                                             command=self.__validateMeas)
-        reversedCheckbutton.pack(side=LEFT)
         sweepHighEntry.pack(side=LEFT)
         sweepHighEntryLabel = tk.Label(sweepFrame, text='Step Size:', font=self.labelFont)
         sweepHighEntryLabel.pack(side=LEFT)
