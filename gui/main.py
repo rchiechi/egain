@@ -59,6 +59,7 @@ class MainFrame(tk.Frame):
     widgets = {}
     variables = {}
     initialized = False
+    counter = 0
 
     def __init__(self, root, opts):
         self.root = root
@@ -102,6 +103,8 @@ class MainFrame(tk.Frame):
         tempcontrols = TempControl(tempcontrolFrame)
         self.widgets['tempcontrols'] = tempcontrols
         optionsFrame = tk.Frame(self)
+        outputFrame = tk.Frame(optionsFrame)
+        magFrame = tk.Frame(optionsFrame)
         # outputfilenameFrame = tk.Frame(optionsFrame)
         buttonFrame = tk.Frame(self)
 
@@ -115,14 +118,14 @@ class MainFrame(tk.Frame):
                             textvariable=statusVar)
         self.variables['statusVar'] = statusVar
 
-        outputfilenameEntryLabel = Label(master=optionsFrame,
+        outputfilenameEntryLabel = Label(master=outputFrame,
                                          text='Output Filename Prefix:')
         outputfilenameEntryLabel.pack(side=LEFT)
-        outputdirstring = StringVar(value=self.opts.save_path)
+        outputdirstring = StringVar(value=self.opts.save_path+'/')
         self.variables['outputdirstring'] = outputdirstring
-        outputdirLabel = Label(master=optionsFrame,
+        outputdirLabel = Label(master=outputFrame,
                                textvariable=outputdirstring)
-        outputfilenameEntry = Entry(master=optionsFrame,
+        outputfilenameEntry = Entry(master=outputFrame,
                                     width=20,
                                     font=Font(size=10))
         outputdirLabel.pack(side=LEFT)
@@ -132,23 +135,23 @@ class MainFrame(tk.Frame):
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
 
-        junctionsizeEntryLabel = Label(master=optionsFrame,
+        junctionsizeEntryLabel = Label(master=magFrame,
                                        text='Junction size (cm):')
         junctionsizeEntryLabel.pack(side=LEFT)
         junction_size = StringVar(value='1.0')
         self.variables['junction_size'] = junction_size
-        junctionsizeEntry = Entry(master=optionsFrame,
+        junctionsizeEntry = Entry(master=magFrame,
                                   width=5,
                                   textvariable=junction_size,
                                   font=Font(size=10))
         junctionsizeEntry.pack(side=LEFT)
 
-        junctionmagEntryLabel = Label(master=optionsFrame,
+        junctionmagEntryLabel = Label(master=magFrame,
                                       text='Magnification:')
         junctionmagEntryLabel.pack(side=LEFT)
         junction_mag = StringVar(value='2.5')
         self.variables['junction_mag'] = junction_mag
-        junctionmag = tk.Spinbox(optionsFrame,
+        junctionmag = tk.Spinbox(magFrame,
                                  font=Font(size=10),
                                  from_=1,
                                  to=20,
@@ -156,6 +159,9 @@ class MainFrame(tk.Frame):
                                  textvariable=junction_mag,
                                  width=4)
         junctionmag.pack(side=LEFT)
+
+        outputFrame.pack(side=TOP, fill=X)
+        magFrame.pack(side=TOP, fill=X)
 
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             junctionsizeEntry.bind(_ev, self.checkJunctionsize)
@@ -212,11 +218,11 @@ class MainFrame(tk.Frame):
         self.root.quit()
 
     def SpawnSaveDialogClick(self):
-        self.checkOptions()
         self.opts.save_path = filedialog.askdirectory(
             title="Path to save data",
             initialdir=self.opts.save_path)
         self.variables['outputdirstring'].set(self.opts.save_path)
+        self.checkOptions()
 
     def checkOutputfilename(self, event):
         self.opts.output_file_name = event.widget.get()
@@ -232,6 +238,8 @@ class MainFrame(tk.Frame):
             self.variables['junction_size'].set('1.0')
 
     def checkOptions(self):
+        _outdir = f"/{self.variables['outputdirstring'].get().strip('/')}/"
+        self.variables['outputdirstring'].set(_outdir)
         if self.variables['statusVar'].get() in (MEASURING, READY):
             self.widgets['measButton'].after(100, self.checkOptions)
             return
@@ -280,6 +288,10 @@ class MainFrame(tk.Frame):
             results['J'].append(_I/_area)
         _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
         if finalize:
+            if os.path.exists(_fn):
+                if not tk.askyesno("Overwrite?", f'{_fn} exists, overwrite it?'):
+                    _fn = f'{_fn}_{str(self.counter).zfill(2)}'
+                    self.counter += 1
             write_data_to_file(f'{_fn}_data.txt', results)
             try:
                 os.remove(f'{_fn}_temp.txt')
@@ -291,7 +303,8 @@ class MainFrame(tk.Frame):
 
         with open(f'{_fn}_metadata.txt', 'w') as fh:
             fh.write(f'{datetime.strftime(STRFTIME)}\n')
-            fh.write(f'Onscreen junction size:{ _jsize}\n')
+            fh.write(f'Onscreen junction size:{_jsize}\n')
+            fh.write(f"Magnification:{self.variables['junction_mag'].get()}\n")
             fh.write(f'Junction conversion factor:{JUNCTION_CONVERSION_FACTOR}\n')
             fh.write(f"Peltier enabled: {self.widgets['tempcontrols'].peltierstatus}\n")
             fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
