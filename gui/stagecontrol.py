@@ -174,7 +174,7 @@ class StageControls(tk.Frame):
             messagebox.showerror("Error", "Invalid address settings.")
 
     def _initstage(self):
-        self.xyzstage['nethost'] = GenericBackEnd()
+        self.xyzstage['nethost'] = NetHost()
         self.xyzstage['nethost'].initialize(address=self.xyzstage['address'].get(),
                                             port=self.xyzstage['port'].get())
         self.xyzstage['stage'] = ESP302(self.alive, self.xyzstage['nethost'])
