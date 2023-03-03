@@ -20,8 +20,8 @@ from stage.mks import ESP302
 
 class StageControls(tk.Frame):
 
-    Xaxis = 1
-    Yaxis = 2
+    Xaxis = 2
+    Yaxis = 1
     Zaxis = 3
     relative_move = 1.0
     unit = 2
