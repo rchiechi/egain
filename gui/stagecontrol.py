@@ -203,56 +203,52 @@ class StageControls(tk.Frame):
                            'leftButton', 'rightButton', 'forwardButton', 'backButton':
                 getattr(self, _widget)['state'] = NORMAL
             self._handleunitchange()
+            self.widgets['initButton'].after(100, self._updateposition)
 
         except IOError:
             self.xyzstage['initialized'] = False
 
-    def updatePosition(self):
+    def _updateposition(self):
         self.position = self.xyzstage['stage'].getPosition()
         self.widgets['stagepositionvar'].set(
-            f'{self.position[0]:.1f},{self.position[1]:.1f},{self.position[2]:.1f}')
+            f'{self.position[0]:.3f},{self.position[1]:.3f},{self.position[2]:.3f}')
+        self.widgets['initButton'].after(1000, self._updateposition)
 
     def upButtonClick(self):
         self.upButton['state'] = DISABLED
         self.upButton.after('100', lambda: self._waitformotion(self.upButton))
         # self.xyzstage['stage'].moveMax(self.Zaxis)
         self.xyzstage['stage'].relativeMove(self.Zaxis, self.relative_move)
-        self.updatePosition()
 
     def downButtonClick(self):
         self.downButton['state'] = DISABLED
         self.downButton.after('100', lambda: self._waitformotion(self.downButton))
         # self.xyzstage['stage'].moveMin(self.Zaxis)
         self.xyzstage['stage'].relativeMove(self.Zaxis, -1.0*self.relative_move)
-        self.updatePosition()
 
     def rightButtonClick(self):
         self.rightButton['state'] = DISABLED
         self.rightButton.after('100', lambda: self._waitformotion(self.rightButton))
         # self.xyzstage['stage'].moveMin(self.Yaxis)
         self.xyzstage['stage'].relativeMove(self.Yaxis, self.relative_move)
-        self.updatePosition()
 
     def leftButtonClick(self):
         self.leftButton['state'] = DISABLED
         self.leftButton.after('100', lambda: self._waitformotion(self.leftButton))
         # self.xyzstage['stage'].moveMax(self.Yaxis)
         self.xyzstage['stage'].relativeMove(self.Yaxis, -1.0*self.relative_move)
-        self.updatePosition()
 
     def forwardButtonClick(self):
         self.forwardButton['state'] = DISABLED
         self.forwardButton.after('100', lambda: self._waitformotion(self.forwardButton))
         # self.xyzstage['stage'].moveMax(self.Xaxis)
         self.xyzstage['stage'].relativeMove(self.Xaxis, self.relative_move)
-        self.updatePosition()
 
     def backButtonClick(self):
         self.backButton['state'] = DISABLED
         self.backButton.after('100', lambda: self._waitformotion(self.backButton))
         # self.xyzstage['stage'].moveMin(self.Xaxis)
         self.xyzstage['stage'].relativeMove(self.Xaxis, -1.0*self.relative_move)
-        self.updatePosition()
 
     def _handleunitchange(self, *args):
         for key in self.units:
@@ -265,7 +261,6 @@ class StageControls(tk.Frame):
                 for _unit in self.xyzstage['stage'].getUnits():
                     if _unit != self.unit:
                         print("Warning units not set correctly.")
-        self.updatePosition()
 
     def relativemoveScaleChange(self, distance):
         distance = float(distance)

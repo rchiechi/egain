@@ -128,6 +128,9 @@ class ESP302(threading.Thread):
         self._in_motion = True
         _status = self._cmd(axis, b'PR', direction)
         while not bool(int(_status[2])):
+            self._waitforcmd()
+            self.dev.write(b"%dTS\t")
+            _status = asciitobinary(self.dev.read())
             if self._bittobool(_status[8]) or self._bittobool(_status[9]):
                 self._in_motion = False
                 return False
@@ -148,6 +151,18 @@ class ESP302(threading.Thread):
     def _waitforcmd(self):
         while self._cmd_queue:
             time.sleep(0.1)
+
+    def _waitformotion(self):
+        _t = 0
+        while self._in_motion:
+            time.sleep(0.1)
+            _t += 10
+            if _t > self.motion_timeout:
+                break
+
+    def waitForStage(self):
+        self._waitforcmd()
+        self._waitformotion()
 
     def cleanup(self):
         for axis in (1,2,3):
@@ -189,7 +204,7 @@ class ESP302(threading.Thread):
             self._cmd_queue.append(('_setunits', axis, unit))
 
     def getUnits(self):
-        self._waitforcmd()
+        self.waitForStage()
         units = []
         for axis in self.AXES:
             self.dev.write(b'%dSN?\r' % axis)
@@ -197,7 +212,7 @@ class ESP302(threading.Thread):
         return units
 
     def getPosition(self):
-        self._waitforcmd()
+        self.waitForStage()
         self.dev.write(b'TP\r')
         _x, _y, _z = self.dev.read().split(b',')
         return (float(_x), float(_y), float(_z))
