@@ -302,7 +302,7 @@ class MainFrame(tk.Frame):
             write_data_to_file(f'{_fn}_tmp.txt', results)
 
         with open(f'{_fn}_metadata.txt', 'w') as fh:
-            fh.write(f'{datetime.strftime(STRFTIME)}\n')
+            fh.write(f'{time.strftime(STRFTIME)}\n')
             fh.write(f'Onscreen junction size:{_jsize}\n')
             fh.write(f"Magnification:{self.variables['junction_mag'].get()}\n")
             fh.write(f'Junction conversion factor:{JUNCTION_CONVERSION_FACTOR}\n')
