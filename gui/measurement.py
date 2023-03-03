@@ -199,6 +199,8 @@ class MeasurementControl(tk.Frame):
         self._measureinbackground()
 
     def _measureinbackground(self):
+        if not self.is_initialized:
+            return
         self.measdone.set(False)
         self.busy.set(True)
         if self.child_threads:
