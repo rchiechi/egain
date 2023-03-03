@@ -139,8 +139,15 @@ class ESP302(threading.Thread):
         self._in_motion = False
         return True
 
+    def _setunits(self, axis, unit):
+        self._cmd(axis, b'SN', unit)
+
     def _bittobool(self, bit):
         return bool(int(bit))
+
+    def _waitforcmd(self):
+        while self._cmd_queue:
+            time.sleep(0.1)
 
     def cleanup(self):
         for axis in (1,2,3):
@@ -179,15 +186,21 @@ class ESP302(threading.Thread):
 
     def setUnits(self, unit):
         for axis in self.AXES:
-            self._cmd(axis, b'SN', unit)
+            self._cmd_queue.append(('_setunits', axis, unit))
 
     def getUnits(self):
+        self._waitforcmd()
         units = []
         for axis in self.AXES:
             self.dev.write(b'%dSN?\r' % axis)
             units.append(int(self.dev.read()))
         return units
 
+    def getPosition(self):
+        self._waitforcmd()
+        self.dev.write(b'TP\r')
+        _x, _y, _z = self.dev.read().split(b',')
+        return (float(_x), float(_y), float(_z))
 
 if __name__ == '__main__':
     from backend import NetHost
