@@ -55,6 +55,7 @@ class ESP302(threading.Thread):
     _cmd_queue = []
     motion_timeout = 30
     name = 'ESP302'
+    AXES = (1,2,3)
 
     def __init__(self, alive, backend):
         super().__init__()
@@ -64,7 +65,7 @@ class ESP302(threading.Thread):
         self.dev.connect()
         if not self.dev.connected:
             raise IOError('Could not connect backend.')
-        for axis in (1, 2, 3):
+        for axis in self.AXES:
             if not self.motorOn(axis):
                 self._error = True
                 print(f"Error starting up axis {axis} motor!")
@@ -177,14 +178,14 @@ class ESP302(threading.Thread):
         self._cmd_queue.append(('_moverelative', axis, distance))
 
     def setUnits(self, unit):
-        for axis in (1, 2, 3):
+        for axis in self.AXES:
             self._cmd(axis, b'SN', unit)
 
     def getUnits(self):
         units = []
-        for axis in (1, 2, 3):
-            self.dev.write(b'%dSN\r' % axis)
-            units.append(self.dev.read())
+        for axis in self.AXES:
+            self.dev.write(b'%dSN?\r' % axis)
+            units.append(int(self.dev.read()))
         return units
 
 

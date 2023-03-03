@@ -54,6 +54,8 @@ class NetHost(GenericBackEnd):
     def connect(self):
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.conn.connect((self.address, int(self.port)))
+        self.conn.settimeout(10)
+        #self.conn.setblocking(False)
         self._connected = True
 
     def disconnect(self):

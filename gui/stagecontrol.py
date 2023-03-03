@@ -24,8 +24,9 @@ class StageControls(tk.Frame):
     Yaxis = 2
     Zaxis = 3
     relative_move = 1.0
-    unit = 1
-    units = {1:'step',
+    unit = 2
+    units = {0:'counts',
+             1:'steps',
              2:'mm',
              3:'μm'}
     xyzstage = {'address':IP_ADDRESS,
@@ -96,7 +97,7 @@ class StageControls(tk.Frame):
                                      text='Relative Move Distance')
         relativemoveindicatorLabel = tk.Label(master=relativemoveFrame,
                                               textvariable=self.relative_move_label)
-        self.unitStr.set(self.units[1])
+        self.unitStr.set(self.units[2])
         unitOptionMenu = tk.OptionMenu(relativemoveFrame,
                                        self.unitStr,
                                        self.unitStr.get(),
@@ -180,7 +181,7 @@ class StageControls(tk.Frame):
         self.xyzstage['stage'] = ESP302(self.alive, self.xyzstage['nethost'])
         try:
             self.xyzstage['stage'].start()
-            self.xyzstage['initalized'] = True
+            self.xyzstage['initialized'] = True
             for _widget in 'initButton', 'stageaddressEntry', 'stageportEntry':
                 self.widgets[_widget]['state'] = DISABLED
             self.unitStr.trace_add('write', self._handleunitchange)
@@ -191,7 +192,7 @@ class StageControls(tk.Frame):
             self._handleunitchange()
 
         except IOError:
-            self.xyzstage['initalized'] = False
+            self.xyzstage['initialized'] = False
 
     def upButtonClick(self):
         self.upButton['state'] = DISABLED
@@ -233,6 +234,7 @@ class StageControls(tk.Frame):
         for key in self.units:
             if self.units[key] == self.unitStr.get():
                 self.unit = key
+                print(f"Setting units to {self.units[key]}")
                 self.relativemoveScaleChange(self.relativemoveScale.get())
                 self.xyzstage['stage'].setUnits(key)
                 time.sleep(1)
