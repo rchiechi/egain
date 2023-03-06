@@ -1,5 +1,6 @@
 import time
 import threading
+import random
 
 XXTS = {0:'Axis connected',
         1:'Motor on',
@@ -38,21 +39,60 @@ def axisstatustostring(status):
         print(f'{XXTS[i]}: {_bool}')
     print('------')
 
-class CommandThread(threading.Thread):
-    '''A Thread object to run stage commands in so it
-       doesn't block the main GUI thread.'''
 
-    def __init__(self, parser):
-        super().__init__()
-        self.parser = parser
 
-    def run(self):
-        self.parser.readfiles(self.parser.opts.in_files)
+# class CommandThread(threading.Thread):
+#     '''A Thread object to run stage commands in so it
+#        doesn't block the main GUI thread.'''
+# 
+#     def __init__(self, parser):
+#         super().__init__()
+#         self.parser = parser
+# 
+#     def run(self):
+#         self.parser.readfiles(self.parser.opts.in_files)
+
+class Command:
+
+    _res = None
+    _done = False
+
+    def __init__(self, _func:str, *args):
+        self._id = random.randint(10000,99999)
+        self._func = _func
+        self._cmd = args
+
+    def complete(self, res=None):
+        self._done = True
+        self._res = res
+
+    @property
+    def id(self):
+        return self._id
+
+    @property
+    def function(self):
+        return self._func
+
+    @property
+    def command(self):
+        return self._cmd
+
+    @property
+    def result(self):
+        return self._res
+
+    @property
+    def done(self):
+        return self._done
+
 
 class ESP302(threading.Thread):
-
+    '''A Thread object to run stage commands in so it
+       doesn't block the main GUI thread.'''
     _in_motion = False
     _cmd_queue = []
+    _res_queue = {}
     motion_timeout = 30
     name = 'ESP302'
     AXES = (1,2,3)
@@ -84,9 +124,10 @@ class ESP302(threading.Thread):
         while self.alive.isSet():
             if self._cmd_queue:
                 _cmd = self._cmd_queue.pop()
-                _func = getattr(self, _cmd[0])
-                print(f'Executing command {_cmd[0]}.')
-                _func(*_cmd[1:])
+                _func = getattr(self, _cmd.function)
+                print(f'Executing command {_cmd.function}({_cmd.command}).')
+                _cmd.complete(_func(*_cmd.command))
+                self._res_queue[_cmd.id] = _cmd.res
             time.sleep(0.1)
         for axis in (1, 2, 3):
             if not self.motorOff(axis):
@@ -103,12 +144,17 @@ class ESP302(threading.Thread):
         self.dev.write(_cmdstr)
         return asciitobinary(self.dev.read())
 
+    def _getstatus(self, axis):
+        self.dev.write(b"%dTS\r" % axis)
+        return asciitobinary(self.dev.read())
+
     def _moveindefinitely(self, axis, direction):
         if self._in_motion:
             return False
         _t = 0
         self._in_motion = True
-        _status = self._cmd(axis, b'MF', direction)
+        self._cmd(axis, b'MF', direction)
+        _status = self._getstatus(axis)
         while not bool(int(_status[2])):
             if self._bittobool(_status[8]) or self._bittobool(_status[9]):
                 self._in_motion = False
@@ -118,6 +164,8 @@ class ESP302(threading.Thread):
                 break
             time.sleep(1)
             _t += 1
+            self._waitforcmd()
+            _status = self._getstatus(axis)
         self._in_motion = False
         return True
 
@@ -126,11 +174,9 @@ class ESP302(threading.Thread):
             return False
         _t = 0
         self._in_motion = True
-        _status = self._cmd(axis, b'PR', direction)
+        self._cmd(axis, b'PR', direction)
+        _status = self._getstatus(axis)
         while not bool(int(_status[2])):
-            self._waitforcmd()
-            self.dev.write(b"%dTS\t")
-            _status = asciitobinary(self.dev.read())
             if self._bittobool(_status[8]) or self._bittobool(_status[9]):
                 self._in_motion = False
                 return False
@@ -139,18 +185,29 @@ class ESP302(threading.Thread):
                 break
             time.sleep(1)
             _t += 1
+            self._waitforcmd()
+            _status = self._getstatus(axis)
         self._in_motion = False
         return True
 
     def _setunits(self, axis, unit):
-        self._cmd(axis, b'SN', unit)
+        for axis in self.AXES:
+            self._cmd(axis, b'SN', unit)
+
+    def _getunits(self):
+        units = []
+        for axis in self.AXES:
+            self.dev.write(b'%dSN?\r' % axis)
+            units.append(int(self.dev.read()))
+        return units
+
+    def _getposition(self):
+        self.dev.write(b'TP\r')
+        _x, _y, _z = self.dev.read().split(b',')
+        return (float(_x), float(_y), float(_z))
 
     def _bittobool(self, bit):
         return bool(int(bit))
-
-    def _waitforcmd(self):
-        while self._cmd_queue:
-            time.sleep(0.1)
 
     def _waitformotion(self):
         _t = 0
@@ -161,8 +218,15 @@ class ESP302(threading.Thread):
                 break
 
     def waitForStage(self):
-        self._waitforcmd()
         self._waitformotion()
+
+    def getresult(self, _id, block=False):
+        if block:
+            while _id not in self._res_queue:
+                time.sleep(0.1)
+            return self._res_queue[_id]
+        else:
+            return self._res_queue.get(_id, False)
 
     def cleanup(self):
         for axis in (1,2,3):
@@ -189,33 +253,51 @@ class ESP302(threading.Thread):
         return self._bittobool(_status[2])
 
     def moveMax(self, axis):
-        self._cmd_queue.append(('_moveindefinitely', axis, b'+'))
+        _cmd = Command('_moveindefinitely', axis, b'+')
+        self._cmd_queue.append(_cmd)
+        return _cmd.id
+        # self._cmd_queue.append(('_moveindefinitely', axis, b'+'))
         # return self._moveindefinitely(axis, b'+')
 
     def moveMin(self, axis):
-        self._cmd_queue.append(('_moveindefinitely', axis, b'-'))
+        _cmd = Command('_moveindefinitely', axis, b'-')
+        self._cmd_queue.append(_cmd)
+        return _cmd.id
+        # self._cmd_queue.append(('_moveindefinitely', axis, b'-'))
         # return self._moveindefinitely(axis, b'-')
 
     def relativeMove(self, axis, distance):
-        self._cmd_queue.append(('_moverelative', axis, distance))
+        _cmd = Command('_moverelative', axis, distance)
+        self._cmd_queue.append(_cmd)
+        return _cmd.id
+        # self._cmd_queue.append(('_moverelative', axis, distance))
 
     def setUnits(self, unit):
-        for axis in self.AXES:
-            self._cmd_queue.append(('_setunits', axis, unit))
+        _cmd = Command('_setunits', unit)
+        self._cmd_queue.append(_cmd)
+        return _cmd.id
+        # self._cmd_queue.append(('_setunits', axis, unit))
 
     def getUnits(self):
-        self.waitForStage()
-        units = []
-        for axis in self.AXES:
-            self.dev.write(b'%dSN?\r' % axis)
-            units.append(int(self.dev.read()))
-        return units
+        _cmd = Command('_getunits')
+        self._cmd_queue.append(_cmd)
+        return self.getresult(_cmd.id, True)
+        # self.waitForStage()
+        # units = []
+        # for axis in self.AXES:
+        #     self.dev.write(b'%dSN?\r' % axis)
+        #     units.append(int(self.dev.read()))
+        # return units
 
     def getPosition(self):
-        self.waitForStage()
-        self.dev.write(b'TP\r')
-        _x, _y, _z = self.dev.read().split(b',')
-        return (float(_x), float(_y), float(_z))
+        _cmd = Command('_getposition')
+        self._cmd_queue.append(_cmd)
+        return self.getresult(_cmd.id, True)
+        # self.waitForStage()
+        # self.dev.write(b'TP\r')
+        # _x, _y, _z = self.dev.read().split(b',')
+        # return (float(_x), float(_y), float(_z))
+
 
 if __name__ == '__main__':
     from backend import NetHost

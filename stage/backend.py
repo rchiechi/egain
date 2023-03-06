@@ -38,7 +38,7 @@ class GenericBackEnd:
     def write(self, cmd):
         if not self._connected:
             raise IOError('Connection to stage is closed.')
-        # print(f'Sending {cmd}')
+        print(f'Sending {cmd}')
         self.send(cmd)
         self._message_queue.append(self.receive())
         # print(f"Received:{self._message_queue[-1]}")
