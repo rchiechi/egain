@@ -66,8 +66,11 @@ class NetHost(GenericBackEnd):
         self.conn.sendall(cmd)
 
     def receive(self):
-        return self.conn.recv(1024).strip()
-
+        try:
+            return self.conn.recv(1024).strip()
+        except TimeoutError:
+            print("Socket timeout reached during recv.")
+            return b''
 
 if __name__ == '__main__':
     tel = NetHost()

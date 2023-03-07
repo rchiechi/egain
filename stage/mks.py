@@ -95,7 +95,7 @@ class ESP302(threading.Thread):
     _res_queue = {}
     motion_timeout = 30
     name = 'ESP302'
-    AXES = (1,2,3)
+    AXES = (1, 2, 3)
 
     def __init__(self, alive, backend):
         super().__init__()
@@ -138,7 +138,7 @@ class ESP302(threading.Thread):
         if param is None:
             _cmdstr = b"%d%s;%dTS\r" % (axis, cmd, axis)
         elif isinstance(param, int) or isinstance(param, float):
-            _cmdstr = b"%d%s%d;%dTS\r" % (axis, cmd, param, axis)
+            _cmdstr = b"%d%s%f;%dTS\r" % (axis, cmd, param, axis)
         else:
             _cmdstr = b"%d%s%s;%dTS\r" % (axis, cmd, param, axis)
         self.dev.write(_cmdstr)
@@ -148,51 +148,42 @@ class ESP302(threading.Thread):
         self.dev.write(b"%dTS\r" % axis)
         return asciitobinary(self.dev.read())
 
+    def _geterrors(self):
+        self.dev.write(b'TB?\r')
+        _err = self.dev.read()
+        return str(_err, encoding='utf-8')
+
+    def _findhome(self):
+        while self._in_motion:
+            time.sleep(0.1)
+        self._in_motion = True
+        print("Searching for home...")
+        self.dev.write(b'0OR0\r')
+        for axis in self.AXES:
+            self._waitformotion(axis)
+        self._in_motion = False
+        print("Done searching for home.")
+
     def _moveindefinitely(self, axis, direction):
-        if self._in_motion:
-            return False
+        while self._in_motion:
+            time.sleep(0.1)
         _t = 0
         self._in_motion = True
-        _status = self._cmd(axis, b'MF', direction)
+        self._cmd(axis, b'MF', direction)
         print('Moving axis.')
-        while not bool(int(_status[2])):
-            if self._bittobool(_status[9]):
-                self._in_motion = False
-                return False
-            if self._bittobool(_status[8]):
-                print("Following error while moving axis.")
-            if _t > self.motion_timeout:
-                print('Timed out executing motion command')
-                break
-            time.sleep(1)
-            _t += 1
-            self._waitforcmd()
-            _status = self._getstatus(axis)
+        self._waitformotion(axis)
         print('Done moving.')
         self._in_motion = False
         return True
 
     def _moverelative(self, axis, direction):
-        if self._in_motion:
-            return False
+        while self._in_motion:
+            time.sleep(0.1)
         _t = 0
         self._in_motion = True
-        _status = self._cmd(axis, b'PR', direction)
+        self._cmd(axis, b'PR', direction)
         print('Moving axis.')
         self._waitformotion(axis)
-        # while not bool(int(_status[2])):
-        #     if self._bittobool(_status[9]):
-        #         self._in_motion = False
-        #         return False
-        #     if self._bittobool(_status[8]):
-        #         print("Following error while moving axis.")
-        #     if _t > self.motion_timeout:
-        #         print('Timed out executing motion command')
-        #         break
-        #     time.sleep(1)
-        #     _t += 1
-        #     self._waitforcmd()
-        #     _status = self._getstatus(axis)
         print('Done moving.')
         self._in_motion = False
         return True
@@ -205,7 +196,10 @@ class ESP302(threading.Thread):
         units = []
         for axis in self.AXES:
             self.dev.write(b'%dSN?\r' % axis)
-            units.append(int(self.dev.read()))
+            try:
+                units.append(int(self.dev.read()))
+            except ValueError:
+                units.append(0)
         return units
 
     def _getposition(self):
@@ -220,13 +214,21 @@ class ESP302(threading.Thread):
         _res = {}
         for axis in self.AXES:
             self.dev.write(b'%dMD\r' % axis)
-            _res[axis] = bool(int(self.dev.read()))
+            _res[axis] = self._bittobool(self.dev.read())
+        print(_res)
         return _res
 
     def _waitformotion(self, axis):
+        time.sleep(0.5)
         _t = 0
         while False in list(self._getmotiondone().values()):
-            time.sleep(1)
+            print("Waiting for movement.")
+            _status = self._getstatus(axis)
+            if self._bittobool(_status[9]):
+                print("Error moving axis.")
+            if self._bittobool(_status[8]):
+                print("Following error while moving axis.")
+            time.sleep(0.1)
             _t += 1
             if _t > self.motion_timeout:
                 break
@@ -245,7 +247,7 @@ class ESP302(threading.Thread):
             return self._res_queue.get(_id, False)
 
     def cleanup(self):
-        for axis in (1,2,3):
+        for axis in (1, 2, 3):
             if not self.motorOff(axis):
                 self._error = True
                 print(f"Error shutting down axis {axis} motor!")
@@ -293,11 +295,23 @@ class ESP302(threading.Thread):
         self._cmd_queue.append(_cmd)
         return self.getresult(_cmd.id, True)
 
-    def getPosition(self):
+    def getPosition(self, block=False):
         _cmd = Command('_getposition')
         self._cmd_queue.append(_cmd)
-        return self.getresult(_cmd.id, True)
+        if block:
+            return self.getresult(_cmd.id, True)
+        else:
+            return _cmd.id
 
+    def getErrors(self):
+        _cmd = Command('_geterrors')
+        self._cmd_queue.append(_cmd)
+        return _cmd.id
+
+    def findHome(self):
+        _cmd = Command('_findhome')
+        self._cmd_queue.append(_cmd)
+        return _cmd.id
 
 
 if __name__ == '__main__':

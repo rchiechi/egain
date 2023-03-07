@@ -43,6 +43,9 @@ class StageControls(tk.Frame):
                 'initialized': False}
     position = [0.0, 0.0, 0.0]
     widgets = {}
+    motionControls = {}
+    err_id = 0
+    pos_id = 0
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -50,6 +53,7 @@ class StageControls(tk.Frame):
         super().__init__(self.master)
         self.relative_move_label = StringVar()
         self.unitStr = StringVar()
+        self.status = StringVar(value='Nominal')
         self.createWidgets()
         self.alive = threading.Event()
         self.alive.set()
@@ -64,7 +68,6 @@ class StageControls(tk.Frame):
     def createWidgets(self):
         xyzFrame = tk.Frame(self)
         # commandFrame = tk.Frame(self)
-        self.motionControls = {}
         for _button in self.axismap:
             self.motionControls[_button] = tk.Button(master=xyzFrame,
                                                      text=_button.capitalize(),
@@ -92,11 +95,18 @@ class StageControls(tk.Frame):
 
         stageFrame = tk.Frame(master=self)
         positionFrame = tk.Frame(master=stageFrame)
+        gohomebutton = tk.Button(master=positionFrame,
+                                 text='Go Home',
+                                 command=self.gohomeButtonClick,
+                                 state=DISABLED)
+        self.widgets['gohomebutton'] = gohomebutton
         stagepositionLabel = tk.Label(master=positionFrame, text='Position:')
         self.widgets['stagepositionvar'] = StringVar(value=str(self.position))
         # self.widgets['stagepositionvar'].trace_add('w', self._updatepositionvar)
         stagepositionVal = tk.Label(master=positionFrame,
                                     textvariable=self.widgets['stagepositionvar'])
+        statusLabel = tk.Label(master=stageFrame,
+                               textvariable=self.status)
         addressFrame = tk.Frame(master=stageFrame)
 
         stageaddressvar = StringVar(value=IP_ADDRESS)
@@ -129,9 +139,12 @@ class StageControls(tk.Frame):
         self.motionControls['right'].pack(side=RIGHT)
         self.motionControls['back'].pack(side=BOTTOM)
         self.motionControls['forward'].pack(side=BOTTOM)
+        tk.Separator(positionFrame, orient=HORIZONTAL).pack(side=TOP, fill=X)
 
+        gohomebutton.pack(side=LEFT)
         stagepositionLabel.pack(side=LEFT)
         stagepositionVal.pack(side=LEFT)
+        statusLabel.pack(side=BOTTOM)
         positionFrame.pack(side=TOP)
         stageaddressLabel.pack(side=LEFT)
         stageaddressEntry.pack(side=LEFT)
@@ -144,6 +157,14 @@ class StageControls(tk.Frame):
         xyzFrame.pack(side=TOP)
         # commandFrame.pack(side=BOTTOM)
 
+    def _checkformotion(self):
+        if self.xyzstage['stage'].isMoving:
+            self.busy.set(True)
+            for _widget in self.motionControls:
+                self.motionControls[_widget]['state'] = DISABLED
+        self.widgets['gohomebutton']['state'] = DISABLED
+        self.widgets['initButton'].after('100', lambda: self._waitformotion(self.widgets['initButton']))
+
     def _waitformotion(self, widget):
         if self.xyzstage['stage'].isMoving:
             self.busy.set(True)
@@ -151,8 +172,10 @@ class StageControls(tk.Frame):
         else:
             for _widget in self.motionControls:
                 self.motionControls[_widget]['state'] = NORMAL
+            self.widgets['gohomebutton']['state'] = NORMAL
             self.busy.set(False)
-
+        self._updateposition()
+        
     def initButtonClick(self):
         _address, _port = self.xyzstage['address'].get(), self.xyzstage['port'].get()
         _ok = True
@@ -186,6 +209,7 @@ class StageControls(tk.Frame):
             self.relativemoveScaleChange(self.motionControls['scale'].get())
             for _widget in self.motionControls:
                 self.motionControls[_widget]['state'] = NORMAL
+            self.widgets['gohomebutton']['state'] = NORMAL
             self._handleunitchange()
             self.widgets['initButton'].after(100, self._updateposition)
 
@@ -193,16 +217,44 @@ class StageControls(tk.Frame):
             self.xyzstage['initialized'] = False
 
     def _updateposition(self):
-        self.position = self.xyzstage['stage'].getPosition()
+        if self.pos_id == 0:
+            self.pos_id = self.position = self.xyzstage['stage'].getPosition()
+        _res = self.xyzstage['stage'].getresult(self.pos_id)
+        if _res is False:
+            self.widgets['initButton'].after(100, self._updateposition)
+            return
+        self.position = _res
         self.widgets['stagepositionvar'].set(
-            f'{self.position[0]:.3f},{self.position[1]:.3f},{self.position[2]:.3f}')
-        self.widgets['initButton'].after(500, self._updateposition)
+            f'{self.position[0]:.2f},{self.position[1]:.2f},{self.position[2]:.2f}')
+        # self.widgets['initButton'].after(500, self._updateposition)
+
+    def checkErrors(self):
+        if self.err_id == 0:
+            self.err_id = self.xyzstage['stage'].getErrors()
+        _res = self.xyzstage['stage'].getresult(self.err_id)
+        if _res is False:
+            self.widgets['initButton'].after(100, self.checkErrors)
+            self.status.set('Nominal')
+            return
+        elif _res is not None:
+            self.status.set(_res)
+        self.err_id = 0
+
+    def gohomeButtonClick(self):
+        for _widget in self.motionControls:
+            self.motionControls[_widget]['state'] = DISABLED
+        self.widgets['gohomebutton']['state'] = DISABLED
+        self.xyzstage['stage'].findHome()
+        self.widgets['gohomebutton'].after('100', lambda: self._waitformotion(self.widgets['gohomebutton']))
 
     def motionButtonClick(self, _button):
         for _widget in self.motionControls:
             self.motionControls[_widget]['state'] = DISABLED
+        self.widgets['gohomebutton']['state'] = DISABLED
         self.motionControls[_button].after('100', lambda: self._waitformotion(self.motionControls[_button]))
         self.xyzstage['stage'].relativeMove(self.axismap[_button][0], self.axismap[_button][1]*self.relative_move)
+        self.checkErrors()
+        time.sleep(0.5)
 
     def _handleunitchange(self, *args):
         for key in self.units:
@@ -234,3 +286,15 @@ class StageControls(tk.Frame):
             _labelstring += 's'
         self.relative_move_label.set(_labelstring)
         self.relative_move = distance
+
+    def checkErrors(self):
+        if self.err_id == 0:
+            self.err_id = self.xyzstage['stage'].getErrors()
+        _res = self.xyzstage['stage'].getresult(self.err_id)
+        if _res is False:
+            self.widgets['initButton'].after(100, self.checkErrors)
+            self.status.set('Nominal')
+            return
+        elif _res is not None:
+            self.status.set(_res)
+        self.err_id = 0
