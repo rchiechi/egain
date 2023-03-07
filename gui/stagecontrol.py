@@ -162,8 +162,10 @@ class StageControls(tk.Frame):
             self.busy.set(True)
             for _widget in self.motionControls:
                 self.motionControls[_widget]['state'] = DISABLED
-        self.widgets['gohomebutton']['state'] = DISABLED
-        self.widgets['initButton'].after('100', lambda: self._waitformotion(self.widgets['initButton']))
+            self.widgets['gohomebutton']['state'] = DISABLED
+            self._updateposition()
+        # self.widgets['initButton'].after('100', lambda: self._waitformotion(self.widgets['initButton']))
+        self.widgets['initButton'].after('100', lambda: self._checkformotion)
 
     def _waitformotion(self, widget):
         if self.xyzstage['stage'].isMoving:
@@ -174,8 +176,9 @@ class StageControls(tk.Frame):
                 self.motionControls[_widget]['state'] = NORMAL
             self.widgets['gohomebutton']['state'] = NORMAL
             self.busy.set(False)
+        self.checkErrors()
         self._updateposition()
-        
+     
     def initButtonClick(self):
         _address, _port = self.xyzstage['address'].get(), self.xyzstage['port'].get()
         _ok = True
@@ -212,6 +215,7 @@ class StageControls(tk.Frame):
             self.widgets['gohomebutton']['state'] = NORMAL
             self._handleunitchange()
             self.widgets['initButton'].after(100, self._updateposition)
+            self.widgets['initButton'].after(100, self._checkformotion)
 
         except IOError:
             self.xyzstage['initialized'] = False
@@ -253,8 +257,7 @@ class StageControls(tk.Frame):
         self.widgets['gohomebutton']['state'] = DISABLED
         self.motionControls[_button].after('100', lambda: self._waitformotion(self.motionControls[_button]))
         self.xyzstage['stage'].relativeMove(self.axismap[_button][0], self.axismap[_button][1]*self.relative_move)
-        self.checkErrors()
-        time.sleep(0.5)
+        time.sleep(0.25)
 
     def _handleunitchange(self, *args):
         for key in self.units:
