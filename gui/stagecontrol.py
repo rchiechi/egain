@@ -24,12 +24,12 @@ class StageControls(tk.Frame):
     Xaxis = 1
     Yaxis = 2
     Zaxis = 3
-    axismap = {'up': (Zaxis, 1.0),
-               'down': (Zaxis, -1.0),
+    axismap = {'up': (Zaxis, -1.0),
+               'down': (Zaxis, 1.0),
                'right': (Xaxis, 1.0),
                'left': (Xaxis, -1.0),
-               'forward': (Yaxis, 1.0),
-               'back': (Yaxis, -1.0)}
+               'forward': (Yaxis, -1.0),
+               'back': (Yaxis, 1.0)}
     relative_move = 1.0
     unit = 2
     units = {0: 'counts',
