@@ -164,6 +164,7 @@ class StageControls(tk.Frame):
                 self.motionControls[_widget]['state'] = DISABLED
             self.widgets['gohomebutton']['state'] = DISABLED
             self._updateposition()
+            time.sleep(0.5)
         # self.widgets['initButton'].after('100', lambda: self._waitformotion(self.widgets['initButton']))
         self.widgets['initButton'].after('100', lambda: self._checkformotion)
 
@@ -221,13 +222,13 @@ class StageControls(tk.Frame):
             self.xyzstage['initialized'] = False
 
     def _updateposition(self):
-        if self.pos_id == 0:
-            self.pos_id = self.position = self.xyzstage['stage'].getPosition()
-        _res = self.xyzstage['stage'].getresult(self.pos_id)
-        if _res is False:
-            self.widgets['initButton'].after(100, self._updateposition)
-            return
-        self.position = _res
+        # if self.pos_id == 0:
+        #     self.pos_id = self.position = self.xyzstage['stage'].getPosition()
+        # _res = self.xyzstage['stage'].getresult(self.pos_id)
+        # if _res is False:
+        #     self.widgets['initButton'].after(100, self._updateposition)
+        #     return
+        self.position = self.xyzstage['stage'].getPosition(block=True)
         self.widgets['stagepositionvar'].set(
             f'{self.position[0]:.2f},{self.position[1]:.2f},{self.position[2]:.2f}')
         # self.widgets['initButton'].after(500, self._updateposition)
