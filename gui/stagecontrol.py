@@ -21,8 +21,8 @@ from stage.mks import ESP302
 
 class StageControls(tk.Frame):
 
-    Xaxis = 2
-    Yaxis = 1
+    Xaxis = 1
+    Yaxis = 2
     Zaxis = 3
     axismap = {'up': (Zaxis, 1.0),
                'down': (Zaxis, -1.0),
@@ -178,7 +178,7 @@ class StageControls(tk.Frame):
             self.busy.set(False)
         self.checkErrors()
         self._updateposition()
-     
+
     def initButtonClick(self):
         _address, _port = self.xyzstage['address'].get(), self.xyzstage['port'].get()
         _ok = True
