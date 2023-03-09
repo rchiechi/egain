@@ -35,19 +35,21 @@ class GenericBackEnd:
     def receive(self):
         return b"P@"
 
-    def write(self, cmd):
+    def write(self, cmd, reply=False):
         if not self._connected:
             raise IOError('Connection to stage is closed.')
         print(f'Sending {cmd}')
         self.send(cmd)
-        self._message_queue.append(self.receive())
-        # print(f"Received:{self._message_queue[-1]}")
+        if reply:
+            self._message_queue.append(self.receive())
+            print(f"Received:{self._message_queue[-1]}")
 
     def read(self):
         if self._message_queue:
             return self._message_queue.pop()
         else:
             return ''
+        
 
 class NetHost(GenericBackEnd):
 

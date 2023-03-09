@@ -141,15 +141,15 @@ class ESP302(threading.Thread):
             _cmdstr = b"%d%s%f;%dTS\r" % (axis, cmd, param, axis)
         else:
             _cmdstr = b"%d%s%s;%dTS\r" % (axis, cmd, param, axis)
-        self.dev.write(_cmdstr)
+        self.dev.write(_cmdstr, reply=True)
         return asciitobinary(self.dev.read())
 
     def _getstatus(self, axis):
-        self.dev.write(b"%dTS\r" % axis)
+        self.dev.write(b"%dTS\r" % axis, reply=True)
         return asciitobinary(self.dev.read())
 
     def _geterrors(self):
-        self.dev.write(b'TB?\r')
+        self.dev.write(b'TB?\r', reply=True)
         _err = self.dev.read()
         return str(_err, encoding='utf-8')
 
@@ -164,38 +164,39 @@ class ESP302(threading.Thread):
         self._in_motion = False
         print("Done searching for home.")
 
-    def _moveindefinitely(self, axis, direction):
-        while self._in_motion:
-            time.sleep(0.1)
-        _t = 0
-        self._in_motion = True
-        self._cmd(axis, b'MF', direction)
-        print('Moving axis.')
-        self._waitformotion(axis)
-        print('Done moving.')
-        self._in_motion = False
-        return True
+    # def _moveindefinitely(self, axis, direction):
+        # while self._in_motion:
+        #     time.sleep(0.1)
+        # _t = 0
+        # self._in_motion = True
+        # self._cmd(axis, b'MF', direction)
+        # print('Moving axis.')
+        # self._waitformotion(axis)
+        # print('Done moving.')
+        # self._in_motion = False
+        # return True
 
     def _moverelative(self, axis, direction):
         while self._in_motion:
             time.sleep(0.1)
         _t = 0
         self._in_motion = True
-        self._cmd(axis, b'PR', direction)
-        print('Moving axis.')
+        # self._cmd(axis, b'PR', direction)
+        self.dev.write(b'%dPR%f\r' % (axis, direction))
+        print(f'Moving axis {axis}.')
         self._waitformotion(axis)
-        print('Done moving.')
+        print(f'Done moving axis {axis}.')
         self._in_motion = False
         return True
 
     def _setunits(self, unit):
         for axis in self.AXES:
-            self._cmd(axis, b'SN', unit)
+            self.dev.write(b'%dSN%d\r' % (axis, unit))
 
     def _getunits(self):
         units = []
         for axis in self.AXES:
-            self.dev.write(b'%dSN?\r' % axis)
+            self.dev.write(b'%dSN?\r' % axis, reply=True)
             try:
                 units.append(int(self.dev.read()))
             except ValueError:
@@ -203,7 +204,7 @@ class ESP302(threading.Thread):
         return units
 
     def _getposition(self):
-        self.dev.write(b'TP\r')
+        self.dev.write(b'TP\r', reply=True)
         _x, _y, _z = self.dev.read().split(b',')
         return (float(_x), float(_y), float(_z))
 
@@ -213,7 +214,7 @@ class ESP302(threading.Thread):
     def _getmotiondone(self):
         _res = {}
         for axis in self.AXES:
-            self.dev.write(b'%dMD\r' % axis)
+            self.dev.write(b'%dMD\r' % axis, reply=True)
             _res[axis] = self._bittobool(self.dev.read())
         print(_res)
         return _res
