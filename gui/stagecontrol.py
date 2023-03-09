@@ -260,7 +260,10 @@ class StageControls(tk.Frame):
             return
         elif _res is not None:
             # self.status.set(_res)
-            self.msg_queue.append(_res.split(',')[2])
+            try:
+                self.msg_queue.append(_res.split(',')[2])
+            except ValueError:
+                self.msg_queue.append('Error reading message buffer.')
             self.msg_count += 1
             self.msg_queue.reverse()
             self.status['state'] = NORMAL
