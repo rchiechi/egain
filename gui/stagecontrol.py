@@ -47,6 +47,7 @@ class StageControls(tk.Frame):
     cmd_ids = {'error': 0,  # Holds ids for non-blocking queued commands
                'position': 0}
     msg_queue = []  # Hold a queue of messages
+    msg_count = 0  # Hold a count of total messages
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -260,13 +261,14 @@ class StageControls(tk.Frame):
         elif _res is not None:
             # self.status.set(_res)
             self.msg_queue.append(_res.split(',')[2])
+            self.msg_count += 1
             self.msg_queue.reverse()
             self.status['state'] = NORMAL
             self.status.delete('1.0', END)
-            _i = 0
+            _i = self.msg_count
             for _msg in self.msg_queue:
-                _i += 1
                 self.status.insert(END, f'{_i}: {_msg}\n')
+                _i -= 1
             self.status['state'] = DISABLED
             while len(self.msg_queue) > 10:
                 self.msg_queue.pop()
