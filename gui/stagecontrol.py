@@ -42,10 +42,11 @@ class StageControls(tk.Frame):
                 'stage': None,
                 'initialized': False}
     position = [0.0, 0.0, 0.0]
-    widgets = {}
-    motionControls = {}
-    err_id = 0
-    pos_id = 0
+    widgets = {}  # Holds GUI widgets
+    motionControls = {}  # Holds motion control buttons
+    cmd_ids = {'error': 0,  # Holds ids for non-blocking queued commands
+               'position': 0}
+    msg_queue = []  # Hold a queue of messages
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -53,7 +54,7 @@ class StageControls(tk.Frame):
         super().__init__(self.master)
         self.relative_move_label = StringVar()
         self.unitStr = StringVar()
-        self.status = StringVar(value='Nominal')
+        # self.status = StringVar(value='Nominal')
         self.createWidgets()
         self.alive = threading.Event()
         self.alive.set()
@@ -66,68 +67,81 @@ class StageControls(tk.Frame):
         self.alive.clear()
 
     def createWidgets(self):
-        xyzFrame = tk.Frame(self)
-        # commandFrame = tk.Frame(self)
-        for _button in self.axismap:
+        # */ Motion control frame
+        xyzFrame = tk.Frame(self)  # Create main xyz motion control frame
+        for _button in self.axismap:  # Create motion control buttons
             self.motionControls[_button] = tk.Button(master=xyzFrame,
                                                      text=_button.capitalize(),
                                                      command=lambda: self.motionButtonClick(_button),
                                                      state=DISABLED)
-
-        relativemoveFrame = tk.Frame(xyzFrame)
-        self.motionControls['scale'] = tk.Scale(master=relativemoveFrame,
+        relativemoveFrame = tk.Frame(xyzFrame)  # Create frame to hold information about movement
+        self.motionControls['scale'] = tk.Scale(master=relativemoveFrame,  # Create slider to set movement distance
                                                 from_=1, to=1000,
                                                 value=1,
                                                 orient=HORIZONTAL,
                                                 command=self.relativemoveScaleChange,
                                                 state=DISABLED)
-        relativemoveLabel = tk.Label(master=relativemoveFrame,
+        # */ Status frame
+        statusFrame = tk.Frame(master=xyzFrame)  # Create frame for status box
+        yScroll = tk.Scrollbar(statusFrame, orient=VERTICAL)  # Create yscroller for status box
+        self.status = Text(statusFrame, height=3, width=40,  # Create status box
+                           bg=WHITE, fg=BLACK, yscrollcommand=yScroll.set)
+        yScroll['command'] = self.status.yview  # Attach scroller to status box
+        self.status.pack(side=LEFT, fill=BOTH, expand=True)  # Pack the status box
+        self.status['state'] = DISABLED  # Disable status box to prevent user input
+        yScroll.pack(side=RIGHT, fill=Y)  # Pack the scroll bar
+        # Status frame */
+        # Motion control frame */
+        # */ Relative move frame
+        relativemoveLabel = tk.Label(master=relativemoveFrame,  # Create label for slider
                                      text='Relative Move Distance')
         relativemoveindicatorLabel = tk.Label(master=relativemoveFrame,
                                               textvariable=self.relative_move_label)
-        self.unitStr.set(self.units[2])
-        unitOptionMenu = tk.OptionMenu(relativemoveFrame,
+        self.unitStr.set(self.units[2])  # Set default units to mm
+        unitOptionMenu = tk.OptionMenu(relativemoveFrame,  # Create menu for units
                                        self.unitStr,
                                        self.unitStr.get(),
                                        *list(self.units.values()))
-        # self.unitStr.trace_add('write', self._handleunitchange)
-        # self.relativemoveScaleChange(self.relativemoveScale.get())
-
-        stageFrame = tk.Frame(master=self)
-        positionFrame = tk.Frame(master=stageFrame)
-        gohomebutton = tk.Button(master=positionFrame,
+        # Relative move frame */
+        # */ Stage frame
+        stageFrame = tk.Frame(master=self)  # Create frame to hold status and position information
+        positionFrame = tk.Frame(master=stageFrame)  # Create nexted frame for position information
+        gohomebutton = tk.Button(master=positionFrame,  # Create button to initiate home search
                                  text='Go Home',
                                  command=self.gohomeButtonClick,
                                  state=DISABLED)
-        self.widgets['gohomebutton'] = gohomebutton
-        stagepositionLabel = tk.Label(master=positionFrame, text='Position:')
-        self.widgets['stagepositionvar'] = StringVar(value=str(self.position))
-        # self.widgets['stagepositionvar'].trace_add('w', self._updatepositionvar)
-        stagepositionVal = tk.Label(master=positionFrame,
+        self.widgets['gohomebutton'] = gohomebutton  # Store GoHome button
+        stagepositionLabel = tk.Label(master=positionFrame, text='Position:')  # Create label for position reporting widgets
+        self.widgets['stagepositionvar'] = StringVar(value=str(self.position))  # Create GUI variable to hold position
+        stagepositionVal = tk.Label(master=positionFrame,  # Create label to display position variable
                                     textvariable=self.widgets['stagepositionvar'])
-        statusLabel = tk.Label(master=stageFrame,
-                               textvariable=self.status)
-        addressFrame = tk.Frame(master=stageFrame)
-
-        stageaddressvar = StringVar(value=IP_ADDRESS)
-        stageportvar = StringVar(value=PORT)
-        stageaddressLabel = tk.Label(master=addressFrame, text='Address:')
-        stageaddressEntry = tk.Entry(master=addressFrame,
+        # statusLabel = tk.Label(master=stageFrame,
+                            #    textvariable=self.status)
+        addressFrame = tk.Frame(master=stageFrame)  # Create frame to hold stage address settings
+        # Stage frame */
+        # */ Address Frame
+        stageaddressvar = StringVar(value=IP_ADDRESS)  # Create GUI variable to hold IP address of stage
+        stageportvar = StringVar(value=PORT)  # Create GUI variable to hold network port of stage
+        stageaddressLabel = tk.Label(master=addressFrame, text='Address:')  # Create label for address
+        stageaddressEntry = tk.Entry(master=addressFrame,  # Create entry to display address
                                      textvariable=stageaddressvar,
                                      width=12)
-        stageportlLabel = tk.Label(master=addressFrame, text='Port:')
-        stageportEntry = tk.Entry(master=addressFrame,
+        stageportlLabel = tk.Label(master=addressFrame, text='Port:')  # Create label for port
+        stageportEntry = tk.Entry(master=addressFrame,  # Create entry to display port
                                   textvariable=stageportvar,
                                   width=4)
-        self.xyzstage['address'] = stageaddressvar
-        self.xyzstage['port'] = stageportvar
-        initButton = tk.Button(master=addressFrame,
+        self.xyzstage['address'] = stageaddressvar  # Store stage address as GUI String
+        self.xyzstage['port'] = stageportvar  # Store stage network port as GUI String
+        initButton = tk.Button(master=addressFrame,  # Create button to initialize stage
                                text='Initialize',
                                command=self.initButtonClick)
-        self.widgets['initButton'] = initButton
-        self.widgets['stageaddressEntry'] = stageaddressEntry
-        self.widgets['stageportEntry'] = stageportEntry
+        self.widgets['initButton'] = initButton  # Store init button
+        self.widgets['stageaddressEntry'] = stageaddressEntry  # Store address entry widget
+        self.widgets['stageportEntry'] = stageportEntry  # Store stage port entry widget
+        # Address Frame */
 
+        # */ Pack widgets #################################################
+        statusFrame.pack(side=BOTTOM)
         relativemoveLabel.pack(side=TOP)
         self.motionControls['scale'].pack(side=TOP)
         relativemoveindicatorLabel.pack(side=TOP)
@@ -140,11 +154,10 @@ class StageControls(tk.Frame):
         self.motionControls['back'].pack(side=BOTTOM)
         self.motionControls['forward'].pack(side=BOTTOM)
         tk.Separator(positionFrame, orient=HORIZONTAL).pack(side=TOP, fill=X)
-
         gohomebutton.pack(side=LEFT)
         stagepositionLabel.pack(side=LEFT)
         stagepositionVal.pack(side=LEFT)
-        statusLabel.pack(side=BOTTOM)
+        # statusLabel.pack(side=BOTTOM)
         positionFrame.pack(side=TOP)
         stageaddressLabel.pack(side=LEFT)
         stageaddressEntry.pack(side=LEFT)
@@ -153,9 +166,8 @@ class StageControls(tk.Frame):
         addressFrame.pack(side=BOTTOM)
         initButton.pack(side=BOTTOM)
         stageFrame.pack(side=BOTTOM)
-
         xyzFrame.pack(side=TOP)
-        # commandFrame.pack(side=BOTTOM)
+        # Pack widgets */ #################################################
 
     def _checkformotion(self):
         if self.xyzstage['stage'].isMoving:
@@ -178,7 +190,7 @@ class StageControls(tk.Frame):
             self.widgets['gohomebutton']['state'] = NORMAL
             self.busy.set(False)
         self.checkErrors()
-        self._updateposition()
+        self._updateposition(block=True)
 
     def initButtonClick(self):
         _address, _port = self.xyzstage['address'].get(), self.xyzstage['port'].get()
@@ -198,6 +210,7 @@ class StageControls(tk.Frame):
             self._initstage()
         else:
             messagebox.showerror("Error", "Invalid address settings.")
+        self.checkErrors()
 
     def _initstage(self):
         self.xyzstage['nethost'] = NetHost()
@@ -221,29 +234,44 @@ class StageControls(tk.Frame):
         except IOError:
             self.xyzstage['initialized'] = False
 
-    def _updateposition(self):
-        # if self.pos_id == 0:
-        #     self.pos_id = self.position = self.xyzstage['stage'].getPosition()
-        # _res = self.xyzstage['stage'].getresult(self.pos_id)
-        # if _res is False:
-        #     self.widgets['initButton'].after(100, self._updateposition)
-        #     return
-        self.position = self.xyzstage['stage'].getPosition(block=True)
+    def _updateposition(self, block=False):
+        if block:
+            self.position = self.xyzstage['stage'].getPosition(block=True)
+        else:
+            if self.cmd_ids['position'] == 0:
+                self.cmd_ids['position'] = self.position = self.xyzstage['stage'].getPosition()
+            _res = self.xyzstage['stage'].getresult(self.cmd_ids['position'])
+            if _res is False:
+                self.widgets['initButton'].after(100, self._updateposition)
+                return
+            self.position = _res
         self.widgets['stagepositionvar'].set(
             f'{self.position[0]:.2f},{self.position[1]:.2f},{self.position[2]:.2f}')
-        # self.widgets['initButton'].after(500, self._updateposition)
+        self.cmd_ids['position'] = 0
 
     def checkErrors(self):
-        if self.err_id == 0:
-            self.err_id = self.xyzstage['stage'].getErrors()
-        _res = self.xyzstage['stage'].getresult(self.err_id)
+        if self.cmd_ids['error'] == 0:
+            self.cmd_ids['error'] = self.xyzstage['stage'].getErrors()
+        _res = self.xyzstage['stage'].getresult(self.cmd_ids['error'])
         if _res is False:
             self.widgets['initButton'].after(100, self.checkErrors)
-            self.status.set('Nominal')
+            #  self.status.set('Nominal')
             return
         elif _res is not None:
-            self.status.set(_res)
-        self.err_id = 0
+            # self.status.set(_res)
+            self.msg_queue.append(_res.split(',')[2])
+            self.msg_queue.reverse()
+            self.status['state'] = NORMAL
+            self.status.delete('1.0', END)
+            _i = 0
+            for _msg in self.msg_queue:
+                _i += 1
+                self.status.insert(END, f'{_i}: {_msg}\n')
+            self.status['state'] = DISABLED
+            while len(self.msg_queue) > 10:
+                self.msg_queue.pop()
+            self.msg_queue.reverse()
+        self.cmd_ids['error'] = 0
 
     def gohomeButtonClick(self):
         for _widget in self.motionControls:
@@ -251,6 +279,7 @@ class StageControls(tk.Frame):
         self.widgets['gohomebutton']['state'] = DISABLED
         self.xyzstage['stage'].findHome()
         self.widgets['gohomebutton'].after('100', lambda: self._waitformotion(self.widgets['gohomebutton']))
+        self.checkErrors()
 
     def motionButtonClick(self, _button):
         for _widget in self.motionControls:
@@ -271,6 +300,8 @@ class StageControls(tk.Frame):
                 for _unit in self.xyzstage['stage'].getUnits():
                     if _unit != self.unit:
                         print("Warning units not set correctly.")
+        self._updateposition(block=True)
+        self.checkErrors()
 
     def relativemoveScaleChange(self, distance):
         distance = float(distance)
@@ -291,14 +322,3 @@ class StageControls(tk.Frame):
         self.relative_move_label.set(_labelstring)
         self.relative_move = distance
 
-    def checkErrors(self):
-        if self.err_id == 0:
-            self.err_id = self.xyzstage['stage'].getErrors()
-        _res = self.xyzstage['stage'].getresult(self.err_id)
-        if _res is False:
-            self.widgets['initButton'].after(100, self.checkErrors)
-            self.status.set('Nominal')
-            return
-        elif _res is not None:
-            self.status.set(_res)
-        self.err_id = 0
