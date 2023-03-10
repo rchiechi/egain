@@ -30,7 +30,7 @@ import datetime
 import tkinter.ttk as tk
 # from tkinter import Tk
 # from tkinter import Toplevel
-from tkinter import filedialog
+from tkinter import Toplevel, filedialog
 from tkinter import Text, IntVar, StringVar, BooleanVar, Listbox, Label, Entry
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
@@ -136,7 +136,12 @@ class MainFrame(tk.Frame):
         outputfilenameEntry.insert(0, self.opts.output_file_name)
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
-
+        maketipButton = tk.Button(master=magFrame,
+                                  text='Make Tip',
+                                  command=self.maketipButtonClick,
+                                  state=DISABLED)
+        self.widgets['maketipButton'] = maketipButton
+        maketipButton.pack(side=LEFT)
         junctionsizeEntryLabel = Label(master=magFrame,
                                        text='Junction size (cm):')
         junctionsizeEntryLabel.pack(side=LEFT)
@@ -192,7 +197,6 @@ class MainFrame(tk.Frame):
         dataFrame.pack(side=TOP, fill=BOTH)
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         optionsFrame.pack(side=TOP, fill=X)
-        # outputfilenameFrame.pack(side=BOTTOM, fill=BOTH)
         measurementFrame.pack(side=TOP, fill=BOTH)
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         sattusLabelprefix.pack(side=LEFT)
@@ -219,6 +223,9 @@ class MainFrame(tk.Frame):
         time.sleep(1)
         self.root.quit()
 
+    def maketipButtonClick(self):
+        return
+
     def SpawnSaveDialogClick(self):
         self.opts.save_path = filedialog.askdirectory(
             title="Path to save data",
@@ -242,7 +249,7 @@ class MainFrame(tk.Frame):
     def checkOptions(self):
         _outdir = f"/{self.variables['outputdirstring'].get().strip('/')}/"
         self.variables['outputdirstring'].set(_outdir)
-        if self.variables['statusVar'].get() in (MEASURING, READY):
+        if self.variables['statusVar'].get() in (MEASURING):
             self.widgets['measButton'].after(100, self.checkOptions)
             return
         _initialized = [False, False, False]
@@ -258,12 +265,14 @@ class MainFrame(tk.Frame):
             _initialized[2] = True
         if len(_connected) > 1:
             _connected = _connected[:-1]+['and', _connected[-1]]
-        if True in _initialized:
+        if _initialized[0] is True:
             self.widgets['measButton']['state'] = NORMAL
             self.variables['statusVar'].set(" ".join(_connected)+" connected")
-            self.initialized = True
         else:
             self.variables['statusVar'].set('Not Initialized')
+        if _initialized[0] is True and _initialized[1] is True:
+            self.initialized = True
+            self.widgets['maketipButton']['state'] = NORMAL
         if False in _initialized and not self.variables['busy'].get():
             self.widgets['measButton'].after(100, self.checkOptions)
 
@@ -339,3 +348,9 @@ def write_data_to_file(fn, results):
                              results['I'][_idx],
                              results['J'][_idx],
                              results['t'][_idx]])
+
+def maketip(smu, stage):
+    popup = Toplevel()
+    popup.geometry('500x100+250-250')
+    _msg = StringVar()
+    Label(popup, textvariable=_msg).pack()

@@ -164,22 +164,16 @@ class ESP302(threading.Thread):
         self._in_motion = False
         print("Done searching for home.")
 
-    # def _moveindefinitely(self, axis, direction):
-        # while self._in_motion:
-        #     time.sleep(0.1)
-        # _t = 0
-        # self._in_motion = True
-        # self._cmd(axis, b'MF', direction)
-        # print('Moving axis.')
-        # self._waitformotion(axis)
-        # print('Done moving.')
-        # self._in_motion = False
-        # return True
+    def _moveindefinitely(self, axis, direction):
+        while self._in_motion:
+            time.sleep(0.1)
+        self._in_motion = True
+        self._cmd(axis, b'MF', direction)
+        return True
 
     def _moverelative(self, axis, direction):
         while self._in_motion:
             time.sleep(0.1)
-        _t = 0
         self._in_motion = True
         # self._cmd(axis, b'PR', direction)
         self.dev.write(b'%dPR%f\r' % (axis, direction))
@@ -220,6 +214,7 @@ class ESP302(threading.Thread):
         return _res
 
     def _waitformotion(self, axis):
+        self._in_motion = True
         time.sleep(0.5)
         _t = 0
         while False in list(self._getmotiondone().values()):
@@ -233,6 +228,7 @@ class ESP302(threading.Thread):
             _t += 1
             if _t > self.motion_timeout:
                 break
+        self._in_motion = False
 
     def waitForMotion(self, axis):
         _cmd = Command('_waitformotion', axis)
@@ -274,11 +270,13 @@ class ESP302(threading.Thread):
     def moveMax(self, axis):
         _cmd = Command('_moveindefinitely', axis, b'+')
         self._cmd_queue.append(_cmd)
+        self._cmd_queue.append(Command('_waitformotion', axis))
         return _cmd.id
 
     def moveMin(self, axis):
         _cmd = Command('_moveindefinitely', axis, b'-')
         self._cmd_queue.append(_cmd)
+        self._cmd_queue.append(Command('_waitformotion', axis))
         return _cmd.id
 
     def relativeMove(self, axis, distance):

@@ -89,27 +89,15 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
     """ Initialize Serial devices using SerialVisa """
 
     try:
-        print(f"Opening {name}")
+        print(f"Opening serial device {name}")
         serial_visa = SerialVisa(visatoserial(name))
-        # print("Setting timeout")
-        # serial_visa.timeout = 2000  # 2s
-        # print("Setting read_termination")
-        # if read_termination == "LF":
-        #     serial_visa.read_termination = "\n"
-        # elif read_termination == "CR":
-        #     serial_visa.read_termination = "\r"
-        # elif read_termination == "CRLF":
-        #     serial_visa.read_termination = "\r\n"
-        # for kw in list(kwargs.keys()):
-        #     tmp = "".join(("serial_visa.", kw, "=", kwargs[kw]))
-        #     exec(tmp)
         i = 0
         while i < 5:
             IDN = serial_visa.query(idn)
             if IDN:
                 print(IDN)
                 serial_visa.playchord()
-                break
+                return serial_visa
             else:
                 serial_visa.close()
                 time.sleep(1)
@@ -117,10 +105,9 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
                 i += 1
 
     except Exception as msg:
-        print("Failed opening serial port %s" % name)
         print(str(msg))
-        serial_visa = None
-    return serial_visa
+    print("Failed opening serial port %s" % name)
+    return None
 
 @contextmanager
 def _mutestderr():
@@ -141,6 +128,8 @@ def enumerateDevices():
     rm = visa.ResourceManager('@py')
     with _mutestderr():
         for _dev in rm.list_resources():
+            if 'Bluetooth' in _dev:
+                continue
             for _f in _filter:
                 if _f.lower() in _dev.lower():
                     _devs.append(_dev)
@@ -260,6 +249,12 @@ class SerialVisa():
         #     # _s = self.smu.read(1)
         # self.smu.read(1)  # Trim CR
 
+    def get_reader(self):
+        alive = threading.Event()
+        alive.set()
+        redthread = READThread(self.smu, alive)
+        return alive, redthread
+
 
 class OPCThread(threading.Thread):
 
@@ -277,3 +272,25 @@ class OPCThread(threading.Thread):
                 break
             time.sleep(1)
         # self.smu.end_voltage_sweep()
+
+class READThread(threading.Thread):
+
+    def __init__(self, smu, alive):
+        super().__init__()
+        self.smu = smu
+        self.alive = alive
+
+    def run(self):
+        while self.alive.is_set():
+            time.sleep(0.1)
+
+    def kill(self):
+        self.alive.clear()
+
+    @property
+    def isalive(self):
+        return self.alive._is_set()
+
+    def read(self):
+        if self.alive.is_set():
+            return self.smu.query('READ?')

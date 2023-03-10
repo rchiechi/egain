@@ -148,7 +148,9 @@ class MeasurementControl(tk.Frame):
 
     def __initdevice(self, *args):
         if not self.is_initialized:
-            self.smu = K6430(self.deviceString.get())
+            _smu = K6430(self.deviceString.get())
+            if _smu.initialize():
+                self.smu = _smu
         if self.smu is not None:
             self.is_initialized = True
 

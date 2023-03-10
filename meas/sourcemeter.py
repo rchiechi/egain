@@ -133,6 +133,7 @@ class Keithley(Instrument):
             self.__checkarmed()
             compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
             self.read_data()
+        return True
 
     def setNPLC(self, nplc):
         self.visa.write(f':SENSE:{self.sense}:NPLC {nplc}')
@@ -153,6 +154,14 @@ class Keithley(Instrument):
         self.arm()
         self.visa.write(':INIT')
         return self.visa.get_wait_for_meas()
+
+    def measure_resistance(self, _range='20'):
+        self.visa.write(':SYST:TIME:RES')
+        self.visa.write(":SENS:FUNC 'RES'")
+        self.visa.write(f':SENS:RANG {_range}')
+        self.visa.write(':SENS:MODE AUTO')
+        self.arm()
+        return self.visa.get_reader()
 
     def end_voltage_sweep(self):
         self.disarm()

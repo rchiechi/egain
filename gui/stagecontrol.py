@@ -121,8 +121,6 @@ class StageControls(tk.Frame):
         self.widgets['stagepositionvar'] = StringVar(value=str(self.position))  # Create GUI variable to hold position
         stagepositionVal = tk.Label(master=positionFrame,  # Create label to display position variable
                                     textvariable=self.widgets['stagepositionvar'])
-        # statusLabel = tk.Label(master=stageFrame,
-                            #    textvariable=self.status)
         addressFrame = tk.Frame(master=stageFrame)  # Create frame to hold stage address settings
         # Stage frame */
         # */ Address Frame
@@ -235,7 +233,8 @@ class StageControls(tk.Frame):
             self.relativemoveScaleChange(self.motionControls['scale'].get())
             for _widget in self.motionControls:
                 self.motionControls[_widget]['state'] = NORMAL
-            self.widgets['gohomebutton']['state'] = NORMAL
+            for _widget in ['gohomebutton']:
+                self.widgets[_widget]['state'] = NORMAL
             self._handleunitchange()
             self.widgets['initButton'].after(100, self._updateposition)
             self.widgets['initButton'].after(100, self._checkformotion)
@@ -334,7 +333,6 @@ class StageControls(tk.Frame):
             _labelstring += 's'
         self.relative_move_label.set(_labelstring)
         self.relative_move = distance
-
 
 def waitpopup(_label, _time):
     popup = Toplevel()
