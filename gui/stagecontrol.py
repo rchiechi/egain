@@ -17,7 +17,6 @@ from tkinter.font import Font
 from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from stage.backend import NetHost, GenericBackEnd, IP_ADDRESS, PORT
 from stage.mks import ESP302
-from gui.progresswindow import ProgressWindow
 
 
 class StageControls(tk.Frame):
@@ -175,7 +174,6 @@ class StageControls(tk.Frame):
         stageFrame.pack(side=BOTTOM)
         xyzFrame.pack(side=TOP)
         # Pack widgets */ #################################################
-        waitpopup('Test', 10)
 
     def _checkformotion(self):
         if self.xyzstage['stage'].isMoving or self.busy.get():
