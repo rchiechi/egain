@@ -6,7 +6,7 @@ import tkinter.ttk as tk
 from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import filedialog
-from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry, messagebox
+from tkinter import Text, BooleanVar, IntVar, StringVar, Listbox, Label, Entry, messagebox
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
 from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
@@ -42,6 +42,7 @@ class MeasurementControl(tk.Frame):
     meas = {'ADDRESS': '24',
             'NPLC': '5'
             }
+    _isbusy = False
     mode = MEAS_MODE
     smu = None
     is_initialized = False
@@ -51,8 +52,8 @@ class MeasurementControl(tk.Frame):
 
     def __init__(self, root, **kwargs):
         self.master = root
-        self.measdone = kwargs['measdone']
-        self.busy = kwargs['busy']
+        self.measdone = kwargs.get('measdone', BooleanVar(value=False))
+        self.busy = kwargs.get('busy', BooleanVar(value=False))
         self.measdone.set(False)
         super().__init__(self.master)
         self.labelFont = Font(size=8)
@@ -80,6 +81,14 @@ class MeasurementControl(tk.Frame):
     @data.deleter
     def data(self):
         self.results = DATA_FORMAT
+
+    @property
+    def donemeasuring(self):
+        return self.measdone.get()
+
+    @property
+    def isbusy(self):
+        return self._isbusy
 
     def createWidgets(self):
         for _StringVar in self.sweep:
@@ -192,6 +201,7 @@ class MeasurementControl(tk.Frame):
             return
         self.measdone.set(False)
         self.busy.set(True)
+        self._isbusy = True
         self.smu.initialize()
         self.smu.setNPLC(self.meas['NPLC'])
         self.child_threads.append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
@@ -203,6 +213,7 @@ class MeasurementControl(tk.Frame):
             return
         self.measdone.set(False)
         self.busy.set(True)
+        self._isbusy = True
         if self.child_threads:
             if not self.child_threads[-1][1].is_alive():
                 self._process_data(self.smu.fetch_data().split(','))
@@ -220,6 +231,7 @@ class MeasurementControl(tk.Frame):
         self.smu.end_voltage_sweep()
         self.measdone.set(True)
         self.busy.set(False)
+        self._isbusy = False
 
     def _process_data(self, data_):
         # b'VOLT,CURR,RES,TIME,STAT\r'
@@ -255,8 +267,6 @@ def build_sweep(sweep):
     if sweep['reversed']:
         return list(map(str, _sweepup+_sweepdown+[_zero]))
     return list(map(str, _sweepdown+_sweepup+[_zero]))
-
-
 
 
 if __name__ == '__main__':

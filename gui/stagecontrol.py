@@ -7,7 +7,7 @@ import tkinter.ttk as tk
 from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import filedialog
-from tkinter import Text, IntVar, StringVar, DoubleVar, Listbox, Label, Entry, messagebox
+from tkinter import Toplevel, Text, IntVar, BooleanVar, StringVar, DoubleVar, Listbox, Label, Entry, messagebox
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
 from tkinter import END, BOTH, NONE, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
@@ -17,6 +17,7 @@ from tkinter.font import Font
 from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from stage.backend import NetHost, GenericBackEnd, IP_ADDRESS, PORT
 from stage.mks import ESP302
+from gui.progresswindow import ProgressWindow
 
 
 class StageControls(tk.Frame):
@@ -41,6 +42,7 @@ class StageControls(tk.Frame):
                 'nethost': None,
                 'stage': None,
                 'initialized': False}
+    _isbusy = False
     position = [0.0, 0.0, 0.0]
     widgets = {}  # Holds GUI widgets
     motionControls = {}  # Holds motion control buttons
@@ -51,7 +53,7 @@ class StageControls(tk.Frame):
 
     def __init__(self, root, **kwargs):
         self.master = root
-        self.busy = kwargs['busy']
+        self.busy = kwargs.get('busy', BooleanVar(value=False))
         super().__init__(self.master)
         self.relative_move_label = StringVar()
         self.unitStr = StringVar()
@@ -63,6 +65,10 @@ class StageControls(tk.Frame):
     @property
     def initialized(self):
         return self.xyzstage['initialized']
+
+    @property
+    def isbusy(self):
+        return self._isbusy
 
     def shutdown(self):
         self.alive.clear()
@@ -171,8 +177,9 @@ class StageControls(tk.Frame):
         # Pack widgets */ #################################################
 
     def _checkformotion(self):
-        if self.xyzstage['stage'].isMoving:
+        if self.xyzstage['stage'].isMoving or self.busy.get():
             self.busy.set(True)
+            self._isbusy = True
             for _widget in self.motionControls:
                 self.motionControls[_widget]['state'] = DISABLED
             self.widgets['gohomebutton']['state'] = DISABLED
@@ -184,12 +191,14 @@ class StageControls(tk.Frame):
     def _waitformotion(self, widget):
         if self.xyzstage['stage'].isMoving:
             self.busy.set(True)
+            self._isbusy = True
             widget.after('100', lambda: self._waitformotion(widget))
         else:
             for _widget in self.motionControls:
                 self.motionControls[_widget]['state'] = NORMAL
             self.widgets['gohomebutton']['state'] = NORMAL
             self.busy.set(False)
+            self._isbusy = False
         self.checkErrors()
         self._updateposition(block=True)
 
@@ -278,6 +287,35 @@ class StageControls(tk.Frame):
             self.msg_queue.reverse()
         self.cmd_ids['error'] = 0
 
+    def doRestart(self):
+        # prog = ProgressWindow(self, 'Progress')
+        popup = Toplevel()
+        popup.geometry('500x100+250-250')
+        _msg = StringVar()
+        Label(popup, textvariable=_msg).pack()
+        # prog_var = DoubleVar()
+        _msg.set('Waiting 30 seconds for stage to reboot...')
+        prog_bar = tk.Progressbar(popup, maximum=100, length=500)
+        prog_bar.pack(fill=X)
+        t = 0
+        while t < 100:
+            prog_bar.step(10)
+            popup.update()
+            t += 10
+            time.sleep(1)
+        # prog_var.set(1.0)
+        _msg.set('Waiting for stage to respond...')
+        prog_bar.destroy()
+        prog_bar = tk.Progressbar(popup, mode='indeterminate', length=500)
+        prog_bar.pack(fill=X)
+        prog_bar.start()
+        t = 0
+        while t < 100:
+            popup.update()
+            time.sleep(1)
+            t += 10
+        popup.destroy()
+
     def gohomeButtonClick(self):
         for _widget in self.motionControls:
             self.motionControls[_widget]['state'] = DISABLED
@@ -326,4 +364,5 @@ class StageControls(tk.Frame):
             _labelstring += 's'
         self.relative_move_label.set(_labelstring)
         self.relative_move = distance
+
 

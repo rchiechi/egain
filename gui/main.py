@@ -48,8 +48,10 @@ absdir = os.path.dirname(os.path.realpath(__file__))
 
 JUNCTION_CONVERSION_FACTOR = 0.1  # cm/cm
 MEASURING = 'Measuring'
+MOVING = 'Stage in motion'
 READY = 'Ready'
 NOT_INITIALIZED = 'Not initalized'
+INITIALIZED = 'Initialized'
 STRFTIME = '%Y-%m-%dT%H:%M:%SZ'
 csv.register_dialect('JV', delimiter='\t', quoting=csv.QUOTE_MINIMAL)
 
@@ -314,7 +316,11 @@ class MainFrame(tk.Frame):
         if not self.initialized:
             return
         if self.variables['busy'].get():
-            self.variables['statusVar'].set(f"{MEASURING} sweep {self.widgets['measurementFrame'].sweeps_done+1}")
+            if self.widgets['stagecontroller'].isbusy:
+                self.variables['statusVar'].set(f"{MOVING}")
+            if self.widgets['measurementFrame'].isbusy:
+                self.variables['statusVar'].set(
+                    f"{MEASURING} sweep {self.widgets['measurementFrame'].sweeps_done+1}")
         else:
             self.variables['statusVar'].set(READY)
         if self.variables['busy'].get():
