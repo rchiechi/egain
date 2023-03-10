@@ -130,7 +130,7 @@ class Keithley(Instrument):
             self.visa.write(":FORM:ELEM VOLT,CURR")
 
         else:
-            self.output = bool(int(self.visa.query(":OUTP:STAT?")))
+            self.__checkarmed()
             compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
             self.read_data()
 
@@ -150,12 +150,23 @@ class Keithley(Instrument):
             _points = len(v_list)
         self.visa.write(f':TRIG:COUN {_points}')
         self.visa.write(':SOUR:VOLT:MODE LIST')
-        self.visa.write(':OUTP ON')
+        self.arm()
         self.visa.write(':INIT')
         return self.visa.get_wait_for_meas()
 
     def end_voltage_sweep(self):
+        self.disarm()
+
+    def arm(self):
+        self.visa.write(':OUTP ON')
+        self.__checkarmed()
+
+    def disarm(self):
         self.visa.write(':OUTP OFF')
+        self.__checkarmed()
+
+    def __checkarmed(self):
+        self.output = bool(int(self.visa.query(":OUTP:STAT?")))
 
     def fetch_data(self):
         return self.visa.query('FETC?')
@@ -163,3 +174,8 @@ class Keithley(Instrument):
     def close(self):
         if self.visa is not None:
             self.visa.close()
+
+    @property
+    def armed(self):
+        return self.output
+
