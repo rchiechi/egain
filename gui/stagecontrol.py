@@ -175,6 +175,7 @@ class StageControls(tk.Frame):
         stageFrame.pack(side=BOTTOM)
         xyzFrame.pack(side=TOP)
         # Pack widgets */ #################################################
+        waitpopup('Test', 10)
 
     def _checkformotion(self):
         if self.xyzstage['stage'].isMoving or self.busy.get():
@@ -287,35 +288,6 @@ class StageControls(tk.Frame):
             self.msg_queue.reverse()
         self.cmd_ids['error'] = 0
 
-    def doRestart(self):
-        # prog = ProgressWindow(self, 'Progress')
-        popup = Toplevel()
-        popup.geometry('500x100+250-250')
-        _msg = StringVar()
-        Label(popup, textvariable=_msg).pack()
-        # prog_var = DoubleVar()
-        _msg.set('Waiting 30 seconds for stage to reboot...')
-        prog_bar = tk.Progressbar(popup, maximum=100, length=500)
-        prog_bar.pack(fill=X)
-        t = 0
-        while t < 100:
-            prog_bar.step(10)
-            popup.update()
-            t += 10
-            time.sleep(1)
-        # prog_var.set(1.0)
-        _msg.set('Waiting for stage to respond...')
-        prog_bar.destroy()
-        prog_bar = tk.Progressbar(popup, mode='indeterminate', length=500)
-        prog_bar.pack(fill=X)
-        prog_bar.start()
-        t = 0
-        while t < 100:
-            popup.update()
-            time.sleep(1)
-            t += 10
-        popup.destroy()
-
     def gohomeButtonClick(self):
         for _widget in self.motionControls:
             self.motionControls[_widget]['state'] = DISABLED
@@ -366,3 +338,20 @@ class StageControls(tk.Frame):
         self.relative_move = distance
 
 
+def waitpopup(_label, _time):
+    popup = Toplevel()
+    popup.geometry('500x100+250-250')
+    _msg = StringVar()
+    Label(popup, textvariable=_msg).pack()
+    prog_var = DoubleVar(value=_time)
+    _msg.set(f'{_label} - {_time:.0f}s')
+    prog_bar = tk.Progressbar(popup, variable=prog_var, maximum=_time, length=500)
+    prog_bar.pack(fill=X)
+    t = float(_time)
+    while t > 0 and popup.winfo_exists():
+        prog_var.set(t)
+        _msg.set(f'{_label} - {t:.0f}s')
+        popup.update()
+        t -= 0.1
+        time.sleep(0.1)
+    popup.destroy()
