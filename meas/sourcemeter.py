@@ -5,6 +5,7 @@ import time
 import numpy as np
 import meas.visa_subs as visa_subs
 from meas.visa_subs import MODE_GPIB, MODE_SERIAL
+from meas.notes import Music
 # import serial
 
 VOLT = 'VOLT'

@@ -24,7 +24,6 @@ import threading
 from contextlib import contextmanager
 import pyvisa as visa
 import serial
-from meas.notes import Music
 rm = visa.ResourceManager()
 
 #############
