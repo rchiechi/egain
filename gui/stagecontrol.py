@@ -302,7 +302,7 @@ class StageControls(tk.Frame):
         time.sleep(0.25)
 
     def raiseZaxis(self):
-        self.xyzstage['stage'].moveMax(self.Zaxis)
+        self.xyzstage['stage'].moveMin(self.Zaxis)
         time.sleep(0.25)
         self._checkformotion()
 
