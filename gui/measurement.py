@@ -147,12 +147,16 @@ class MeasurementControl(tk.Frame):
             self.smu.close()
 
     def __initdevice(self, *args):
+        self.busy.set(True)
+        self._isbusy = True
         if not self.is_initialized:
             _smu = K6430(self.deviceString.get())
             if _smu.initialize():
                 self.smu = _smu
         if self.smu is not None:
             self.is_initialized = True
+        self.busy.set(False)
+        self._isbusy = False
 
     def __validateSweep(self, *args):
         try:
@@ -197,13 +201,13 @@ class MeasurementControl(tk.Frame):
 
     def startMeasurementButtonClick(self):
         if self.error:
-            messagebox.showerror("Error", "Invalid settings, cannot start sweep.")
+            messagebox.showerror("Error", "Invalid settings.")
             return
         if self.smu is None:
-            messagebox.showerror("Error", "Sourcemeter is not configured correctly.")
+            messagebox.showerror("Error", "SMU config error.")
             return
         if not self.is_initialized:
-            messagebox.showerror("Error", "Sourcemeter is not initialized.")
+            messagebox.showerror("Error", "SMU not initialized.")
             return
         self.measdone.set(False)
         self.busy.set(True)
@@ -227,7 +231,8 @@ class MeasurementControl(tk.Frame):
         self.busy.set(True)
         self._isbusy = True
         if self.child_threads['read']:
-            if self.child_threads['read'][-1][1].is_alive():
+            if self.child_threads['read'][-1][1].active:
+                # print(self.child_threads['read'][-1][0].is_set())
                 self.after(100, self._readinbackground)
                 return
             else:
@@ -243,7 +248,7 @@ class MeasurementControl(tk.Frame):
         self.busy.set(True)
         self._isbusy = True
         if self.child_threads['meas']:
-            if not self.child_threads['meas'][-1][1].is_alive():
+            if not self.child_threads['meas'][-1][1].active:
                 self._process_data(self.smu.fetch_data().split(','))
                 self.child_threads['meas'].pop()
                 self.sweeps_done += 1

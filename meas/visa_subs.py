@@ -268,12 +268,14 @@ class OPCThread(threading.Thread):
     def run(self):
         while self.alive.is_set():
             _s = self.smu.read(1)
-            # print(_s)
             if _s == b'1':
                 print(self.smu.read(1))  # Trim CR
                 break
             time.sleep(1)
-        # self.smu.end_voltage_sweep()
+
+    @property
+    def active(self):
+        return self.alive.is_set()
 
 class READThread(threading.Thread):
 
@@ -292,8 +294,8 @@ class READThread(threading.Thread):
         self.alive.clear()
 
     @property
-    def isalive(self):
-        return self.alive._is_set()
+    def active(self):
+        return self.alive.is_set()
 
     def read(self):
         if self.alive.is_set():

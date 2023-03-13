@@ -226,27 +226,31 @@ class MainFrame(tk.Frame):
     def maketipButtonClick(self):
         _t = 0
         _alive, _res = self.widgets['measurementFrame'].getResistanceReader()
-        ohms = float(_res.split(b',')[0])
-        if ohms > 20.0:
-            messagebox.showerror("Error", "No tip/substrate contact deteced, cannot proceed.")
+        ohms = float(_res.read().split(b',')[0])
+        # NOTE: K6430 returns Ohms/10 for some reason
+        if ohms > 2.0:  # 20Ω is compliance
+            messagebox.showerror("Error", "No tip contact.")
+            _alive.clear()
             return
         self.widgets['stagecontroller'].raiseZaxis()
         time.sleep(0.1)
         while self.widgets['stagecontroller'].isbusy:
             try:
-                ohms = float(_res.split(b',')[0])
+                # NOTE: This command takes about a second to complete
+                ohms, amps = map(float, _res.read().split(b','))
             except ValueError:
                 break
-            print(f"Measured {ohms:0.1f}Ω")
-            if ohms > 20.0:
+            print(f"Measured {10*ohms:0.1f}Ω at {1000*amps}mA")
+            if ohms > 2.0:
                 print("Resistance > 20Ω --> tip formed?")
                 break
             _t += 1
-            if _t > 300:
+            print(_t)
+            if _t > 120:
                 break
-        self.widgets['stagecontroller'].stopMotion()
+            time.sleep(0.1)
+        self.widgets['stagecontroller'].stopZaxis()
         _alive.clear()
-        return
 
     def SpawnSaveDialogClick(self):
         self.opts.save_path = filedialog.askdirectory(

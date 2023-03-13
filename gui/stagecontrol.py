@@ -306,9 +306,12 @@ class StageControls(tk.Frame):
         time.sleep(0.25)
         self._checkformotion()
 
-    def stopMotion(self):
+    def stopZaxis(self):
+        self._stopmotion(self.Zaxis)
+
+    def _stopmotion(self, axis):
         _i = 0
-        while not self.xyzstage['stage'].stop():
+        while not self.xyzstage['stage'].stop(axis):
             time.sleep(0.5)
             _i += 1
             if _i > 5:

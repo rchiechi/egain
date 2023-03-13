@@ -168,7 +168,7 @@ class ESP302(threading.Thread):
         while self._in_motion:
             time.sleep(0.1)
         self._in_motion = True
-        self._cmd(axis, b'MF', direction)
+        self._cmd(axis, b'MT', direction)
         return True
 
     def _moverelative(self, axis, direction):
