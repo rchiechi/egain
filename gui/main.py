@@ -24,21 +24,21 @@ import platform
 import time
 import math
 import csv
-import datetime
+# import datetime
 # import logging
 # import threading
 import tkinter.ttk as tk
 # from tkinter import Tk
 # from tkinter import Toplevel
 from tkinter import Toplevel, filedialog
-from tkinter import Text, IntVar, StringVar, BooleanVar, Listbox, Label, Entry
+from tkinter import StringVar, BooleanVar, Label, Entry, messagebox
 from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
 from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
-from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
-from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused-import
+from tkinter import END, BOTH, HORIZONTAL  # pylint: disable=unused-import
+from tkinter import DISABLED, NORMAL  # pylint: disable=unused-import
 from tkinter import PhotoImage
 from tkinter.font import Font
-from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
+# from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from gui.datacanvas import dataCanvas
 from gui.stagecontrol import StageControls
 from gui.tempcontrol import TempControl
@@ -224,6 +224,28 @@ class MainFrame(tk.Frame):
         self.root.quit()
 
     def maketipButtonClick(self):
+        _t = 0
+        _alive, _res = self.widgets['measurementFrame'].getResistanceReader()
+        ohms = float(_res.split(b',')[0])
+        if ohms > 20.0:
+            messagebox.showerror("Error", "No tip/substrate contact deteced, cannot proceed.")
+            return
+        self.widgets['stagecontroller'].raiseZaxis()
+        time.sleep(0.1)
+        while self.widgets['stagecontroller'].isbusy:
+            try:
+                ohms = float(_res.split(b',')[0])
+            except ValueError:
+                break
+            print(f"Measured {ohms:0.1f}Ω")
+            if ohms > 20.0:
+                print("Resistance > 20Ω --> tip formed?")
+                break
+            _t += 1
+            if _t > 300:
+                break
+        self.widgets['stagecontroller'].stopMotion()
+        _alive.clear()
         return
 
     def SpawnSaveDialogClick(self):

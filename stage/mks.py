@@ -265,7 +265,7 @@ class ESP302(threading.Thread):
 
     def stop(self, axis):
         _status = self._cmd(axis, b'ST')
-        return self._bittobool(_status[2])
+        return not self._bittobool(_status[2])
 
     def moveMax(self, axis):
         _cmd = Command('_moveindefinitely', axis, b'+')

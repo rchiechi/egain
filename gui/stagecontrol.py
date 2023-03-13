@@ -181,7 +181,7 @@ class StageControls(tk.Frame):
                 self.motionControls[_widget]['state'] = DISABLED
             self.widgets['gohomebutton']['state'] = DISABLED
             self._updateposition()
-            time.sleep(0.5)
+            time.sleep(0.25)
         # self.widgets['initButton'].after('100', lambda: self._waitformotion(self.widgets['initButton']))
         self.widgets['initButton'].after('100', lambda: self._checkformotion)
 
@@ -300,6 +300,20 @@ class StageControls(tk.Frame):
         self.motionControls[_button].after('100', lambda: self._waitformotion(self.motionControls[_button]))
         self.xyzstage['stage'].relativeMove(self.axismap[_button][0], self.axismap[_button][1]*self.relative_move)
         time.sleep(0.25)
+
+    def raiseZaxis(self):
+        self.xyzstage['stage'].moveMax(self.Zaxis)
+        time.sleep(0.25)
+        self._checkformotion()
+
+    def stopMotion(self):
+        _i = 0
+        while not self.xyzstage['stage'].stop():
+            time.sleep(0.5)
+            _i += 1
+            if _i > 5:
+                break
+        self._checkformotion()
 
     def _handleunitchange(self, *args):
         for key in self.units:

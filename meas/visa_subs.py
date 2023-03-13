@@ -252,7 +252,9 @@ class SerialVisa():
     def get_reader(self):
         alive = threading.Event()
         alive.set()
-        redthread = READThread(self.smu, alive)
+        redthread = READThread(self.smu,
+                               alive, self.read_termination_b,
+                               self.write_termination_b)
         return alive, redthread
 
 
@@ -275,10 +277,12 @@ class OPCThread(threading.Thread):
 
 class READThread(threading.Thread):
 
-    def __init__(self, smu, alive):
+    def __init__(self, smu, alive, read_termination, write_termination):
         super().__init__()
         self.smu = smu
         self.alive = alive
+        self.read_termination = read_termination
+        self.write_termination = write_termination
 
     def run(self):
         while self.alive.is_set():
@@ -293,4 +297,5 @@ class READThread(threading.Thread):
 
     def read(self):
         if self.alive.is_set():
-            return self.smu.query('READ?')
+            self.smu.write(b'READ?'+self.read_termination)
+            return self.smu.read_until(self.read_termination)

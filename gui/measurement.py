@@ -46,7 +46,7 @@ class MeasurementControl(tk.Frame):
     mode = MEAS_MODE
     smu = None
     is_initialized = False
-    child_threads = []
+    child_threads = {'meas':[], 'read':[]}
     sweeps_done = 0
     results = DATA_FORMAT
 
@@ -188,10 +188,11 @@ class MeasurementControl(tk.Frame):
         self.error = False
 
     def stop_measurement(self):
-        for child in self.child_threads:
-            child[0].clear()
-            while child[1].is_alive():
-                time.sleep(0.1)
+        for _key in self.child_threads:
+            for child in self.child_threads[_key]:
+                child[0].clear()
+                while child[1].is_alive():
+                    time.sleep(0.1)
         self._measureinbackground()
 
     def startMeasurementButtonClick(self):
@@ -201,14 +202,39 @@ class MeasurementControl(tk.Frame):
         if self.smu is None:
             messagebox.showerror("Error", "Sourcemeter is not configured correctly.")
             return
+        if not self.is_initialized:
+            messagebox.showerror("Error", "Sourcemeter is not initialized.")
+            return
         self.measdone.set(False)
         self.busy.set(True)
         self._isbusy = True
         self.smu.initialize()
         self.smu.setNPLC(self.meas['NPLC'])
-        self.child_threads.append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
-        self.child_threads[-1][1].start()
+        self.child_threads['meas'].append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
+        self.child_threads['meas'][-1][1].start()
         self._measureinbackground()
+
+    def getResistanceReader(self):
+        if not self.is_initialized:
+            messagebox.showerror("Error", "Sourcemeter is not initialized.")
+            return
+        self.child_threads['read'].append(self.smu.measure_resistance())
+        self.child_threads['read'][-1][1].start()
+        self.after(500, self._readinbackground)
+        return self.child_threads['read'][-1]
+
+    def _readinbackground(self):
+        self.busy.set(True)
+        self._isbusy = True
+        if self.child_threads['read']:
+            if self.child_threads['read'][-1][1].is_alive():
+                self.after(100, self._readinbackground)
+                return
+            else:
+                self.child_threads['read'].pop()
+        self.smu.disarm()
+        self.busy.set(False)
+        self._isbusy = False
 
     def _measureinbackground(self):
         if not self.is_initialized:
@@ -216,15 +242,15 @@ class MeasurementControl(tk.Frame):
         self.measdone.set(False)
         self.busy.set(True)
         self._isbusy = True
-        if self.child_threads:
-            if not self.child_threads[-1][1].is_alive():
+        if self.child_threads['meas']:
+            if not self.child_threads['meas'][-1][1].is_alive():
                 self._process_data(self.smu.fetch_data().split(','))
-                self.child_threads.pop()
+                self.child_threads['meas'].pop()
                 self.sweeps_done += 1
                 if self.sweeps_done < int(self.sweep["nsweeps"]):
-                    self.child_threads.append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
+                    self.child_threads['meas'].append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
                     self.measdone.set(True)
-                    self.child_threads[-1][1].start()
+                    self.child_threads['meas'][-1][1].start()
                 else:
                     print(f'Completed {self.sweep["nsweeps"]} sweeps.')
                     self.sweeps_done = 0

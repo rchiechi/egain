@@ -48,7 +48,7 @@ class TempControl(tk.Frame):
 
     @property
     def peltierstatus(self):
-        return bool(self.plentier_on.get())
+        return bool(self.peltier_on.get())
 
     def createWidgets(self):
         setFrame = tk.LabelFrame(self,
