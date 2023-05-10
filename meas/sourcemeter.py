@@ -62,6 +62,7 @@ class Keithley(Instrument):
     ramp_step = 0
     source_range = 0
     sense_range = 0
+    auto_range = True
     output = False
 
     def description(self):
@@ -115,6 +116,7 @@ class Keithley(Instrument):
             if kwargs.get('auto_sense_range', False):
                 self.visa.write(f":SENS:{self.sense}:RANG:AUTO ON")
             else:
+                self.auto_range = True
                 self.visa.write(f":SENS:{self.sense}:RANG {self.sense_range:.2e}")
 
             compliance = kwargs.get('compliance', 105e-9)
@@ -145,6 +147,10 @@ class Keithley(Instrument):
         self.visa.write(':SYST:TIME:RES')
         self.visa.write(':SOUR:FUNC:MODE VOLT')
         self.visa.write(":SENS:FUNC 'CURR:DC'")
+        if self.auto_range:
+            self.visa.write(":SENS:CURR:RANG:AUTO ON")
+        else:
+            self.visa.write(f":SENS:CURR:RANG {self.sense_range:.2e}")
         self.visa.write(':SOUR:DEL:AUTO ON')
         self.visa.write(f':SOUR:LIST:VOLT {",".join(v_list)}')
         _points = self.visa.query(':SOUR:LIST:VOLT:POIN?')
