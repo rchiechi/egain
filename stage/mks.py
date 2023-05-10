@@ -177,7 +177,7 @@ class ESP302(threading.Thread):
         self._in_motion = True
         # self._cmd(axis, b'PR', direction)
         self.dev.write(b'%dPR%f\r' % (axis, direction))
-        print(f'Moving axis {axis}.')
+        print(f'Moving axis {axis} ({direction}).')
         self._waitformotion(axis)
         print(f'Done moving axis {axis}.')
         self._in_motion = False
