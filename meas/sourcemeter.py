@@ -119,7 +119,7 @@ class Keithley(Instrument):
                 self.auto_range = True
                 self.visa.write(f":SENS:{self.sense}:RANG {self.sense_range:.2e}")
 
-            compliance = kwargs.get('compliance', 105e-9)
+            compliance = kwargs.get('compliance', 105e-3)
             self.visa.write(f":SENS:{self.sense}:PROT:LEV {compliance:.3e}")
 
             # Configure the auto zero (reference)
@@ -130,7 +130,7 @@ class Keithley(Instrument):
             # Disable concurrent mode, measure I and V (not R)
             self.visa.write(":SENS:FUNC:CONC OFF")
             # self.visa.write(":SENS:FUNC:ON 'VOLT','CURR'")
-            self.visa.write(":FORM:ELEM VOLT,CURR")
+            self.visa.write(":FORM:ELEM VOLT,CURR,TIME")
 
         else:
             self.__checkarmed()
@@ -185,7 +185,7 @@ class Keithley(Instrument):
         self.output = bool(int(self.visa.query(":OUTP:STAT?")))
 
     def fetch_data(self):
-        return self.visa.query('FETC?')
+        return self.visa.query('FETC?').strip()
 
     def close(self):
         if self.visa is not None:
