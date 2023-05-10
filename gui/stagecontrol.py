@@ -75,11 +75,20 @@ class StageControls(tk.Frame):
     def createWidgets(self):
         # */ Motion control frame
         xyzFrame = tk.Frame(self)  # Create main xyz motion control frame
-        for _button in self.axismap:  # Create motion control buttons
-            self.motionControls[_button] = tk.Button(master=xyzFrame,
-                                                     text=_button.capitalize(),
-                                                     command=lambda: self.motionButtonClick(_button),
-                                                     state=DISABLED)
+        # for _button in self.axismap:  # Create motion control buttons
+        #     self.motionControls[_button] = tk.Button(master=xyzFrame,
+        #                                              text=_button.capitalize(),
+        #                                              command=lambda: self.motionButtonClick(_button),
+        #                                              state=DISABLED)
+        # NOTE: The code above binds all buttons to lambda: self.motionButtonClick("back") for some reason
+        self.motionControls['up'] = tk.Button(master=xyzFrame, text='up'.capitalize(), command=lambda: self.motionButtonClick('up'), state=DISABLED)
+        self.motionControls['down'] = tk.Button(master=xyzFrame, text='down'.capitalize(), command=lambda: self.motionButtonClick('down'), state=DISABLED)
+        self.motionControls['left'] = tk.Button(master=xyzFrame, text='left'.capitalize(), command=lambda: self.motionButtonClick('left'), state=DISABLED)
+        self.motionControls['right'] = tk.Button(master=xyzFrame, text='right'.capitalize(), command=lambda: self.motionButtonClick('right'), state=DISABLED)
+        self.motionControls['forward'] = tk.Button(master=xyzFrame, text='forward'.capitalize(), command=lambda: self.motionButtonClick('forward'), state=DISABLED)
+        self.motionControls['back'] = tk.Button(master=xyzFrame, text='back'.capitalize(), command=lambda: self.motionButtonClick('back'), state=DISABLED)
+
+
         relativemoveFrame = tk.Frame(xyzFrame)  # Create frame to hold information about movement
         self.motionControls['scale'] = tk.Scale(master=relativemoveFrame,  # Create slider to set movement distance
                                                 from_=1, to=1000,
@@ -298,6 +307,7 @@ class StageControls(tk.Frame):
             self.motionControls[_widget]['state'] = DISABLED
         self.widgets['gohomebutton']['state'] = DISABLED
         self.motionControls[_button].after('100', lambda: self._waitformotion(self.motionControls[_button]))
+        print(f"*******Moving {_button}:{self.axismap[_button][0]} ({self.axismap[_button][1]*self.relative_move})")
         self.xyzstage['stage'].relativeMove(self.axismap[_button][0], self.axismap[_button][1]*self.relative_move)
         time.sleep(0.25)
 
