@@ -147,7 +147,7 @@ class SerialVisa():
     timeout_s = 1
     read_termination_b = b"\n"
     write_termination_b = b"\r"
-    cmd_delay = 0.5
+    cmd_delay = 0.05
     smu = None
 
     def __init__(self, address, baud=9600, timeout=1):
@@ -268,7 +268,8 @@ class OPCThread(threading.Thread):
         while self.alive.is_set():
             _s = self.smu.read(1)
             if _s == b'1':
-                print(self.smu.read(1))  # Trim CR
+                # print(f'OPCThread complete: {self.smu.read(1)}')  # Trim CR
+                self.alive.clear()
                 break
             time.sleep(1)
 
