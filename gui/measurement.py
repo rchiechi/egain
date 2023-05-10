@@ -27,7 +27,9 @@ from meas.visa_subs import MODE_GPIB, MODE_SERIAL
 #     except ValueError:
 
 MEAS_MODE = MODE_SERIAL
-DATA_FORMAT = {'V':[], 'I':[], 'R':[], 't':[], 's':[]}
+# DATA_FORMAT = {'V':[], 'I':[], 'R':[], 't':[], 's':[]}
+DATA_TEMPLATE = {'V':[], 'I':[], 't':[]}
+DATA_FORMAT = ('V', 'I', 't')
 
 class MeasurementControl(tk.Frame):
 
@@ -48,7 +50,7 @@ class MeasurementControl(tk.Frame):
     is_initialized = False
     child_threads = {'meas':[], 'read':[]}
     sweeps_done = 0
-    results = DATA_FORMAT
+    results = {'V':[], 'I':[], 't':[]}
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -80,7 +82,7 @@ class MeasurementControl(tk.Frame):
 
     @data.deleter
     def data(self):
-        self.results = DATA_FORMAT
+        self.results = {'V':[], 'I':[], 't':[]}
 
     @property
     def donemeasuring(self):
@@ -151,7 +153,7 @@ class MeasurementControl(tk.Frame):
         self._isbusy = True
         if not self.is_initialized:
             _smu = K6430(self.deviceString.get())
-            if _smu.initialize():
+            if _smu.initialize(auto_sense_range=True):
                 self.smu = _smu
         if self.smu is not None:
             self.is_initialized = True
@@ -197,6 +199,7 @@ class MeasurementControl(tk.Frame):
                 child[0].clear()
                 while child[1].is_alive():
                     time.sleep(0.1)
+        self.smu.end_voltage_sweep()
         self._measureinbackground()
 
     def startMeasurementButtonClick(self):
@@ -209,10 +212,10 @@ class MeasurementControl(tk.Frame):
         if not self.is_initialized:
             messagebox.showerror("Error", "SMU not initialized.")
             return
-        self.measdone.set(False)
+        # self.measdone.set(False)
         self.busy.set(True)
         self._isbusy = True
-        self.smu.initialize()
+        self.smu.initialize(auto_sense_range=True)
         self.smu.setNPLC(self.meas['NPLC'])
         self.child_threads['meas'].append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
         self.child_threads['meas'][-1][1].start()
@@ -261,26 +264,30 @@ class MeasurementControl(tk.Frame):
                     self.sweeps_done = 0
             self.after(100, self._measureinbackground)
             return
+        print('All sweeps completed.')
         self.smu.end_voltage_sweep()
         self.measdone.set(True)
         self.busy.set(False)
         self._isbusy = False
 
     def _process_data(self, data_):
-        # b'VOLT,CURR,RES,TIME,STAT\r'
+        # b'VOLT,CURR,TIME ---> self.visa.write(":FORM:ELEM VOLT,CURR,TIME") 
         # _data = DATA_FORMAT
         _keymap = {}
-        for i, j in enumerate(self.results.keys()):
+        for i, j in enumerate(DATA_FORMAT):
             _keymap[i] = j
+        print(_keymap)
         i = 0
         for _d in data_:
-            if i == len(_keymap)-1:
+            if i == len(_keymap):
                 i = 0
+            print(f'{i}:{_keymap[i]} = {_d}')
             try:
                 self.results[_keymap[i]].append(float(_d))
             except ValueError:
                 self.results[_keymap[i]].append(0.0)
             i += 1
+        # print(self.results)
 
 def build_sweep(sweep):
     _sweepup = []
