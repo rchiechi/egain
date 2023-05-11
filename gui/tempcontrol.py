@@ -126,12 +126,12 @@ class TempControl(tk.Frame):
     def _readTemps(self):
         self.tempFrame.after('500', self._readTemps)
         _temps = self.readserial()
-        upper = _temps.get('UPPER', -999.9)
-        lower = _temps.get('LOWER', -999.9)
-        if upper > -1000:
-            self.upperTempString.set('Upper: %0.2f °C' % upper)
-        if lower > -1000:
-            self.lowerTempString.set('Lower: %0.2f °C' % lower)
+        self.temps['upper'] = _temps.get('UPPER', -999.9)
+        self.temps['lower'] = _temps.get('LOWER', -999.9)
+        if self.temps['upper'] > -1000:
+            self.upperTempString.set('Upper: %0.2f °C' % self.temps['upper'])
+        if self.temps['lower'] > -1000:
+            self.lowerTempString.set('Lower: %0.2f °C' % self.temps['lower'])
 
     def _initdevice(self, *args):
         if self.device.get() == DEFAULTUSBDEVICE:

@@ -316,7 +316,7 @@ class MainFrame(tk.Frame):
     def _writedata(self, finalize=False):
         # TEMPERATURE DATA!!!
         # Save data to disk and then delete them
-        # DATA_FORMAT = {'V':[], 'I':[], 'R':[], 't':[], 's':[]}
+        # DATA_FORMAT = {'V':[], 'I':[], 't':[]}
         _jsize = float(self.variables['junction_size'].get())
         _jmag = float(self.variables['junction_mag'].get())
         _area = math.pi*(_jmag * _jsize * JUNCTION_CONVERSION_FACTOR)**2
@@ -324,6 +324,8 @@ class MainFrame(tk.Frame):
         results['J'] = []
         for _I in results['I']:
             results['J'].append(_I/_area)
+            results['upper'] = self.widgets['tempcontrols'].uppertemp
+            results['lower'] = self.widgets['tempcontrols'].lowertemp
         _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
         if finalize:
             if os.path.exists(_fn):
@@ -367,15 +369,19 @@ class MainFrame(tk.Frame):
             self.widgets['quitButton']['state'] = NORMAL
             self.widgets['measButton']['state'] = NORMAL
 
+
 def write_data_to_file(fn, results):
     with open(fn, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect='JV')
-        writer.writerow(['V (V)', 'I (A)', 'J (A/cm2)', 'Time (s)'])
+        writer.writerow(['V (V)', 'I (A)', 'J (A/cm2)', 'Time (s)', 'Upper Temp (°C)', 'Lower Temp (°C)'])
         for _idx, V in enumerate(results['V']):
             writer.writerow([V,
                              results['I'][_idx],
                              results['J'][_idx],
-                             results['t'][_idx]])
+                             results['t'][_idx],
+                             results['upper'][_idx],
+                             results['lower'][_idx]])
+
 
 def maketip(smu, stage):
     popup = Toplevel()
