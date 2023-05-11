@@ -12,13 +12,12 @@ VOLT = 'VOLT'
 CURR = 'CURR'
 DEFAULTMODE = VOLT
 
-
 class Instrument:
     """Implement a generic instrument which does the following:
 
     description
     """
-
+    DATA_FORMAT = ('V', 'I', 't')
     visa = None
 
     def __init__(self, address):

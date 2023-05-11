@@ -309,7 +309,8 @@ class MainFrame(tk.Frame):
                 self.widgets['dataplot'].displayData(results)
             self._writedata(False)
             # self.widgets['dataplot'].displayData({'x':[1,2,3], 'y':[4,5,6]})
-        if not self.variables['busy'].get():
+        # if not self.variables['busy'].get():
+        if not self.widgets['measurementFrame'].isbusy:
             self._writedata(True)
 
     def _writedata(self, finalize=False):
@@ -358,7 +359,8 @@ class MainFrame(tk.Frame):
                     f"{MEASURING} sweep {self.widgets['measurementFrame'].sweeps_done+1}")
         else:
             self.variables['statusVar'].set(READY)
-        if self.variables['busy'].get():
+        # if self.variables['busy'].get():
+        if self.variables['measurementFrame'].isbusy:
             self.widgets['quitButton']['state'] = DISABLED
             self.widgets['measButton']['state'] = DISABLED
         else:

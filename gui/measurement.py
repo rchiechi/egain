@@ -28,8 +28,8 @@ from meas.visa_subs import MODE_GPIB, MODE_SERIAL
 
 MEAS_MODE = MODE_SERIAL
 # DATA_FORMAT = {'V':[], 'I':[], 'R':[], 't':[], 's':[]}
-DATA_TEMPLATE = {'V':[], 'I':[], 't':[]}
-DATA_FORMAT = ('V', 'I', 't')
+# DATA_TEMPLATE = {'V':[], 'I':[], 't':[]}
+# DATA_FORMAT = ('V', 'I', 't')
 
 class MeasurementControl(tk.Frame):
 
@@ -50,10 +50,10 @@ class MeasurementControl(tk.Frame):
     is_initialized = False
     child_threads = {'meas':[], 'read':[]}
     sweeps_done = 0
-    results = {'V':[], 'I':[], 't':[]}
 
     def __init__(self, root, **kwargs):
         self.master = root
+        self.__init_results()
         self.measdone = kwargs.get('measdone', BooleanVar(value=False))
         self.busy = kwargs.get('busy', BooleanVar(value=False))
         self.measdone.set(False)
@@ -61,6 +61,11 @@ class MeasurementControl(tk.Frame):
         self.labelFont = Font(size=8)
         self.deviceString = StringVar()
         self.createWidgets()
+
+    def __init_results(self):
+        self.results = {}
+        for key in K6430.DATA_FORMAT:
+            self.results[key] = []
 
     @property
     def initialized(self):
@@ -82,7 +87,7 @@ class MeasurementControl(tk.Frame):
 
     @data.deleter
     def data(self):
-        self.results = {'V':[], 'I':[], 't':[]}
+        self.__init_results()
 
     @property
     def donemeasuring(self):
@@ -266,15 +271,15 @@ class MeasurementControl(tk.Frame):
             return
         print('All sweeps completed.')
         self.smu.end_voltage_sweep()
+        self._isbusy = False
         self.measdone.set(True)
         self.busy.set(False)
-        self._isbusy = False
 
     def _process_data(self, data_):
         # b'VOLT,CURR,TIME ---> self.visa.write(":FORM:ELEM VOLT,CURR,TIME") 
         # _data = DATA_FORMAT
         _keymap = {}
-        for i, j in enumerate(DATA_FORMAT):
+        for i, j in enumerate(K6430.DATA_FORMAT):
             _keymap[i] = j
         print(_keymap)
         i = 0
@@ -288,6 +293,7 @@ class MeasurementControl(tk.Frame):
                 self.results[_keymap[i]].append(0.0)
             i += 1
         # print(self.results)
+
 
 def build_sweep(sweep):
     _sweepup = []
