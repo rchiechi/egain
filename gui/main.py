@@ -223,6 +223,12 @@ class MainFrame(tk.Frame):
         time.sleep(1)
         self.root.quit()
 
+    # def measButtonClick(self):
+        # self.variables['busy'].set(True)
+        # self._checkbusy()
+        # self.widgets['measurementFrame'].after(100, self._checkbusy)
+        # self.widgets['measurementFrame'].startMeasurementButtonClick()
+
     def maketipButtonClick(self):
         _t = 0
         _alive, _res = self.widgets['measurementFrame'].getResistanceReader()
@@ -297,10 +303,11 @@ class MainFrame(tk.Frame):
         else:
             self.variables['statusVar'].set('Not Initialized')
         if _initialized[0] is True and _initialized[1] is True:
-            self.initialized = True
             self.widgets['maketipButton']['state'] = NORMAL
         if False in _initialized and not self.variables['busy'].get():
             self.widgets['measButton'].after(100, self.checkOptions)
+        if True in _initialized:
+            self.initialized = True
 
     def _updateData(self, *args):
         if self.variables['measdone'].get():
@@ -312,6 +319,8 @@ class MainFrame(tk.Frame):
         # if not self.variables['busy'].get():
         if not self.widgets['measurementFrame'].isbusy:
             self._writedata(True)
+            # print(">>>>>>>>>>>> _updateData Measurement is not busy")
+
 
     def _writedata(self, finalize=False):
         # TEMPERATURE DATA!!!
@@ -321,11 +330,12 @@ class MainFrame(tk.Frame):
         _jmag = float(self.variables['junction_mag'].get())
         _area = math.pi*(_jmag * _jsize * JUNCTION_CONVERSION_FACTOR)**2
         results = self.widgets['measurementFrame'].data
-        results['J'] = []
+        for _key in ('J', 'upper', 'lower'):
+            results[_key] = []
         for _I in results['I']:
             results['J'].append(_I/_area)
-            results['upper'] = self.widgets['tempcontrols'].uppertemp
-            results['lower'] = self.widgets['tempcontrols'].lowertemp
+            results['upper'].append(self.widgets['tempcontrols'].uppertemp)
+            results['lower'].append(self.widgets['tempcontrols'].lowertemp)
         _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
         if finalize:
             if os.path.exists(_fn):
@@ -334,7 +344,7 @@ class MainFrame(tk.Frame):
                     self.counter += 1
             write_data_to_file(f'{_fn}_data.txt', results)
             try:
-                os.remove(f'{_fn}_temp.txt')
+                os.remove(f'{_fn}_tmp.txt')
             except FileNotFoundError:
                 pass
             del self.widgets['measurementFrame'].data
@@ -362,9 +372,11 @@ class MainFrame(tk.Frame):
         else:
             self.variables['statusVar'].set(READY)
         # if self.variables['busy'].get():
-        if self.variables['measurementFrame'].isbusy:
+        if self.widgets['measurementFrame'].isbusy or self.variables['busy'].get():
             self.widgets['quitButton']['state'] = DISABLED
             self.widgets['measButton']['state'] = DISABLED
+            # self.widgets['measurementFrame'].after(100, self._checkbusy)
+            # print(f">>>> _checkbusy Measurement Frame is busy {self.widgets['measurementFrame'].isbusy}, {self.variables['busy'].get()}")
         else:
             self.widgets['quitButton']['state'] = NORMAL
             self.widgets['measButton']['state'] = NORMAL

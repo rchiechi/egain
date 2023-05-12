@@ -269,11 +269,11 @@ class MeasurementControl(tk.Frame):
                     self.sweeps_done = 0
             self.after(100, self._measureinbackground)
             return
-        print('All sweeps completed.')
         self.smu.end_voltage_sweep()
         self._isbusy = False
         self.measdone.set(True)
         self.busy.set(False)
+        print('All sweeps completed.')
 
     def _process_data(self, data_):
         # b'VOLT,CURR,TIME ---> self.visa.write(":FORM:ELEM VOLT,CURR,TIME") 

@@ -265,10 +265,15 @@ class OPCThread(threading.Thread):
         self.alive = alive
 
     def run(self):
+        starttime = time.time()
         while self.alive.is_set():
             _s = self.smu.read(1)
             if _s == b'1':
                 # print(f'OPCThread complete: {self.smu.read(1)}')  # Trim CR
+                self.alive.clear()
+                break
+            elif time.time() - starttime > 120:
+                print("OPCThread timeout reached.")
                 self.alive.clear()
                 break
             time.sleep(1)
