@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 from tkinter import Tk
-from gui.mainegain import MainFrame
+from gui.mainseebeck import MainFrame
 from config.options import createOptions
 
 root = Tk()
