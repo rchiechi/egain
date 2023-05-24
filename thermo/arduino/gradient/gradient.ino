@@ -13,6 +13,10 @@
   Written by Limor Fried/Ladyada for Adafruit Industries.
   BSD license, all text above must be included in any redistribution
  ****************************************************/
+ 
+ /* Peltier MOSTFET wiring
+https://forum.arduino.cc/t/how-do-i-control-the-current-in-a-peltier-plate-with-arduino-after-reversing-it/493755
+ */
 
 #include <SPI.h>
 #include "Adafruit_MAX31855.h"
@@ -22,20 +26,20 @@
 
 // Example creating a thermocouple instance with software SPI on any three
 // digital IO pins.
-#define LDO   3
-#define LCS   4
-#define LCLK  5
-#define RDO   8
-#define RCS   9
-#define RCLK  10
+#define RDO   3
+#define RCS   4
+#define RCLK  5
+#define LDO   8
+#define LCS   9
+#define LCLK  10
 // initialize the Thermocouple
 Adafruit_MAX31855 leftThermocouple(LCLK, LCS, LDO);
 Adafruit_MAX31855 rightThermocouple(RCLK, RCS, RDO);
 
-#define LPELTIER 6
-#define LPELTIER_RELAY 13
-#define RPELTIER 11
-#define RPELTIER_RELAY 12
+#define RPELTIER 6
+#define RLPELTIER_RELAY 13
+#define LELTIER 11
+#define LPELTIER_RELAY 12
 
 // Example creating a thermocouple instance with hardware SPI
 // on a given CS pin.
