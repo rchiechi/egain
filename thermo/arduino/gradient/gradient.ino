@@ -14,6 +14,10 @@
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
+/* Wiring diagram
+ *  https://ali-atwa.medium.com/how-to-use-a-peltier-with-arduino-a35b0d4e52c2
+ */
+
 #include <SPI.h>
 #include "Adafruit_MAX31855.h"
 
