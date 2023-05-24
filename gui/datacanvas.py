@@ -11,13 +11,13 @@ import numpy as np
 
 class dataCanvas(FigureCanvasTkAgg):
 
-    def __init__(self, root):
+    def __init__(self, root, **kwargs):
         fig = Figure(figsize=(5, 4), dpi=100)
         t = np.arange(0, 3, .01)
         self.ax = fig.add_subplot()
         line, = self.ax.plot(t, 2 * np.sin(2 * np.pi * t))
-        self.ax.set_xlabel("Voltage")
-        self.ax.set_ylabel("Current")
+        self.ax.set_xlabel(kwargs.get('xlabel', "Voltage"))
+        self.ax.set_ylabel(kwargs.get('ylabel', "Current"))
         self.canvas = FigureCanvasTkAgg(fig, master=root)  # A tk.DrawingArea.
         self.canvas.draw()
 
@@ -53,9 +53,9 @@ class dataCanvas(FigureCanvasTkAgg):
         toolbar.pack(side=tkinter.BOTTOM, fill=tkinter.X)
         self.canvas.get_tk_widget().pack(side=tkinter.TOP, fill=tkinter.BOTH, expand=1)
 
-    def displayData(self, data):
+    def displayData(self, data, **kwargs):
         self.ax.cla()
-        self.ax.set_xlabel("Voltage (V)")
-        self.ax.set_ylabel("Current (I)")
-        self.ax.plot('V', 'I', '', data=data)
+        self.ax.set_xlabel(kwargs.get('xlabel', "Voltage (V)"))
+        self.ax.set_ylabel(kwargs.get('ylabel', "Current (I)"))
+        self.ax.plot(kwargs.get('xkey','V'), kwargs.get('ykey','I'), '', data=data)
         self.canvas.draw()

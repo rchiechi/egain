@@ -48,7 +48,6 @@ absdir = os.path.dirname(os.path.realpath(__file__))
 
 JUNCTION_CONVERSION_FACTOR = 0.1  # cm/cm
 MEASURING = 'Measuring'
-MOVING = 'Stage in motion'
 READY = 'Ready'
 NOT_INITIALIZED = 'Not initalized'
 INITIALIZED = 'Initialized'
@@ -110,7 +109,7 @@ class MainFrame(tk.Frame):
         # outputfilenameFrame = tk.Frame(optionsFrame)
         buttonFrame = tk.Frame(self)
 
-        dataplot = dataCanvas(dataFrame)
+        dataplot = dataCanvas(dataFrame, xlabel='ΔT', ylabel='Voltage')
         self.widgets['dataplot'] = dataplot
 
         statusFrame = tk.Frame(controlsFrame)
@@ -267,13 +266,13 @@ class MainFrame(tk.Frame):
             _connected = _connected[:-1]+['and', _connected[-1]]
         if _initialized[0] is True:
             self.widgets['measButton']['state'] = NORMAL
-            self.variables['statusVar'].set(" ".join(_connected)+" connected")
-        else:
-            self.variables['statusVar'].set('Not Initialized')
         if False in _initialized and not self.variables['busy'].get():
             self.widgets['measButton'].after(100, self.checkOptions)
         if True in _initialized:
+            self.variables['statusVar'].set(" ".join(_connected)+" connected")
             self.initialized = True
+        else:
+            self.variables['statusVar'].set('Not Initialized')
 
     def _updateData(self, *args):
         if self.variables['measdone'].get():
