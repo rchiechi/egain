@@ -240,10 +240,12 @@ class KeithleyV(Instrument):
 
         else:
             raise ValueError(f"This mode does exist! Please input {VOLT} or {CURR} only.")
-
+        # self.visa.write_termination = '\n'
         self.data = [0.0, 0.0]
-
+        self.visa.write('*CLS')
         self.visa.write(f":CONF:{self.sense}")
+        self.visa.write("INIT:CONT ON")
+        self.visa.write("TRIG:SOUR IMM")
 
         return True
 
@@ -253,8 +255,12 @@ class KeithleyV(Instrument):
     def fetch_data(self):
         return self.visa.query('FETC?').strip()
 
+    def read(self):
+        return self.visa.query('READ?').strip()
+
     def close(self):
         if self.visa is not None:
+            self.visa.write(':INIT:CONT OFF')
             self.visa.close()
 
     @property

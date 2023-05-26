@@ -76,12 +76,12 @@ class TempControl(tk.Frame):
                                            command=self._setPeltier)
 
         leftPeltierPower = tk.Label(master=setFrame,
-                                textvariable=self.leftPeltierPowerString,
-                                width=4)
+                                    textvariable=self.leftPeltierPowerString,
+                                    width=4)
 
         rightPeltierPower = tk.Label(master=setFrame,
-                                textvariable=self.rightPeltierPowerString,
-                                width=4)
+                                     textvariable=self.rightPeltierPowerString,
+                                     width=4)
 
         self.peltierCheck.after(100, self._checkPeltier)
 
@@ -140,8 +140,8 @@ class TempControl(tk.Frame):
     def _readTemps(self):
         self.tempFrame.after('500', self._readTemps)
         _temps = self.readserial()
-        self.temps['left'] = _temps.get('left', -999.9)
-        self.temps['right'] = _temps.get('right', -999.9)
+        self.temps['left'] = _temps.get('LEFT', -999.9)
+        self.temps['right'] = _temps.get('RIGHT', -999.9)
         if self.temps['left'] > -1000:
             self.leftTempString.set('left: %0.2f °C' % self.temps['left'])
         if self.temps['right'] > -1000:

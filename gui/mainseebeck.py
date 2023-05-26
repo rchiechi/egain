@@ -42,7 +42,7 @@ from tkinter.font import Font
 from gui.datacanvas import dataCanvas
 from gui.stagecontrol import StageControls
 from gui.gradientcontrol import TempControl
-from gui.measurement import MeasurementControl
+from gui.measurement import MeasurementControl, MeasurementReadV
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -97,9 +97,9 @@ class MainFrame(tk.Frame):
                                               measdone=measdone,
                                               busy=busy)
         self.widgets['measurementFrame'] = measurementFrame
-        # stagecontrolFrame = tk.LabelFrame(controlsFrame, text='Stage Controls')
-        # stagecontroller = StageControls(stagecontrolFrame, busy=busy)
-        # self.widgets['stagecontroller'] = stagecontroller
+        voltmeterFrame = tk.LabelFrame(controlsFrame, text='Voltmeter Controls')
+        voltmetercontrols = MeasurementReadV(voltmeterFrame, busy=busy)
+        self.widgets['voltmetercontrols'] = voltmetercontrols
         tempcontrolFrame = tk.LabelFrame(controlsFrame, text='Temperature Gradient Controls')
         tempcontrols = TempControl(tempcontrolFrame)
         self.widgets['tempcontrols'] = tempcontrols
@@ -202,9 +202,9 @@ class MainFrame(tk.Frame):
         statusLabel.pack(side=LEFT)
         statusFrame.pack(side=BOTTOM)
         controlsFrame.pack(side=TOP)
-        # stagecontrolFrame.pack(side=LEFT)
+        voltmeterFrame.pack(side=LEFT)
         tempcontrolFrame.pack(side=LEFT)
-        # stagecontroller.pack(side=LEFT, fill=Y)
+        voltmetercontrols.pack(side=LEFT, fill=Y)
         tempcontrols.pack(side=RIGHT, fill=Y)
 
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)

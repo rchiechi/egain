@@ -92,7 +92,9 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
         serial_visa = SerialVisa(visatoserial(name))
         i = 0
         while i < 5:
-            IDN = serial_visa.query(idn)
+            # IDN = serial_visa.query(idn)
+            serial_visa.write(idn)
+            IDN = serial_visa.read(64)
             if IDN:
                 print(IDN)
                 serial_visa.playchord()
@@ -142,7 +144,7 @@ def visatoserial(visa_address):
 
 class SerialVisa():
 
-    buffer = {}
+    buffer = []
     encoding = 'ascii'
     timeout_s = 1
     read_termination_b = b"\n"
@@ -193,13 +195,22 @@ class SerialVisa():
 
     def __writebuffer(self, cmd_, data_):
         # print(data_)
-        self.buffer[cmd_] = []
+        if len(self.buffer) > 100:
+            self.buffer = self.buffer[-100:]
         for _d in data_.split(self.read_termination_b):
-            # print(_d)
-            if _d not in self.buffer:
-                self.buffer[cmd_].append(str(_d.strip(self.read_termination_b),
-                                         encoding=self.encoding))
+            if _d:
+                # print(_d)
+                self.buffer.append((cmd_,
+                                   str(_d.strip(self.read_termination_b),
+                                    encoding=self.encoding)))
         # print(self.buffer)
+
+    @property
+    def lastreading(self):
+        if len(self.buffer):
+            return self.buffer[-1][1]
+        else:
+            return ''
 
     def close(self):
         self.smu.close()
@@ -224,15 +235,16 @@ class SerialVisa():
         if DEBUG:
             print(f'>> {bytes(cmd, encoding=self.encoding)+self.write_termination_b}')
 
-    def query(self, cmd):
+    def read(self, _bytes=1):
         self.__delay()
+        return self.smu.read(_bytes)
+
+    def query(self, cmd):
         self.write(cmd)
-        if len(self.buffer) > 100:
-            self.buffer = self.buffer[-100:]
         self.__writebuffer(cmd, self.smu.read_until(self.read_termination_b))
         if DEBUG:
-            print(f'<< {self.buffer[cmd][-1]}')
-        return self.buffer[cmd][-1]
+            print(f'<< {self.lastreading}')
+        return self.lastreading
 
     def get_wait_for_meas(self):
         self.write('*OPC?')

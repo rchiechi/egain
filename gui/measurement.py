@@ -14,6 +14,7 @@ from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused
 from tkinter import PhotoImage
 from tkinter.font import Font
 from meas.k6430 import K6430
+from meas.k2182A import K2182A
 from meas.visa_subs import enumerateDevices
 from meas.visa_subs import MODE_GPIB, MODE_SERIAL
 
@@ -53,7 +54,7 @@ class MeasurementControl(tk.Frame):
 
     def __init__(self, root, **kwargs):
         self.master = root
-        self.__init_results()
+        self._init_results()
         self.measdone = kwargs.get('measdone', BooleanVar(value=False))
         self.busy = kwargs.get('busy', BooleanVar(value=False))
         self.measdone.set(False)
@@ -62,7 +63,7 @@ class MeasurementControl(tk.Frame):
         self.deviceString = StringVar()
         self.createWidgets()
 
-    def __init_results(self):
+    def _init_results(self):
         self.results = {}
         for key in K6430.DATA_FORMAT:
             self.results[key] = []
@@ -87,7 +88,7 @@ class MeasurementControl(tk.Frame):
 
     @data.deleter
     def data(self):
-        self.__init_results()
+        self._init_results()
 
     @property
     def donemeasuring(self):
@@ -100,7 +101,7 @@ class MeasurementControl(tk.Frame):
     def createWidgets(self):
         for _StringVar in self.sweep:
             setattr(self, _StringVar, StringVar(value=str(self.sweep[_StringVar])))
-            getattr(self, _StringVar).trace_add('write', self.__validateSweep)
+            getattr(self, _StringVar).trace_add('write', self._validateSweep)
         sweepFrame = tk.LabelFrame(self, text='Sweep Settings')
         sweepLowEntry = tk.Entry(sweepFrame, textvariable=self.sweepLow, width=4)
         sweepHighEntry = tk.Entry(sweepFrame, textvariable=self.sweepHigh, width=4)
@@ -110,7 +111,7 @@ class MeasurementControl(tk.Frame):
         sweepFrame.pack(side=LEFT, fill=BOTH)
         reversedCheckbutton = tk.Checkbutton(sweepFrame, text='Reversed',
                                              variable=self.reversed,
-                                             command=self.__validateMeas)
+                                             command=self._validateMeas)
         reversedCheckbutton.pack(side=LEFT)
         sweepLowEntryLabel = tk.Label(sweepFrame, text='From:', font=self.labelFont)
         sweepLowEntryLabel.pack(side=LEFT)
@@ -127,7 +128,7 @@ class MeasurementControl(tk.Frame):
 
         for _StringVar in self.meas:
             setattr(self, _StringVar, StringVar(value=str(self.meas[_StringVar])))
-            getattr(self, _StringVar).trace_add('write', self.__validateMeas)
+            getattr(self, _StringVar).trace_add('write', self._validateMeas)
         measFrame = tk.LabelFrame(self, text='Sourcemeter Settings')
 
         measFrame.pack(side=LEFT, fill=BOTH)
@@ -141,7 +142,7 @@ class MeasurementControl(tk.Frame):
                                      self.deviceString,
                                      'Choose SMU device',
                                      *enumerateDevices())
-        self.deviceString.trace('w', self.__initdevice)
+        self.deviceString.trace('w', self._initdevice)
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
         measNPLC.pack(side=LEFT)
@@ -153,7 +154,7 @@ class MeasurementControl(tk.Frame):
         if self.smu is not None:
             self.smu.close()
 
-    def __initdevice(self, *args):
+    def _initdevice(self, *args):
         self.busy.set(True)
         self._isbusy = True
         if not self.is_initialized:
@@ -165,7 +166,7 @@ class MeasurementControl(tk.Frame):
         self.busy.set(False)
         self._isbusy = False
 
-    def __validateSweep(self, *args):
+    def _validateSweep(self, *args):
         try:
             for _StringVar in self.sweep:
                 _var = getattr(self, _StringVar).get()
@@ -184,7 +185,7 @@ class MeasurementControl(tk.Frame):
             return
         self.error = False
 
-    def __validateMeas(self, *args):
+    def _validateMeas(self, *args):
         try:
             for _StringVar in self.meas:
                 _var = getattr(self, _StringVar).get()
@@ -204,8 +205,9 @@ class MeasurementControl(tk.Frame):
                 child[0].clear()
                 while child[1].is_alive():
                     time.sleep(0.1)
-        self.smu.end_voltage_sweep()
-        self._measureinbackground()
+        if self.smu is not None:
+            self.smu.end_voltage_sweep()
+            self._measureinbackground()
 
     def startMeasurementButtonClick(self):
         if self.error:
@@ -294,6 +296,78 @@ class MeasurementControl(tk.Frame):
             i += 1
         # print(self.results)
 
+class MeasurementReadV(MeasurementControl):
+
+    measvoltage = 0.0
+
+    def createWidgets(self):
+        self.voltageString = StringVar(value=f'{self.voltage} V')
+        nplcFrame = tk.Frame(self)
+        measFrame = tk.Frame(self)
+        for _StringVar in self.meas:
+            setattr(self, _StringVar, StringVar(value=str(self.meas[_StringVar])))
+            getattr(self, _StringVar).trace_add('write', self._validateMeas)
+        measNPLC = tk.Spinbox(nplcFrame,
+                              from_=1,
+                              to=10,
+                              increment=1,
+                              textvariable=self.NPLC,
+                              width=4)
+        devicePicker = tk.OptionMenu(nplcFrame,
+                                     self.deviceString,
+                                     'Choose Voltmeter',
+                                     *enumerateDevices())
+        self.deviceString.trace('w', self._initdevice)
+        measNPLCLabel = tk.Label(nplcFrame, text='NPLC:', font=self.labelFont)
+        measNPLCLabel.pack(side=LEFT)
+        measNPLC.pack(side=LEFT)
+        measdevicePickerLabel = tk.Label(nplcFrame, text='Adress:', font=self.labelFont)
+        measdevicePickerLabel.pack(side=LEFT)
+        devicePicker.pack(side=LEFT)
+        nplcFrame.pack(side=TOP)
+        measFrame.pack(side=TOP, fill=BOTH)
+
+        readoutLabel = tk.Label(measFrame, text='Voltage:')
+        voltageLabel = tk.Label(measFrame, textvariable=self.voltageString)
+        self.after(100, self._readvoltage)
+        readoutLabel.pack(side=LEFT)
+        voltageLabel.pack(side=LEFT)
+
+    def _updateVoltage(self):
+        self.voltageString.set(f'{self.voltage} V')
+
+    def _init_results(self):
+        self.results = {}
+        for key in K2182A.DATA_FORMAT:
+            self.results[key] = []
+
+    def _initdevice(self, *args):
+        self.busy.set(True)
+        self._isbusy = True
+        if not self.is_initialized:
+            _smu = K2182A(self.deviceString.get())
+            if _smu.initialize(auto_sense_range=True):
+                self.smu = _smu
+        if self.smu is not None:
+            self.is_initialized = True
+        self.busy.set(False)
+        self._isbusy = False
+
+    def _readvoltage(self):
+        self.after(500, self._readvoltage)
+        if not self.initialized:
+            return
+        _voltage = self.smu.fetch_data()
+        try:
+            self.measvoltage = float(_voltage)
+        except ValueError:
+            print(f"Error converting {_voltage} to float.")
+            self.measvoltage = 0.0
+        self._updateVoltage()
+
+    @property
+    def voltage(self):
+        return self.measvoltage
 
 def build_sweep(sweep):
     _sweepup = []
