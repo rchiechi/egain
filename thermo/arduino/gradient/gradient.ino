@@ -39,7 +39,7 @@ Adafruit_MAX31855 rightThermocouple(RCLK, RCS, RDO);
 #define RPELTIER 6
 #define RPELTIER_RELAY 13
 #define LPELTIER 11
-#define LPELTIER_RELAY 12
+#define LPELTIER_RELAY 12 // Currently unused
 
 // Example creating a thermocouple instance with hardware SPI
 // on a given CS pin.
@@ -54,13 +54,19 @@ Adafruit_MAX31855 rightThermocouple(RCLK, RCS, RDO);
 #define terminator ';'
 #define LEFT 0
 #define RIGHT 1
+#define COOL 0
+#define HEAT 1
 //int peltier_level = 0;
 //int peltier_level = map(power, 0, 99, 0, 255); //This is a value from 0 to 255 that actually controls the MOSFET
 int leftDegC = 25;
 int leftpower = 0;
 int rightDegC = 25;
 int rightpower = 0;
-bool peltier_on = false;
+bool left_peltier_on = false;
+bool right_peltier_on = false;
+int left_flow = HEAT;
+int right_flow = COOL;
+
 bool initialized = false;
 
 void setup() {
@@ -93,12 +99,19 @@ void setup() {
 
 
 void checkPeltier() {
-  Serial.print("\"Peltier_on\":");
-  if (peltier_on){
+  Serial.print("\"Peltier_on\":[");
+  if (left_peltier_on){
     Serial.print("true");
   }else{
     Serial.print("false");
   }
+  Serial.print(", ");
+  if (right_peltier_on){
+    Serial.print("true");
+  }else{
+    Serial.print("false");
+  }
+  Serial.print("]");
   // int peltier_level = analogRead(PELTIER);
   // int power = map(peltier_level, 0, 1024, 0, 100);
   Serial.print(", \"LeftPower\":");
@@ -110,7 +123,7 @@ void checkPeltier() {
 void setLeft(){
   int setpower = 0;
   double c = leftThermocouple.readCelsius();
-  if (!isnan(c)){
+  if (!isnan(c) && left_peltier_on){
     double leftDegK = leftDegC + 273.15;
     int k = c + 273.15;
     setpower = (1 - (leftDegK / k)) * 100;
@@ -122,19 +135,29 @@ void setLeft(){
     }else{
       setpower = 100;
     }
-    if (c >= leftDegC){
-      setPeltier(LEFT, setpower);
+    if (left_flow == COOL){
+      if (c >= leftDegC){
+        setPeltier(LEFT, setpower);
+      }
+      else {
+        setPeltier(LEFT, 0);
+      }
     }
-    else {
-      setPeltier(LEFT, 0);
-    }
+    if (left_flow == HEAT){
+      if (c <= leftDegC){
+        setPeltier(LEFT, setpower);
+      }
+      else {
+        setPeltier(LEFT, 0);
+        }
+      }
   }
 }
 
 void setRight(){
   int setpower = 0;
   double c = rightThermocouple.readCelsius();
-  if (!isnan(c)){
+  if (!isnan(c) && right_peltier_on){
     double rightDegK = rightDegC + 273.15;
     int k = c + 273.15;
     setpower = (1 - (rightDegK / k)) * 100;
@@ -146,12 +169,22 @@ void setRight(){
     }else{
       setpower = 100;
     }
-    if (c >= rightDegC){
-      setPeltier(RIGHT, setpower);
+    if (right_flow == COOL){
+      if (c >= rightDegC){
+        setPeltier(RIGHT, setpower);
+      }
+      else {
+        setPeltier(RIGHT, 0);
+      }
     }
-    else {
-      setPeltier(RIGHT, 0);
-    }
+    if (right_flow == HEAT){
+      if (c <= rightDegC){
+        setPeltier(RIGHT, setpower);
+      }
+      else {
+        setPeltier(RIGHT, 0);
+      }
+    }    
   }
 }
 
@@ -172,6 +205,13 @@ void setPeltier(int side, int setpower){
   }else {
     power = setpower;
   }
+  bool peltier_on;
+  if (side == LEFT && left_peltier_on){
+    peltier_on = true;
+  }
+  if (side == RIGHT && right_peltier_on){
+    peltier_on = true;
+  }
   if (peltier_on){
     int peltier_level = map(power, 0, 100, 0, 255);
     analogWrite(peltier_addr, peltier_level); //Write this new value out to the port
@@ -185,14 +225,20 @@ void loop() {
   if (Serial.available() > 0) {
       // read the incoming byte:
       String incomingCmd = Serial.readStringUntil(terminator);
-      if (incomingCmd == "ON"){
-        peltier_on = true;
+      if (incomingCmd == "ONLEFT"){
+        left_peltier_on = true;
         digitalWrite(LPELTIER_RELAY, HIGH); // sets the digital pin on
+      }
+      if (incomingCmd == "OFFLEFT"){
+        left_peltier_on = false;
+        digitalWrite(LPELTIER_RELAY, LOW);  // sets the digital pin off
+      }
+      if (incomingCmd == "ONRIGHT"){
+        right_peltier_on = true;
         digitalWrite(RPELTIER_RELAY, HIGH); // sets the digital pin on
       }
-      if (incomingCmd == "OFF"){
-        peltier_on = false;
-        digitalWrite(LPELTIER_RELAY, LOW);  // sets the digital pin off
+      if (incomingCmd == "OFFRIGHT"){
+        right_peltier_on = false;
         digitalWrite(RPELTIER_RELAY, LOW);  // sets the digital pin off
       }
       if (incomingCmd == "SETLTEMP"){
@@ -200,6 +246,18 @@ void loop() {
       }
       if (incomingCmd == "SETRTEMP"){
         rightDegC = Serial.parseFloat();
+      }
+      if (incomingCmd == "LHEAT"){
+        left_flow = HEAT;
+      }
+      if (incomingCmd == "LCOOL"){
+        left_flow = COOL;
+      }
+      if (incomingCmd == "RHEAT"){
+        right_flow = HEAT;
+      }
+      if (incomingCmd == "RCOOL"){
+        right_flow = COOL;
       }
     
   if (incomingCmd == "POLL"){

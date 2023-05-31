@@ -21,7 +21,10 @@ class TempControl(tk.Frame):
 
     controller = None
     is_initialized = False
+    last_read = 0
+    buffer = {}
     temps = {'left':0, 'right':0}
+    widgets = {}
 
     def __init__(self, root):
         self.master = root
@@ -33,7 +36,8 @@ class TempControl(tk.Frame):
         self.device = StringVar()
         self.lefttargettemp = StringVar()
         self.righttargettemp = StringVar()
-        self.peltier_on = IntVar()
+        self.left_peltier_on = IntVar()
+        self.right_peltier_on = IntVar()
         self.createWidgets()
 
     @property
@@ -50,12 +54,10 @@ class TempControl(tk.Frame):
 
     @property
     def peltierstatus(self):
-        return bool(self.peltier_on.get())
+        return {'left': bool(self.left_peltier_on.get()),
+                'right': bool(self.right_peltier_on.get())}
 
     def createWidgets(self):
-        setFrame = tk.LabelFrame(self,
-                                 text='Target Temperatures (°C)',
-                                 labelanchor=N)
         self.tempFrame = tk.LabelFrame(self,
                                        text='Current Temperatures (°C)',
                                        labelanchor=N)
@@ -63,17 +65,33 @@ class TempControl(tk.Frame):
                             textvariable=self.leftTempString)
         rightTemp = tk.Label(master=self.tempFrame,
                              textvariable=self.rightTempString)
-
+        setFrame = tk.LabelFrame(self,
+                                 text='Target Temperatures (°C)',
+                                 labelanchor=N)
         setLeftTemp = tk.Entry(setFrame, textvariable=self.lefttargettemp, width=4)
         setRightTemp = tk.Entry(setFrame, textvariable=self.righttargettemp, width=4)
-
         self.lefttargettemp.trace('w', self._setTemp)
         self.righttargettemp.trace('w', self._setTemp)
-
-        self.peltierCheck = tk.Checkbutton(setFrame,
-                                           text='Peliter On',
-                                           variable=self.peltier_on,
-                                           command=self._setPeltier)
+        toggleFrame = tk.Frame(self)
+        peltierLeftCheck = tk.Checkbutton(toggleFrame,
+                                          text='Left Peliter On',
+                                          variable=self.left_peltier_on,
+                                          command=lambda: self._setPeltier('LEFT'))
+        peltierRightCheck = tk.Checkbutton(toggleFrame,
+                                           text='Right Peliter On',
+                                           variable=self.right_peltier_on,
+                                           command=lambda: self._setPeltier('RIGHT'))
+        self.widgets['peltierLeftCheck'] = peltierLeftCheck
+        self.widgets['peltierRightCheck'] = peltierRightCheck
+        heatcoolFrame = tk.Frame(self)
+        leftheatcoolButton = tk.Button(heatcoolFrame, text="Heat",
+                                       command=lambda: self._heatcoolbuttonclick('leftheatcoolButton'),
+                                       width=5)
+        rigthheatcoolButton = tk.Button(heatcoolFrame, text="Cool",
+                                        command=lambda: self._heatcoolbuttonclick('rigthheatcoolButton'),
+                                        width=5)
+        self.widgets['leftheatcoolButton'] = leftheatcoolButton
+        self.widgets['rigthheatcoolButton'] = rigthheatcoolButton
 
         leftPeltierPower = tk.Label(master=setFrame,
                                     textvariable=self.leftPeltierPowerString,
@@ -82,8 +100,6 @@ class TempControl(tk.Frame):
         rightPeltierPower = tk.Label(master=setFrame,
                                      textvariable=self.rightPeltierPowerString,
                                      width=4)
-
-        self.peltierCheck.after(100, self._checkPeltier)
 
         devicePicker = tk.OptionMenu(self,
                                      self.device,
@@ -95,42 +111,54 @@ class TempControl(tk.Frame):
         leftPeltierPower.pack(side=LEFT)
         setRightTemp.pack(side=LEFT)
         rightPeltierPower.pack(side=LEFT)
-        self.peltierCheck.pack(side=RIGHT)
+        peltierRightCheck.pack(side=RIGHT)
+        peltierLeftCheck.pack(side=RIGHT)
         devicePicker.pack()
         leftTemp.pack(side=TOP, expand=False)
         rightTemp.pack(side=BOTTOM)
+        leftheatcoolButton.pack(side=LEFT)
+        rigthheatcoolButton.pack(side=LEFT)
+        toggleFrame.pack(side=TOP)
+        heatcoolFrame.pack(side=TOP)
         setFrame.pack(side=TOP)
         self.tempFrame.pack(side=TOP)
-        # self.pack()
+
+        for _widget in self.widgets:
+            self.widgets[_widget].configure(state=DISABLED)
+
         self._readTemps()
 
     def shutdown(self):
         self.writeserial('OFF')
 
-    def _setPeltier(self):
-        if self.peltier_on.get():
-            cmd = 'ON'
+    def _setPeltier(self, side):
+        if getattr(self, f'{side.lower()}_peltier_on').get():
+            cmd = f'ON{side.upper()}'
         else:
-            cmd = 'OFF'
+            cmd = f'OFF{side.upper()}'
         if self.is_initialized:
             self.writeserial(cmd)
 
-    def _checkPeltier(self):
-        self.peltierCheck.after('2000', self._checkPeltier)
+    def _checkPeltier(self, *args):
+        if not self.is_initialized:
+            return
+        for _widget in self.widgets:
+            self.widgets[_widget].configure(state=NORMAL)
+        self.widgets['peltierRightCheck'].after('2000', self._checkPeltier)
         _msg = self.readserial()
         lpower = _msg.get('LeftPower', 0)
         rpower = _msg.get('RightPower', 0)
         self.leftPeltierPowerString.set(str(lpower))
         self.rightPeltierPowerString.set(str(rpower))
-        _state = _msg.get('Peltier_on', None)
-        if _state is None:
-            self.peltierCheck.configure(state='disabled')
-            return
-        self.peltierCheck.configure(state='normal')
-        if _state:
-            self.peltier_on.set(1)
+        _state = _msg.get('Peltier_on', [False, False])
+        if _state[0] is True:
+            self.left_peltier_on.set(1)
         else:
-            self.peltier_on.set(0)
+            self.left_peltier_on.set(0)
+        if _state[1] is True:
+            self.right_peltier_on.set(1)
+        else:
+            self.right_peltier_on.set(0)
 
     def _setTemp(self, *args):
         print(f"Setting peltier to left:{self.lefttargettemp.get()} right:{self.righttargettemp.get()} °C")
@@ -147,37 +175,47 @@ class TempControl(tk.Frame):
         if self.temps['right'] > -1000:
             self.rightTempString.set('right: %0.2f °C' % self.temps['right'])
 
+    def _heatcoolbuttonclick(self, widget):
+        _state = self.widgets[widget]['text']
+        if _state == 'Heat':
+            self.widgets[widget].config(text='Cool')
+        elif _state == 'Cool':
+            self.widgets[widget].config(text='Heat')
+
     def _initdevice(self, *args):
-        if self.device.get() == DEFAULTUSBDEVICE:
+        if self.device.get() == DEFAULTUSBDEVICE or self.is_initialized is True:
             return
-        print("Initializing device.")
+        print("Initializing device...", end='')
         n = 0
         ser_port = os.path.join('/', 'dev', self.device.get())
         if not os.path.exists(ser_port):
             return
         try:
-            self.controller = serial.Serial(ser_port, 9600, timeout=0.5)
-            time.sleep(1)
+            self.controller = serial.Serial(ser_port, 9600, timeout=1)
             _json = ''
             while not _json or n < 10:
+                time.sleep(1)
                 _json = str(self.controller.readline(), encoding='utf8')
                 try:
                     _msg = json.loads(_json)
                     _val = _msg.get('message', '')
                     if _val == 'Done initializing':
-                        print("Device initalized")
+                        print("\nDevice initalized")
                         self.is_initialized = True
+                        self._checkPeltier()
                         return
                 except json.decoder.JSONDecodeError:
-                    continue
+                    print(f"{n}...", end='')
                 n += 1
         except serial.serialutil.SerialException:
             return
-        print("Empty reply from device.")
+        print("\nEmpty reply from device.")
 
     def readserial(self):
         if not self.is_initialized:
             return {}
+        if time.time() - self.last_read < 0.5:
+            return self.buffer
         try:
             _json = ''
             while not _json:
@@ -185,6 +223,8 @@ class TempControl(tk.Frame):
                 _json = str(self.controller.readline(), encoding='utf8').strip()
                 try:
                     msg = json.loads(_json)
+                    self.last_read = time.time()
+                    self.buffer = msg
                     # print(msg)
                     if 'message' in msg:
                         print(msg)
@@ -195,7 +235,7 @@ class TempControl(tk.Frame):
         except serial.serialutil.SerialException:
             pass
         print(f"Error reading from {self.controller.name}.")
-        return {}
+        return self.buffer
 
     def writeserial(self, cmd, val=None):
         if not self.is_initialized:
