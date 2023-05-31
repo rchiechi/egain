@@ -129,7 +129,8 @@ class TempControl(tk.Frame):
         self._readTemps()
 
     def shutdown(self):
-        self.writeserial('OFF')
+        self.writeserial('OFFLEFT')
+        self.writeserial('OFFRIGHT')
 
     def _setPeltier(self, side):
         if getattr(self, f'{side.lower()}_peltier_on').get():
@@ -179,8 +180,10 @@ class TempControl(tk.Frame):
         _state = self.widgets[widget]['text']
         if _state == 'Heat':
             self.widgets[widget].config(text='Cool')
+            self.writeserial(f'{widget.upper()[0]}COOL')
         elif _state == 'Cool':
             self.widgets[widget].config(text='Heat')
+            self.writeserial(f'{widget.upper()[0]}HEAT')
 
     def _initdevice(self, *args):
         if self.device.get() == DEFAULTUSBDEVICE or self.is_initialized is True:
