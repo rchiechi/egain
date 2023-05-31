@@ -169,8 +169,8 @@ class TempControl(tk.Frame):
     def _readTemps(self):
         self.tempFrame.after('500', self._readTemps)
         _temps = self.readserial()
-        self.temps['left'] = _temps.get('LEFT', -999.9)
-        self.temps['right'] = _temps.get('RIGHT', -999.9)
+        self.temps['left'] = float(_temps.get('LEFT', -999.9))
+        self.temps['right'] = float(_temps.get('RIGHT', -999.9))
         if self.temps['left'] > -1000:
             self.leftTempString.set('left: %0.2f °C' % self.temps['left'])
         if self.temps['right'] > -1000:
@@ -202,7 +202,7 @@ class TempControl(tk.Frame):
                 try:
                     _msg = json.loads(_json)
                     _val = _msg.get('message', '')
-                    if _val == 'Done initializing':
+                    if _val == 'Done initializing thermocouples':
                         print("\nDevice initalized")
                         self.is_initialized = True
                         self._checkPeltier()

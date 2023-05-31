@@ -61,6 +61,9 @@ class MainFrame(tk.Frame):
     variables = {}
     initialized = False
     counter = 0
+    vt_data = {'V':[], 'leftT':[], 'rightT':[], 'time':[]}
+    measuring = False
+    timer = 0
 
     def __init__(self, root, opts):
         self.root = root
@@ -86,17 +89,10 @@ class MainFrame(tk.Frame):
         self.master.lift()
 
     def __createWidgets(self):
-        measdone = BooleanVar(value=False)
-        self.variables['measdone'] = measdone
         busy = BooleanVar(value=False)
         self.variables['busy'] = busy
-
         dataFrame = tk.Frame(self)
         controlsFrame = tk.Frame(self)
-        measurementFrame = MeasurementControl(controlsFrame,
-                                              measdone=measdone,
-                                              busy=busy)
-        self.widgets['measurementFrame'] = measurementFrame
         voltmeterFrame = tk.LabelFrame(controlsFrame, text='Voltmeter Controls')
         voltmetercontrols = MeasurementReadV(voltmeterFrame, busy=busy)
         self.widgets['voltmetercontrols'] = voltmetercontrols
@@ -105,8 +101,6 @@ class MainFrame(tk.Frame):
         self.widgets['tempcontrols'] = tempcontrols
         optionsFrame = tk.Frame(self)
         outputFrame = tk.Frame(optionsFrame)
-        # magFrame = tk.Frame(optionsFrame)
-        # outputfilenameFrame = tk.Frame(optionsFrame)
         buttonFrame = tk.Frame(self)
 
         dataplot = dataCanvas(dataFrame, xlabel='ΔT', ylabel='Voltage')
@@ -129,74 +123,34 @@ class MainFrame(tk.Frame):
         outputfilenameEntry = Entry(master=outputFrame,
                                     width=20,
                                     font=Font(size=10))
+        self.widgets['outputfilenameEntry'] = outputfilenameEntry
         outputdirLabel.pack(side=LEFT)
         outputfilenameEntry.pack(side=LEFT)
         outputfilenameEntry.delete(0, END)
         outputfilenameEntry.insert(0, self.opts.output_file_name)
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
-            outputfilenameEntry.bind(_ev, self.checkOutputfilename)
-        # maketipButton = tk.Button(master=magFrame,
-        #                           text='Make Tip',
-        #                           command=self.maketipButtonClick,
-        #                           state=DISABLED)
-        # self.widgets['maketipButton'] = maketipButton
-        # maketipButton.pack(side=LEFT)
-#         junctionsizeEntryLabel = Label(master=magFrame,
-#                                        text='Junction size (cm):')
-#         junctionsizeEntryLabel.pack(side=LEFT)
-#         junction_size = StringVar(value='1.0')
-#         self.variables['junction_size'] = junction_size
-#         junctionsizeEntry = Entry(master=magFrame,
-#                                   width=5,
-#                                   textvariable=junction_size,
-#                                   font=Font(size=10))
-#         junctionsizeEntry.pack(side=LEFT)
-# 
-#         junctionmagEntryLabel = Label(master=magFrame,
-#                                       text='Magnification:')
-#         junctionmagEntryLabel.pack(side=LEFT)
-#         junction_mag = StringVar(value='2.5')
-#         self.variables['junction_mag'] = junction_mag
-#         junctionmag = tk.Spinbox(magFrame,
-#                                  font=Font(size=10),
-#                                  from_=1,
-#                                  to=20,
-#                                  increment=0.5,
-#                                  textvariable=junction_mag,
-#                                  width=4)
-#         junctionmag.pack(side=LEFT)
+            outputfilenameEntry.bind(_ev, self.checkOptions)
 
         outputFrame.pack(side=TOP, fill=X)
-        # magFrame.pack(side=TOP, fill=X)
-
-        # for _ev in ('<Return>', '<Leave>', '<Enter>'):
-        #     junctionsizeEntry.bind(_ev, self.checkJunctionsize)
-
         saveButton = tk.Button(master=buttonFrame, text="Save To", command=self.SpawnSaveDialogClick)
         saveButton.pack(side=LEFT)
         measButton = tk.Button(master=buttonFrame, text="Measure",
-                               command=measurementFrame.startMeasurementButtonClick)
+                               command=self.measButtonClick)
         self.widgets['measButton'] = measButton
         measButton.pack(side=LEFT)
         measButton['state'] = DISABLED
         measButton.after(100, self.checkOptions)
         stopButton = tk.Button(master=buttonFrame, text='Stop',
-                               command=measurementFrame.stop_measurement)
+                               command=self.stopbuttonclick)
         self.widgets['stopButton'] = stopButton
         stopButton.pack(side=LEFT)
         quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.quitButtonClick)
         self.widgets['quitButton'] = quitButton
 
-        measdone.trace_add('write', self._updateData)
-        measdone.trace_add(('read', 'write'), self._checkbusy)
-        busy.trace_add(('read', 'write'), self._checkbusy)
-
         quitButton.pack(side=BOTTOM)
-
         dataFrame.pack(side=TOP, fill=BOTH)
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         optionsFrame.pack(side=TOP, fill=X)
-        measurementFrame.pack(side=TOP, fill=BOTH)
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         sattusLabelprefix.pack(side=LEFT)
         statusLabel.pack(side=LEFT)
@@ -216,17 +170,38 @@ class MainFrame(tk.Frame):
         self.__quit()
 
     def __quit(self):
-        self.widgets['measurementFrame'].shutdown()
+        self.widgets['voltmetercontrols'].shutdown()
         self.widgets['tempcontrols'].shutdown()
-        # self.widgets['stagecontroller'].shutdown()
         time.sleep(1)
         self.root.quit()
 
-    # def measButtonClick(self):
-        # self.variables['busy'].set(True)
-        # self._checkbusy()
-        # self.widgets['measurementFrame'].after(100, self._checkbusy)
-        # self.widgets['measurementFrame'].startMeasurementButtonClick()
+    def _record(self, *args):
+        if not self.measuring:
+            return
+        self.vt_data['V'].append(self.widgets['voltmetercontrols'].voltage)
+        self.vt_data['leftT'].append(self.widgets['tempcontrols'].lefttemp)
+        self.vt_data['rightT'].append(self.widgets['tempcontrols'].righttemp)
+        _dt = time.time() - self.timer
+        self.vt_data['time'].append(_dt)
+        self.widgets['measButton'].configure(text=f'Recording {_dt:.0f}')
+        self._writedata()
+        self._updateData()
+        self.widgets['measButton'].after(500, self._record)
+
+    def measButtonClick(self):
+        self.measuring = not self.measuring
+        if self.measuring:
+            self.timer = time.time()
+            self.vt_data = {'V':[], 'leftT':[], 'rightT':[], 'time':[]}
+            self.widgets['measButton'].configure(text='Recording 0')
+        else:
+            self.widgets['measButton'].configure(text='Measure')
+            self._writedata(finalize=True)
+        self._record()
+
+    def stopbuttonclick(self):
+        self.measuring = True
+        self.measButtonClick()
 
     def SpawnSaveDialogClick(self):
         self.opts.save_path = filedialog.askdirectory(
@@ -235,33 +210,21 @@ class MainFrame(tk.Frame):
         self.variables['outputdirstring'].set(self.opts.save_path)
         self.checkOptions()
 
-    def checkOutputfilename(self, event):
-        self.opts.output_file_name = event.widget.get()
-        self.checkOptions()
-
-    def checkJunctionsize(self, event):
-        _junction_size = self.variables['junction_size'].get()
-        if not _junction_size:
-            return
-        try:
-            float(_junction_size)
-        except ValueError:
-            self.variables['junction_size'].set('1.0')
-
-    def checkOptions(self):
+    def checkOptions(self, *args):
+        self.opts.output_file_name = self.widgets['outputfilenameEntry'].get()
         _outdir = f"/{self.variables['outputdirstring'].get().strip('/')}/"
         self.variables['outputdirstring'].set(_outdir)
         if self.variables['statusVar'].get() in (MEASURING):
             self.widgets['measButton'].after(100, self.checkOptions)
             return
-        _initialized = [False, False, False]
+        _initialized = [False, False]
         _connected = []
-        if self.widgets['measurementFrame'].initialized:
-            _connected.append('SMU')
-            _initialized[0] = True
         if self.widgets['tempcontrols'].initialized:
             _connected.append('Peltier')
-            _initialized[2] = True
+            _initialized[0] = True
+        if self.widgets['voltmetercontrols'].initialized:
+            _connected.append('Voltmeter')
+            _initialized[1] = True
         if len(_connected) > 1:
             _connected = _connected[:-1]+['and', _connected[-1]]
         if _initialized[0] is True:
@@ -275,83 +238,42 @@ class MainFrame(tk.Frame):
             self.variables['statusVar'].set('Not Initialized')
 
     def _updateData(self, *args):
-        if self.variables['measdone'].get():
-            results = self.widgets['measurementFrame'].data
-            if len(results['V']) == len(results['I']):
-                self.widgets['dataplot'].displayData(results)
-            self._writedata(False)
-            # self.widgets['dataplot'].displayData({'x':[1,2,3], 'y':[4,5,6]})
-        # if not self.variables['busy'].get():
-        if not self.widgets['measurementFrame'].isbusy:
-            self._writedata(True)
-            # print(">>>>>>>>>>>> _updateData Measurement is not busy")
+        results = {'V':[], 'DT':[]}
+        for _v in self.vt_data['V']:
+            results['V'].append(_v)
+        _lt = self.vt_data['leftT']
+        _rt = self.vt_data['rightT']
+        for i in range(len(_lt)):
+            results['DT'].append(_lt[i] - _rt[i])
+        self.widgets['dataplot'].displayData(results, xlabel='ΔT', ylabel='Voltage', xkey='DT', ykey='V')
 
     def _writedata(self, finalize=False):
-        # TEMPERATURE DATA!!!
-        # Save data to disk and then delete them
-        # DATA_FORMAT = {'V':[], 'I':[], 't':[]}
-        _jsize = float(self.variables['junction_size'].get())
-        _jmag = float(self.variables['junction_mag'].get())
-        _area = math.pi*(_jmag * _jsize * JUNCTION_CONVERSION_FACTOR)**2
-        results = self.widgets['measurementFrame'].data
-        for _key in ('J', 'upper', 'lower'):
-            results[_key] = []
-        for _I in results['I']:
-            results['J'].append(_I/_area)
-            results['upper'].append(self.widgets['tempcontrols'].uppertemp)
-            results['lower'].append(self.widgets['tempcontrols'].lowertemp)
+        if not self.vt_data['V']:
+            return
+        self.checkOptions()
         _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
         if finalize:
             if os.path.exists(_fn):
                 if not tk.askyesno("Overwrite?", f'{_fn} exists, overwrite it?'):
                     _fn = f'{_fn}_{str(self.counter).zfill(2)}'
                     self.counter += 1
-            write_data_to_file(f'{_fn}_data.txt', results)
+            write_data_to_file(f'{_fn}_data.txt', self.vt_data)
             try:
                 os.remove(f'{_fn}_tmp.txt')
             except FileNotFoundError:
                 pass
-            del self.widgets['measurementFrame'].data
+            self.vt_data = {'V':[], 'leftT':[], 'rightT':[], 'time':[]}
+            messagebox.showinfo("Saved", f"Data written to {_fn}_data.txt")
         else:
-            write_data_to_file(f'{_fn}_tmp.txt', results)
-
-        with open(f'{_fn}_metadata.txt', 'w') as fh:
-            fh.write(f'{time.strftime(STRFTIME)}\n')
-            fh.write(f'Onscreen junction size:{_jsize}\n')
-            fh.write(f"Magnification:{self.variables['junction_mag'].get()}\n")
-            fh.write(f'Junction conversion factor:{JUNCTION_CONVERSION_FACTOR}\n')
-            fh.write(f"Peltier enabled: {self.widgets['tempcontrols'].peltierstatus}\n")
-            fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
-            fh.write(f"Lower temperature (°C): {self.widgets['tempcontrols'].lowertemp}\n")
-
-    def _checkbusy(self, *args):
-        if not self.initialized:
-            return
-        if self.variables['busy'].get():
-            if self.widgets['measurementFrame'].isbusy:
-                self.variables['statusVar'].set(
-                    f"{MEASURING} sweep {self.widgets['measurementFrame'].sweeps_done+1}")
-        else:
-            self.variables['statusVar'].set(READY)
-        # if self.variables['busy'].get():
-        if self.widgets['measurementFrame'].isbusy or self.variables['busy'].get():
-            self.widgets['quitButton']['state'] = DISABLED
-            self.widgets['measButton']['state'] = DISABLED
-            # self.widgets['measurementFrame'].after(100, self._checkbusy)
-            # print(f">>>> _checkbusy Measurement Frame is busy {self.widgets['measurementFrame'].isbusy}, {self.variables['busy'].get()}")
-        else:
-            self.widgets['quitButton']['state'] = NORMAL
-            self.widgets['measButton']['state'] = NORMAL
-
+            write_data_to_file(f'{_fn}_tmp.txt', self.vt_data)
 
 def write_data_to_file(fn, results):
     with open(fn, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect='JV')
-        writer.writerow(['V (V)', 'I (A)', 'J (A/cm2)', 'Time (s)', 'Upper Temp (°C)', 'Lower Temp (°C)'])
+        writer.writerow(['V (V)', 'Left T (°C)', 'Rigth T (°C)', 'Delta Time (s)', 'L-R Temp (°C)'])
         for _idx, V in enumerate(results['V']):
             writer.writerow([V,
-                             results['I'][_idx],
-                             results['J'][_idx],
-                             results['t'][_idx],
-                             results['upper'][_idx],
-                             results['lower'][_idx]])
+                             results['leftT'][_idx],
+                             results['rightT'][_idx],
+                             f"{results['time'][_idx]:0.2f}",
+                             results['leftT'][_idx] - results['rightT'][_idx]])

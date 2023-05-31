@@ -87,7 +87,7 @@ void setup() {
     Serial.println("{\"message\":\"ERROR\"}");
     while (1) delay(10);
   }
-  Serial.println("{\"message\":\"Done initializing\"}");
+  Serial.println("{\"message\":\"Done initializing thermocouples\"}");
   initialized = true;
 
   pinMode(LPELTIER_RELAY, OUTPUT);    // sets the digital pin as output
