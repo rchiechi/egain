@@ -283,25 +283,32 @@ void loop() {
     lcd.setCursor(0,0);
     lcd.setBacklight(ON);
     Serial.print("{\"LEFT\":");
-    lcd.print("L: ");
     double c = leftThermocouple.readCelsius();
     if (!isnan(c)){
       Serial.print(c);
+      lcd.print("L: ");
       lcd.print(c,2);
       lcd.print("C");
     } else{
       Serial.print(-999.9);
+      uint8_t e = thermocouple.readError();
+      if (e & MAX31855_FAULT_OPEN) lcd.print("FAULT:Open circuit");
+      if (e & MAX31855_FAULT_SHORT_GND) lcd.print("FAULT: GND short");
+      if (e & MAX31855_FAULT_SHORT_VCC) lcd.print("FAULT: VCC short");
     }
     Serial.print(",\"RIGHT\":");
     lcd.setCursor(0,1);
-    lcd.print("R: ");
     c = rightThermocouple.readCelsius();
     if (!isnan(c)){
       Serial.print(c);
+      lcd.print("R: ");
       lcd.print(c,2);
       lcd.print("C");
     } else{
       Serial.print(-999.9);
+      if (e & MAX31855_FAULT_OPEN) lcd.print("FAULT:Open circuit");
+      if (e & MAX31855_FAULT_SHORT_GND) lcd.print("FAULT: GND short");
+      if (e & MAX31855_FAULT_SHORT_VCC) lcd.print("FAULT: VCC short");
     }
     Serial.print(",");
     Serial.print("\"LTARGET\":");
