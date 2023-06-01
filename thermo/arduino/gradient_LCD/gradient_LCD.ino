@@ -291,7 +291,7 @@ void loop() {
       lcd.print("C");
     } else{
       Serial.print(-999.9);
-      uint8_t e = thermocouple.readError();
+      uint8_t e = leftThermocouple.readError();
       if (e & MAX31855_FAULT_OPEN) lcd.print("FAULT:Open circuit");
       if (e & MAX31855_FAULT_SHORT_GND) lcd.print("FAULT: GND short");
       if (e & MAX31855_FAULT_SHORT_VCC) lcd.print("FAULT: VCC short");
@@ -306,6 +306,7 @@ void loop() {
       lcd.print("C");
     } else{
       Serial.print(-999.9);
+      uint8_t e = rightThermocouple.readError();
       if (e & MAX31855_FAULT_OPEN) lcd.print("FAULT:Open circuit");
       if (e & MAX31855_FAULT_SHORT_GND) lcd.print("FAULT: GND short");
       if (e & MAX31855_FAULT_SHORT_VCC) lcd.print("FAULT: VCC short");
