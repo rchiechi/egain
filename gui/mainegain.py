@@ -135,7 +135,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntry.delete(0, END)
         outputfilenameEntry.insert(0, self.opts.output_file_name)
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
-            outputfilenameEntry.bind(_ev, self.checkOutputfilename)
+            outputfilenameEntry.bind(_ev, self.checkOptions)
         maketipButton = tk.Button(master=magFrame,
                                   text='Make Tip',
                                   command=self.maketipButtonClick,
@@ -223,12 +223,6 @@ class MainFrame(tk.Frame):
         time.sleep(1)
         self.root.quit()
 
-    # def measButtonClick(self):
-        # self.variables['busy'].set(True)
-        # self._checkbusy()
-        # self.widgets['measurementFrame'].after(100, self._checkbusy)
-        # self.widgets['measurementFrame'].startMeasurementButtonClick()
-
     def maketipButtonClick(self):
         _t = 0
         _alive, _res = self.widgets['measurementFrame'].getResistanceReader()
@@ -264,10 +258,10 @@ class MainFrame(tk.Frame):
             initialdir=self.opts.save_path)
         self.variables['outputdirstring'].set(self.opts.save_path)
         self.checkOptions()
-
-    def checkOutputfilename(self, event):
-        self.opts.output_file_name = event.widget.get()
-        self.checkOptions()
+# 
+#     def checkOutputfilename(self, event):
+#         self.opts.output_file_name = event.widget.get()
+#         self.checkOptions()
 
     def checkJunctionsize(self, event):
         _junction_size = self.variables['junction_size'].get()
@@ -321,11 +315,11 @@ class MainFrame(tk.Frame):
             self._writedata(True)
             # print(">>>>>>>>>>>> _updateData Measurement is not busy")
 
-
     def _writedata(self, finalize=False):
         # TEMPERATURE DATA!!!
         # Save data to disk and then delete them
         # DATA_FORMAT = {'V':[], 'I':[], 't':[]}
+        self.checkOptions()
         _jsize = float(self.variables['junction_size'].get())
         _jmag = float(self.variables['junction_mag'].get())
         _area = math.pi*(_jmag * _jsize * JUNCTION_CONVERSION_FACTOR)**2
@@ -359,6 +353,8 @@ class MainFrame(tk.Frame):
             fh.write(f"Peltier enabled: {self.widgets['tempcontrols'].peltierstatus}\n")
             fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
             fh.write(f"Lower temperature (°C): {self.widgets['tempcontrols'].lowertemp}\n")
+        if finalize:
+            messagebox.showinfo("Saved", f"Data written to {_fn}_data.txt")
 
     def _checkbusy(self, *args):
         if not self.initialized:
