@@ -36,10 +36,10 @@
 Adafruit_MAX31855 leftThermocouple(CLK, LCS, DO);
 Adafruit_MAX31855 rightThermocouple(CLK, RCS, DO);
 
-#define RPELTIER 3
-#define RPELTIER_RELAY 5
-#define LPELTIER 4
-#define LPELTIER_RELAY 6 // Currently unused
+#define RPELTIER 4
+#define RPELTIER_RELAY 6
+#define LPELTIER 5
+#define LPELTIER_RELAY 7 // Currently unused
 
 // Example creating a thermocouple instance with hardware SPI
 // on a given CS pin.
