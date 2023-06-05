@@ -194,7 +194,7 @@ class TempControl(tk.Frame):
         if not os.path.exists(ser_port):
             return
         try:
-            self.controller = serial.Serial(ser_port, 9600, timeout=1)
+            self.controller = serial.Serial(ser_port, 115200, timeout=1)
             _json = ''
             while not _json or n < 10:
                 time.sleep(1)

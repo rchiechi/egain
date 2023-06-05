@@ -52,15 +52,17 @@ Adafruit_MAX31855 rightThermocouple(RCLK, RCS, RDO);
 //Adafruit_MAX31855 thermocouple(MAXCS, SPI1);
 
 // These #defines make it easy to set the backlight color
-#define OFF 0x0
-#define ON 0x1
-#define RED 0x1
-#define YELLOW 0x3
-#define GREEN 0x2
-#define TEAL 0x6
-#define BLUE 0x4
-#define VIOLET 0x5
-#define WHITE 0x7 
+enum LightColor {
+  OFF = 0x0,
+  ON = 0x1,
+  RED = 0x1,
+  YELLOW = 0x3,
+  GREEN = 0x2,
+  TEAL = 0x6,
+  BLUE = 0x4,
+  VIOLET = 0x5,
+  WHITE = 0x7
+};
 
 Adafruit_RGBLCDShield lcd;
 
@@ -81,6 +83,13 @@ int left_flow = HEAT;
 int right_flow = COOL;
 
 bool initialized = false;
+
+//! The current state.
+void (*state)() = NULL;
+
+//! The state that the game was in prior to the current state.
+void (*last_state)() = NULL;
+
 
 void setup() {
   Serial.begin(9600);

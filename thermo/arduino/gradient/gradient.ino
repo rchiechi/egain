@@ -26,20 +26,20 @@
 
 // Example creating a thermocouple instance with software SPI on any three
 // digital IO pins.
-#define RDO   3
-#define RCS   4
-#define RCLK  5
-#define LDO   8
+#define DO   11
+#define RCS   10
+#define CLK  13
+// #define LDO   8
 #define LCS   9
-#define LCLK  10
+// #define LCLK  10
 // initialize the Thermocouple
-Adafruit_MAX31855 leftThermocouple(LCLK, LCS, LDO);
-Adafruit_MAX31855 rightThermocouple(RCLK, RCS, RDO);
+Adafruit_MAX31855 leftThermocouple(CLK, LCS, DO);
+Adafruit_MAX31855 rightThermocouple(CLK, RCS, DO);
 
-#define RPELTIER 6
-#define RPELTIER_RELAY 13
-#define LPELTIER 11
-#define LPELTIER_RELAY 12 // Currently unused
+#define RPELTIER 3
+#define RPELTIER_RELAY 5
+#define LPELTIER 4
+#define LPELTIER_RELAY 6 // Currently unused
 
 // Example creating a thermocouple instance with hardware SPI
 // on a given CS pin.
@@ -70,7 +70,7 @@ int right_flow = COOL;
 bool initialized = false;
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   while (!Serial) delay(1); // wait for Serial on Leonardo/Zero, etc
 
