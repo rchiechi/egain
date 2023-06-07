@@ -46,7 +46,8 @@ from gui.measurement import MeasurementControl
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
-JUNCTION_CONVERSION_FACTOR = 0.1  # cm/cm
+REFERENCE_SIZE_M = 450e-6  # Standard syringe barrel is 450 µm
+# JUNCTION_CONVERSION_FACTOR = 0.1  # cm/cm
 MEASURING = 'Measuring'
 MOVING = 'Stage in motion'
 READY = 'Ready'
@@ -142,6 +143,18 @@ class MainFrame(tk.Frame):
                                   state=DISABLED)
         self.widgets['maketipButton'] = maketipButton
         maketipButton.pack(side=LEFT)
+
+        referencesizeEntryLabel = Label(master=magFrame,
+                                        text='Reference size (cm):')
+        referencesizeEntryLabel.pack(side=LEFT)
+        reference_size = StringVar(value='5.0')
+        self.variables['reference_size'] = reference_size
+        referencesizeEntry = Entry(master=magFrame,
+                                   width=5,
+                                   textvariable=reference_size,
+                                   font=Font(size=10))
+        referencesizeEntry.pack(side=LEFT)
+
         junctionsizeEntryLabel = Label(master=magFrame,
                                        text='Junction size (cm):')
         junctionsizeEntryLabel.pack(side=LEFT)
@@ -321,13 +334,15 @@ class MainFrame(tk.Frame):
         # DATA_FORMAT = {'V':[], 'I':[], 't':[]}
         self.checkOptions()
         _jsize = float(self.variables['junction_size'].get())
-        _jmag = float(self.variables['junction_mag'].get())
-        _area = math.pi*(_jmag * _jsize * JUNCTION_CONVERSION_FACTOR)**2
+        _rsize = float(self.variables['reference_size'].get())  # screen_cm
+        # _jmag = float(self.variables['junction_mag'].get())
+        _conversion = (REFERENCE_SIZE_M * 100) / _rsize  # (m cm/m) / screen_cm = cm / screen_cm
+        _area_in_cm = math.pi*(_conversion * _jsize)**2  # pi((cm / screen_cm) screen_cm) = cm
         results = self.widgets['measurementFrame'].data
         for _key in ('J', 'upper', 'lower'):
             results[_key] = []
         for _I in results['I']:
-            results['J'].append(_I/_area)
+            results['J'].append(_I/_area_in_cm)
             results['upper'].append(self.widgets['tempcontrols'].uppertemp)
             results['lower'].append(self.widgets['tempcontrols'].lowertemp)
         _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
@@ -349,7 +364,7 @@ class MainFrame(tk.Frame):
             fh.write(f'{time.strftime(STRFTIME)}\n')
             fh.write(f'Onscreen junction size:{_jsize}\n')
             fh.write(f"Magnification:{self.variables['junction_mag'].get()}\n")
-            fh.write(f'Junction conversion factor:{JUNCTION_CONVERSION_FACTOR}\n')
+            fh.write(f'Junction conversion factor:{_conversion}\n')
             fh.write(f"Peltier enabled: {self.widgets['tempcontrols'].peltierstatus}\n")
             fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
             fh.write(f"Lower temperature (°C): {self.widgets['tempcontrols'].lowertemp}\n")
