@@ -158,7 +158,7 @@ class MeasurementControl(tk.Frame):
         self.busy.set(True)
         self._isbusy = True
         if not self.is_initialized:
-            _smu = K6430(self.deviceString.get())
+            _smu = K6430(self.deviceString.get(), flowcontrol=True)
             if _smu.initialize(auto_sense_range=True):
                 self.smu = _smu
         if self.smu is not None:

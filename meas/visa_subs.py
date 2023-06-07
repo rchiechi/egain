@@ -89,12 +89,12 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
 
     try:
         print(f"Opening serial device {name}")
-        serial_visa = SerialVisa(visatoserial(name))
+        serial_visa = SerialVisa(visatoserial(name), flowcontrol=kwargs.get("flowcontrol", False))
         i = 0
         while i < 5:
-            # IDN = serial_visa.query(idn)
+            print(idn)
             serial_visa.write(idn)
-            IDN = serial_visa.read(64)
+            IDN = serial_visa.read(128)
             if IDN:
                 print(IDN)
                 serial_visa.playchord()
@@ -106,7 +106,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
                 i += 1
 
     except Exception as msg:
-        print(str(msg))
+        print(f"Exception: {str(msg)}")
     print("Failed opening serial port %s" % name)
     return None
 
@@ -152,12 +152,11 @@ class SerialVisa():
     cmd_delay = 0.05
     smu = None
 
-    def __init__(self, address, baud=9600, timeout=1):
+    def __init__(self, address, baud=9600, timeout=1, flowcontrol=False):
         self.delta = time.time()
-        self.address = address
-        self.baud = baud
-        self.timeout = timeout
-        self.smu = serial.Serial(address, baud, timeout=timeout)
+        # self.address = address
+        # self.timeout = timeout
+        self.smu = serial.Serial(address, baud, timeout=timeout, xonxoff=flowcontrol)
         # self.playchord()
 
     @property

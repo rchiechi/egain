@@ -21,7 +21,7 @@ class Instrument:
     DATA_FORMAT = ('V', 'I', 't')
     visa = None
 
-    def __init__(self, address):
+    def __init__(self, address, flowcontrol=False):
         self.name = "Instrument Name"
         self.address = address
         if isinstance(address, int):
@@ -29,7 +29,7 @@ class Instrument:
             self.backend = MODE_GPIB
         else:
             # self.visa = serial.Serial(address, 9600, timeout=0.5)
-            self.visa = visa_subs.initialize_serial(address)
+            self.visa = visa_subs.initialize_serial(address, flowcontrol=flowcontrol)
             self.backend = MODE_SERIAL
 
     @property
@@ -182,7 +182,10 @@ class Keithley(Instrument):
         self.__checkarmed()
 
     def __checkarmed(self):
-        self.output = bool(int(self.visa.query(":OUTP:STAT?")))
+        try:
+            self.output = bool(int(self.visa.query(":OUTP:STAT?")))
+        except ValueError:
+            return True
 
     def fetch_data(self):
         return self.visa.query('FETC?').strip()
