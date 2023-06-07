@@ -248,12 +248,7 @@ class MainFrame(tk.Frame):
             except ValueError:
                 time.sleep(1)
                 _meas = _res.read().split(b'\r')[0]
-                print(_meas)
             _i += 1
-        if _i > 5:
-            ohms = 1000000.0
-        else:
-            ohms = float(_meas.strip())
 
         if ohms > 200:  # 20Ω is compliance
             messagebox.showerror("Error", "No tip contact.")
@@ -273,10 +268,7 @@ class MainFrame(tk.Frame):
                         _meas = _res.read().split(b'\r')[0]
                         print(_meas)
                     _i += 1
-                if _i > 5:
-                    ohms = 1000000.0
-                else:
-                    ohms = float(_meas.strip())
+
             except ValueError:
                 break
             print(f"Measured {ohms:0.1f}Ω")
