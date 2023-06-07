@@ -291,7 +291,7 @@ class MainFrame(tk.Frame):
         except ValueError:
             self.variables['junction_size'].set('1.0')
 
-    def checkOptions(self):
+    def checkOptions(self, *args):
         _outdir = f"/{self.variables['outputdirstring'].get().strip('/')}/"
         self.variables['outputdirstring'].set(_outdir)
         if self.variables['statusVar'].get() in (MEASURING):
