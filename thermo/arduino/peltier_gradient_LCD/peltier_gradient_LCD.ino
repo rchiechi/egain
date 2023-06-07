@@ -13,10 +13,10 @@
 // Example creating a thermocouple instance with software SPI on any three
 // digital IO pins.
 #define DO 11
-#define RCS 10
+#define RCS 9
 #define CLK 13
 // #define LDO   8
-#define LCS 9
+#define LCS 10
 // #define LCLK  10
 // initialize the Thermocouple
 Adafruit_MAX31855 leftThermocouple(CLK, LCS, DO);
@@ -68,6 +68,9 @@ unsigned long last_state_change_time;
 //! The current time in milliseconds since boot.
 unsigned long time;
 
+//! The currently selected menu index.
+uint8_t selected_menu_idx;
+
 //! The LCD display object.
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
@@ -89,15 +92,21 @@ uint8_t clicked_buttons;
 /*!
   Custom icons created using: http://www.quinapalus.com/hd44780udg.html
 */
-byte icons[3][8] = {
+byte icons[6][8] = {
   { 0x0c, 0x12, 0x12, 0x0c, 0x00, 0x00, 0x00 },
   { 0x00, 0x08, 0x0c, 0x0e, 0x0c, 0x08, 0x00 },
-  { 0x00, 0x02, 0x06, 0x0e, 0x06, 0x02, 0x00 }
+  { 0x00, 0x02, 0x06, 0x0e, 0x06, 0x02, 0x00 },
+  { 0x00, 0x1b, 0x0e, 0x04, 0x0e, 0x1b, 0x00 },
+  { 0x00, 0x0a, 0x1b, 0x04, 0x1b, 0x0a, 0x00 },
+  { 0x0a, 0x00, 0x15, 0x15, 0x0a, 0x0e, 0x04 }
 };
 //! Index into the bitmap array for degree symbol.
 const int DEGREE_ICON_IDX = 0;
-const int LEFT_TRIANGLE_IDX = 0;
-const int RIGHT_TRIANGLE_IDX = 0;
+const int LEFT_TRIANGLE_IDX = 1;
+const int RIGHT_TRIANGLE_IDX = 2;
+const int X_IDX = 3;
+const int COOL_IDX = 4;
+const int HEAT_IDX = 5;
 
 void setup() {
   Serial.begin(115200);
@@ -130,6 +139,9 @@ void setup() {
   lcd.createChar(DEGREE_ICON_IDX, icons[DEGREE_ICON_IDX]);
   lcd.createChar(LEFT_TRIANGLE_IDX, icons[LEFT_TRIANGLE_IDX]);
   lcd.createChar(RIGHT_TRIANGLE_IDX, icons[RIGHT_TRIANGLE_IDX]);
+  lcd.createChar(X_IDX, icons[X_IDX]);
+  lcd.createChar(COOL_IDX, icons[COOL_IDX]);
+  lcd.createChar(HEAT_IDX, icons[HEAT_IDX]);
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.setBacklight(ON);
@@ -221,7 +233,7 @@ void loop() {
 
 
 
-  delay(250);
+  delay(100);
 }
 
 // ###########################################################################
@@ -281,86 +293,128 @@ float ctof(float c) {
   return (c * 1.8) + 32;
 }
 
-void show_correction_menu() {
-  static int temp_correction = 0;
-  lcd.setBacklight(YELLOW);
+void show_set_menu() {
+  static bool update = true;
+  static uint8_t last_menu_idx = 0;
+  selected_menu_idx static int temp_correction = 0;
+  lcd.setBacklight(ON);
   lcd.setCursor(0, 0);
-  lcd.print(F("Temp Correction:"));
+  lcd.print(F("R: "));
+  if (right_peltier_on) {
+    if (right_flow == HEAT) {
+      lcd.write(HEAT_IDX);
+    } else if (right_flow == COOL) {
+      lcd.write(COOL_IDX);
+    }
+  } else {
+    lcd.write(X_IDX);
+  }
   lcd.setCursor(0, 1);
-  lcd.print(temp_correction);
-  lcd.write(DEGREE_ICON_IDX);
-  lcd.print(F("C"));
+  lcd.print(F("L: "));
+  if (left_peltier_on) {
+    if (left_flow == HEAT) {
+      lcd.write(HEAT_IDX);
+    } else if (left_flow == COOL) {
+      lcd.write(COOL_IDX);
+    }
+  } else {
+    lcd.write(X_IDX);
+  }
+
+  // lcd.write(DEGREE_ICON_IDX);
+  // lcd.print(F("C"));
   if (clicked_buttons) {
     lcd.clear();
   }
   if (clicked_buttons & BUTTON_SELECT) {
     state = show_summary;
-  } else if (clicked_buttons & BUTTON_LEFT) {
+  } else if (clicked_buttons & BUTTON_LEFT) && (selected_menu_idx == 0) {
     temp_correction--;
   } else if (clicked_buttons & BUTTON_RIGHT) {
     temp_correction++;
   } else {
-    state = show_correction_menu;
+    state = show_set_menu;
   }
 }
 
 void show_summary() {
-  static float last_lc = 0;
-  static float last_rc = 0;
+  static double last_lc = 0;
+  static double last_rc = 0;
+  static bool update = true;
 
-  bool update = false;
   // Read the temperature as Celsius:
 
-  float lc = leftThermocouple.readCelsius();
-  float rc = rightThermocouple.readCelsius();
-  if (last_lc != lc) {
-    last_lc = lc;
-    update = true;
-  }
-  if (last_rc != rc) {
-    last_rc = rc;
-    update = true;
-  }
+  double lc = leftThermocouple.readCelsius();
+  double rc = rightThermocouple.readCelsius();
+
   if (update) {
     lcd.setBacklight(ON);
     lcd.setCursor(0, 0);
-    lcd.write(0x25B2);
-    lcd.write(0x25BC);
-    lcd.print(F("LT: "));
+    if (left_peltier_on) {
+      if (left_flow == HEAT) {
+        lcd.write(HEAT_IDX);
+      } else if (left_flow == COOL) {
+        lcd.write(COOL_IDX);
+      }
+    } else {
+      lcd.write(X_IDX);
+    }
+    lcd.print(F("R: "));
     lcd.print(lc, 1);
-    lcd.print("/");
+    lcd.write(0x7E);
     lcd.print(leftDegC, 1);
     lcd.print(" ");
     lcd.write(DEGREE_ICON_IDX);
     lcd.print(F("C "));
-    // lcd.print(F("% "));
     lcd.setCursor(0, 1);
-    lcd.print(F("RT: "));
+    if (right_peltier_on) {
+      if (right_flow == HEAT) {
+        lcd.write(HEAT_IDX);
+      } else if (right_flow == COOL) {
+        lcd.write(COOL_IDX);
+      }
+    } else {
+      lcd.write(X_IDX);
+    }
+    lcd.print(F("L: "));
     lcd.print(rc, 1);
-    lcd.print("/");
+    lcd.write(0x7E);
     lcd.print(rightDegC, 1);
     lcd.print(" ");
     lcd.write(DEGREE_ICON_IDX);
     lcd.print(F("C "));
-    
   }
-  if (clicked_buttons & BUTTON_SELECT) {
-    lcd.clear();
-    state = show_correction_menu;
-  } else {
-    state = show_summary;
+  update = false;
+
+  if (abs(last_lc - lc) > 0.5) {
+    last_lc = lc;
+    update = true;
   }
-  if (clicked_buttons & BUTTON_UP) {
-    leftDegC = leftDegC + 0.5;
+  if (abs(last_rc - rc) > 0.5) {
+    last_rc = rc;
+    update = true;
   }
-  if (clicked_buttons & BUTTON_DOWN) {
-    leftDegC = leftDegC - 0.5;
-  }
-  if (clicked_buttons & BUTTON_RIGHT) {
-    rightDegC = rightDegC + 0.5;
-  }
-  if (clicked_buttons & BUTTON_LEFT) {
-    rightDegC = rightDegC - 0.5;
+  if (clicked_buttons) {
+    update = true;
+    if (BUTTON_SELECT) {
+      lcd.clear();
+      selected_menu_idx = 0;
+      state = show_set_menu;
+    } else {
+      state = show_summary;
+    }
+    if (BUTTON_UP) {
+      leftDegC = leftDegC + 0.5;
+    }
+    if (BUTTON_DOWN) {
+      leftDegC = leftDegC - 0.5;
+    }
+    if (BUTTON_RIGHT) {
+      rightDegC = rightDegC + 0.5;
+    }
+    if (BUTTON_LEFT) {
+      rightDegC = rightDegC - 0.5;
+    }
   }
 }
 
