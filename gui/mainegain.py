@@ -247,7 +247,7 @@ class MainFrame(tk.Frame):
         _alive, _res = self.widgets['measurementFrame'].getResistanceReader()
         ohms = float(_res.read().split(b',')[2])
         # NOTE: K6430 returns Ohms/10 for some reason
-        if ohms > 100:  # 20Ω is compliance
+        if ohms > 1000:  # 20Ω is compliance
             messagebox.showerror("Error", "No tip contact.")
             _alive.clear()
             return
@@ -270,6 +270,7 @@ class MainFrame(tk.Frame):
             time.sleep(0.1)
         self.widgets['stagecontroller'].stopZaxis()
         _alive.clear()
+        messagebox.showinfo("Tip", "I think I made a tip..?")
 
     def SpawnSaveDialogClick(self):
         self.opts.save_path = filedialog.askdirectory(
@@ -338,6 +339,7 @@ class MainFrame(tk.Frame):
         # TEMPERATURE DATA!!!
         # Save data to disk and then delete them
         # DATA_FORMAT = {'V':[], 'I':[], 't':[]}
+        self.checkOptions()
         _jsize = float(self.variables['junction_size'].get())
         _rsize = float(self.variables['reference_size'].get())  # screen_cm
         # _jmag = float(self.variables['junction_mag'].get())
@@ -373,6 +375,8 @@ class MainFrame(tk.Frame):
             fh.write(f"Peltier enabled: {self.widgets['tempcontrols'].peltierstatus}\n")
             fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
             fh.write(f"Lower temperature (°C): {self.widgets['tempcontrols'].lowertemp}\n")
+        if finalize:
+            messagebox.showinfo("Saved", f"Data written to {_fn}_data.txt")
 
     def _checkbusy(self, *args):
         if not self.initialized:
