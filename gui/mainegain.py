@@ -136,7 +136,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntry.delete(0, END)
         outputfilenameEntry.insert(0, self.opts.output_file_name)
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
-            outputfilenameEntry.bind(_ev, self.checkOptions)
+            outputfilenameEntry.bind(_ev, self.checkOutputfilename)
         maketipButton = tk.Button(master=magFrame,
                                   text='Make Tip',
                                   command=self.maketipButtonClick,
@@ -272,10 +272,10 @@ class MainFrame(tk.Frame):
             initialdir=self.opts.save_path)
         self.variables['outputdirstring'].set(self.opts.save_path)
         self.checkOptions()
-# 
-#     def checkOutputfilename(self, event):
-#         self.opts.output_file_name = event.widget.get()
-#         self.checkOptions()
+
+    def checkOutputfilename(self, event):
+        self.opts.output_file_name = event.widget.get()
+        self.checkOptions()
 
     def checkJunctionsize(self, event):
         _junction_size = self.variables['junction_size'].get()
