@@ -158,7 +158,7 @@ class MeasurementControl(tk.Frame):
         self.busy.set(True)
         self._isbusy = True
         if not self.is_initialized:
-            _smu = K6430(self.deviceString.get(), flowcontrol=True)
+            _smu = K6430(self.deviceString.get())
             if _smu.initialize(auto_sense_range=True):
                 self.smu = _smu
         if self.smu is not None:
@@ -222,7 +222,7 @@ class MeasurementControl(tk.Frame):
         # self.measdone.set(False)
         self.busy.set(True)
         self._isbusy = True
-        self.smu.initialize(auto_sense_range=True)
+        self.smu.initialize(reset=True, auto_sense_range=True)
         self.smu.setNPLC(self.meas['NPLC'])
         self.child_threads['meas'].append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
         self.child_threads['meas'][-1][1].start()

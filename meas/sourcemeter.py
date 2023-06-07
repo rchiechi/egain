@@ -164,6 +164,7 @@ class Keithley(Instrument):
 
     def measure_resistance(self):
         self.visa.write(':SYST:TIME:RES')
+        self.visa.write(':FORM:ELEM RES')
         self.visa.write(":SENS:FUNC 'RES'")
         self.visa.write(':SENS:RES:RANG:AUTO ON')
         self.visa.write(':SENS:RES:MODE AUTO')

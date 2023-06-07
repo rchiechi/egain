@@ -237,11 +237,25 @@ class MainFrame(tk.Frame):
         self.root.quit()
 
     def maketipButtonClick(self):
+        ohms = 1000000.0
         _t = 0
         _alive, _res = self.widgets['measurementFrame'].getResistanceReader()
-        ohms = float(_res.read().split(b',')[2])
-        # NOTE: K6430 returns Ohms/10 for some reason
-        if ohms > 1000:  # 20Ω is compliance
+        _meas = _res.read().split(b'\r')[0]
+        _i = 0
+        while _i < 3:
+            try:
+                ohms = float(_meas)
+            except ValueError:
+                time.sleep(1)
+                _meas = _res.read().split(b'\r')[0]
+                print(_meas)
+            _i += 1
+        if _i > 5:
+            ohms = 1000000.0
+        else:
+            ohms = float(_meas.strip())
+
+        if ohms > 200:  # 20Ω is compliance
             messagebox.showerror("Error", "No tip contact.")
             _alive.clear()
             return
@@ -250,10 +264,22 @@ class MainFrame(tk.Frame):
         while self.widgets['stagecontroller'].isbusy:
             try:
                 # NOTE: This command takes about a second to complete
-                ohms, amps = map(float, _res.read().split(b','))
+                _i = 0
+                while _i < 3:
+                    try:
+                        ohms = float(_meas)
+                    except ValueError:
+                        time.sleep(1)
+                        _meas = _res.read().split(b'\r')[0]
+                        print(_meas)
+                    _i += 1
+                if _i > 5:
+                    ohms = 1000000.0
+                else:
+                    ohms = float(_meas.strip())
             except ValueError:
                 break
-            print(f"Measured {10*ohms:0.1f}Ω at {1000*amps}mA")
+            print(f"Measured {ohms:0.1f}Ω")
             if ohms > 100:
                 print("Resistance > 100Ω --> tip formed?")
                 break
@@ -264,6 +290,7 @@ class MainFrame(tk.Frame):
             time.sleep(0.1)
         self.widgets['stagecontroller'].stopZaxis()
         _alive.clear()
+        self.widgets['quitButton']['state'] = NORMAL
         messagebox.showinfo("Tip", "I think I made a tip..?")
 
     def SpawnSaveDialogClick(self):

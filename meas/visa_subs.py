@@ -315,5 +315,8 @@ class READThread(threading.Thread):
 
     def read(self):
         if self.alive.is_set():
-            self.smu.write(b'READ?'+self.read_termination)
+            self.smu.write(b':READ?'+self.read_termination)
+            print(">>:READ?")
             return self.smu.read_until(self.read_termination)
+        else:
+            return b''
