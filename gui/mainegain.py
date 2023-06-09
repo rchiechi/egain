@@ -237,19 +237,13 @@ class MainFrame(tk.Frame):
         self.root.quit()
 
     def maketipButtonClick(self):
-        ohms = 1000000.0
         _t = 0
         _alive, _res = self.widgets['measurementFrame'].getResistanceReader()
         _meas = _res.read().split(b'\r')[0]
-        _i = 0
-        while _i < 3:
-            try:
-                ohms = float(_meas)
-            except ValueError:
-                time.sleep(1)
-                _meas = _res.read().split(b'\r')[0]
-            _i += 1
-
+        try:
+            ohms = float(_meas)
+        except ValueError:
+            ohms = 1000000.0
         if ohms > 200:  # 20Ω is compliance
             messagebox.showerror("Error", "No tip contact.")
             _alive.clear()
@@ -258,19 +252,9 @@ class MainFrame(tk.Frame):
         time.sleep(0.1)
         while self.widgets['stagecontroller'].isbusy:
             try:
-                # NOTE: This command takes about a second to complete
-                _i = 0
-                while _i < 3:
-                    try:
-                        ohms = float(_meas)
-                    except ValueError:
-                        time.sleep(1)
-                        _meas = _res.read().split(b'\r')[0]
-                        print(_meas)
-                    _i += 1
-
+                ohms = float(_meas)
             except ValueError:
-                break
+                ohms = 1000000.0
             print(f"Measured {ohms:0.1f}Ω")
             if ohms > 100:
                 print("Resistance > 100Ω --> tip formed?")

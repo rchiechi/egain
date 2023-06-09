@@ -251,13 +251,6 @@ class SerialVisa():
         alive.set()
         opcthread = OPCThread(self.smu, alive)
         return alive, opcthread
-        # opcthread = OPCThread(self.smu, alive)
-        # # _s = self.smu.read(1)
-        # while self.smu.read(1) != b'1':
-        #     # print(_s)
-        #     time.sleep(1)
-        #     # _s = self.smu.read(1)
-        # self.smu.read(1)  # Trim CR
 
     def get_reader(self):
         alive = threading.Event()
@@ -280,7 +273,6 @@ class OPCThread(threading.Thread):
         while self.alive.is_set():
             _s = self.smu.read(1)
             if _s == b'1':
-                # print(f'OPCThread complete: {self.smu.read(1)}')  # Trim CR
                 self.alive.clear()
                 break
             elif time.time() - starttime > 120:
@@ -315,8 +307,15 @@ class READThread(threading.Thread):
 
     def read(self):
         if self.alive.is_set():
-            self.smu.write(b':READ?'+self.read_termination)
-            print(">>:READ?")
-            return self.smu.read_until(self.read_termination)
+            self.smu.write(b':READ?'+self.write_termination)
+            if DEBUG:
+                print(">>:READ?")
+            i = 0
+            _data = b''
+            while not _data and i < 3:
+                _data = self.smu.read_until(self.read_termination)
+                time.sleep(1)
+                i += 1
+            return _data
         else:
             return b''
