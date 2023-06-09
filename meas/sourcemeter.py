@@ -147,6 +147,7 @@ class Keithley(Instrument):
         self.visa.write(':SYST:TIME:RES')
         self.visa.write(':SOUR:FUNC:MODE VOLT')
         self.visa.write(":SENS:FUNC 'CURR:DC'")
+        self.visa.write(":FORM:ELEM VOLT,CURR,TIME")
         if self.auto_range:
             self.visa.write(":SENS:CURR:RANG:AUTO ON")
         else:
