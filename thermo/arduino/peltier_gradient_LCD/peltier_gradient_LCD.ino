@@ -296,7 +296,6 @@ float ctof(float c) {
 void show_set_menu() {
   static bool update = true;
   static uint8_t last_menu_idx = 0;
-  selected_menu_idx static int temp_correction = 0;
   lcd.setBacklight(ON);
   lcd.setCursor(0, 0);
   lcd.print(F("R: "));
@@ -328,10 +327,10 @@ void show_set_menu() {
   }
   if (clicked_buttons & BUTTON_SELECT) {
     state = show_summary;
-  } else if (clicked_buttons & BUTTON_LEFT) && (selected_menu_idx == 0) {
-    temp_correction--;
-  } else if (clicked_buttons & BUTTON_RIGHT) {
-    temp_correction++;
+  } else if ((clicked_buttons & BUTTON_DOWN) && (selected_menu_idx == 0)) {
+    ++selected_menu_idx;
+  } else if (clicked_buttons & BUTTON_UP) {
+    --selected_menu_idx;
   } else {
     state = show_set_menu;
   }
@@ -396,23 +395,23 @@ void show_summary() {
   }
   if (clicked_buttons) {
     update = true;
-    if (BUTTON_SELECT) {
+    if (clicked_buttons & BUTTON_SELECT) {
       lcd.clear();
       selected_menu_idx = 0;
       state = show_set_menu;
     } else {
       state = show_summary;
     }
-    if (BUTTON_UP) {
+    if (clicked_buttons & BUTTON_UP) {
       leftDegC = leftDegC + 0.5;
     }
-    if (BUTTON_DOWN) {
+    if (clicked_buttons & BUTTON_DOWN) {
       leftDegC = leftDegC - 0.5;
     }
-    if (BUTTON_RIGHT) {
+    if (clicked_buttons & BUTTON_RIGHT) {
       rightDegC = rightDegC + 0.5;
     }
-    if (BUTTON_LEFT) {
+    if (clicked_buttons & BUTTON_LEFT) {
       rightDegC = rightDegC - 0.5;
     }
   }
