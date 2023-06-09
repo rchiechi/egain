@@ -165,68 +165,7 @@ void loop() {
   // Call current state function
   state();
   if (Serial.available() > 0) {
-    // read the incoming byte:
-    String incomingCmd = Serial.readStringUntil(terminator);
-    if (incomingCmd == "ONLEFT") {
-      left_peltier_on = true;
-      digitalWrite(LPELTIER_RELAY, HIGH);  // sets the digital pin on
-    }
-    if (incomingCmd == "OFFLEFT") {
-      left_peltier_on = false;
-      digitalWrite(LPELTIER_RELAY, LOW);  // sets the digital pin off
-    }
-    if (incomingCmd == "ONRIGHT") {
-      right_peltier_on = true;
-      digitalWrite(RPELTIER_RELAY, HIGH);  // sets the digital pin on
-    }
-    if (incomingCmd == "OFFRIGHT") {
-      right_peltier_on = false;
-      digitalWrite(RPELTIER_RELAY, LOW);  // sets the digital pin off
-    }
-    if (incomingCmd == "SETLTEMP") {
-      leftDegC = Serial.parseFloat();
-    }
-    if (incomingCmd == "SETRTEMP") {
-      rightDegC = Serial.parseFloat();
-    }
-    if (incomingCmd == "LHEAT") {
-      left_flow = HEAT;
-    }
-    if (incomingCmd == "LCOOL") {
-      left_flow = COOL;
-    }
-    if (incomingCmd == "RHEAT") {
-      right_flow = HEAT;
-    }
-    if (incomingCmd == "RCOOL") {
-      right_flow = COOL;
-    }
-
-    if (incomingCmd == "POLL") {
-      Serial.print("{\"LEFT\":");
-      double c = leftThermocouple.readCelsius();
-      if (!isnan(c)) {
-        Serial.print(c);
-      } else {
-        Serial.print(-999.9);
-      }
-      Serial.print(",\"RIGHT\":");
-      c = rightThermocouple.readCelsius();
-      if (!isnan(c)) {
-        Serial.print(c);
-      } else {
-        Serial.print(-999.9);
-      }
-      Serial.print(",");
-      Serial.print("\"LTARGET\":");
-      Serial.print(leftDegC);
-      Serial.print(",");
-      Serial.print("\"RTARGET\":");
-      Serial.print(rightDegC);
-      Serial.print(",");
-      checkPeltier();
-      Serial.println("}");
-    }
+    handle_request();
   }
   setLeft();
   setRight();
@@ -237,6 +176,77 @@ void loop() {
 }
 
 // ###########################################################################
+
+
+void handle_request() {
+  // read the incoming byte:
+  String incomingCmd = Serial.readStringUntil(terminator);
+
+  if (incomingCmd == "INIT") {
+    
+  }
+
+  if (incomingCmd == "ONLEFT") {
+    left_peltier_on = true;
+    digitalWrite(LPELTIER_RELAY, HIGH);  // sets the digital pin on
+  }
+  if (incomingCmd == "OFFLEFT") {
+    left_peltier_on = false;
+    digitalWrite(LPELTIER_RELAY, LOW);  // sets the digital pin off
+  }
+  if (incomingCmd == "ONRIGHT") {
+    right_peltier_on = true;
+    digitalWrite(RPELTIER_RELAY, HIGH);  // sets the digital pin on
+  }
+  if (incomingCmd == "OFFRIGHT") {
+    right_peltier_on = false;
+    digitalWrite(RPELTIER_RELAY, LOW);  // sets the digital pin off
+  }
+  if (incomingCmd == "SETLTEMP") {
+    leftDegC = Serial.parseFloat();
+  }
+  if (incomingCmd == "SETRTEMP") {
+    rightDegC = Serial.parseFloat();
+  }
+  if (incomingCmd == "LHEAT") {
+    left_flow = HEAT;
+  }
+  if (incomingCmd == "LCOOL") {
+    left_flow = COOL;
+  }
+  if (incomingCmd == "RHEAT") {
+    right_flow = HEAT;
+  }
+  if (incomingCmd == "RCOOL") {
+    right_flow = COOL;
+  }
+
+  if (incomingCmd == "POLL") {
+    Serial.print("{\"LEFT\":");
+    double c = leftThermocouple.readCelsius();
+    if (!isnan(c)) {
+      Serial.print(c);
+    } else {
+      Serial.print(-999.9);
+    }
+    Serial.print(",\"RIGHT\":");
+    c = rightThermocouple.readCelsius();
+    if (!isnan(c)) {
+      Serial.print(c);
+    } else {
+      Serial.print(-999.9);
+    }
+    Serial.print(",");
+    Serial.print("\"LTARGET\":");
+    Serial.print(leftDegC);
+    Serial.print(",");
+    Serial.print("\"RTARGET\":");
+    Serial.print(rightDegC);
+    Serial.print(",");
+    checkPeltier();
+    Serial.println("}");
+  }
+}
 
 //! Return a bitmask of clicked buttons.
 /*!
