@@ -222,7 +222,7 @@ class MeasurementControl(tk.Frame):
         # self.measdone.set(False)
         self.busy.set(True)
         self._isbusy = True
-        self.smu.initialize(reset=True, auto_sense_range=True, flowcontrol=True)
+        self.smu.initialize(reset=True, auto_sense_range=True, flowcontrol=False)
         self.smu.setNPLC(self.meas['NPLC'])
         self.child_threads['meas'].append(self.smu.start_voltage_sweep(build_sweep(self.sweep)))
         self.child_threads['meas'][-1][1].start()
