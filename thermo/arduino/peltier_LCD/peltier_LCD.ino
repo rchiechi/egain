@@ -15,12 +15,8 @@
 #define LCS 10
 
 
-// initialize the Thermocouples
-
-// Adafruit_MAX31855 leftThermocouple(CLK, LCS, DO);
-// Adafruit_MAX31855 rightThermocouple(CLK, RCS, DO);
+// The thermocouple objects
 Adafruit_MAX31855 Thermocouples[] = { Adafruit_MAX31855(CLK, LCS, DO), Adafruit_MAX31855(CLK, RCS, DO) };
-// Thermocouples[LEFT](CLK, LCS, DO);
 // Define pins to control peltier relays and MOSFETs
 #define RPELTIER 6
 #define RPELTIER_RELAY 4
@@ -40,49 +36,24 @@ Adafruit_MAX31855 Thermocouples[] = { Adafruit_MAX31855(CLK, LCS, DO), Adafruit_
 // char side[16];
 // const char* const sides[] PROGMEM = {left, right};
 
-// Initialize global variables
-double setDegC[] = {25.0, 25.0};
-// double setDegC[LEFT] = 25.0;        // Target left temperature
-// int leftpower = 0;             // Power to left peltier
-// double setDegC[RIGHT] = 25.0;       // Target rigth temperature
-int power[] = {0, 0};
-// int rightpower = 0;            // Power to right peltier
-// bool left_peltier_on = false;  // Keep track of left pletier power state
-// bool right_peltier_on = false;
+// **** Initialize global variables 
+double setDegC[] = {25.0, 25.0}; // Target temperatures
+int power[] = {0, 0}; // Power to MOSTFETs
 bool peltier_on[] = {false, false}; // Keep track of left pletier power state
-int flow[] = {HEAT, COOL};
-// int left_flow = HEAT;
-// int right_flow = COOL;
+int flow[] = {HEAT, COOL}; // Whether peltiers are in heating or cooling mode
 int peltier_addr[] = {LPELTIER, RPELTIER};
 int peltier_relay[] = {LPELTIER_RELAY, RPELTIER_RELAY};
 bool initialized;
-
-
-// Running averages for temperature
-// RunningAverage leftTC(10);
-// RunningAverage rightTC(10);
+// Running averages for temperatures
 RunningAverage avgTC[] = { RunningAverage(10), RunningAverage(10) };
-
-
-//! The current state.
-void (*state)() = NULL;
-
-//! The state prior to the current state.
-void (*last_state)() = NULL;
-
-//! The time in milliseconds since the last state change.
-unsigned long last_state_change_time;
-
-//! The current time in milliseconds since boot.
-unsigned long time;
-
-//! The currently selected menu index.
-uint8_t selected_menu_idx;
-
-//! The LCD display object.
+void (*state)() = NULL; // The current state.
+void (*last_state)() = NULL; // The state prior to the current state.
+unsigned long last_state_change_time; // The time in milliseconds since the last state change.
+unsigned long time; // The current time in milliseconds since boot.
+uint8_t selected_menu_idx; // The currently selected menu index.
+//The LCD display object.
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
-
-//! Enum of backlight colors.
+// Enum of backlight colors for future use.
 enum BackLightColor { ON = 0x1,
                       OFF = 0x0,
                       RED = 0x1,
@@ -92,11 +63,9 @@ enum BackLightColor { ON = 0x1,
                       BLUE = 0x4,
                       VIOLET = 0x5,
                       WHITE = 0x7 };
-
-//! The bitmask of currently clicked buttons.
+// The bitmask of currently clicked buttons.
 uint8_t clicked_buttons;
-
-//! Array of custom bitmap icons.
+// Array of custom bitmap icons.
 /*!
   Custom icons created using: http://www.quinapalus.com/hd44780udg.html
 */
@@ -108,7 +77,7 @@ byte icons[6][8] = {
   { 0x00, 0x0a, 0x1b, 0x04, 0x1b, 0x0a, 0x00 },
   { 0x0a, 0x00, 0x15, 0x15, 0x0a, 0x0e, 0x04 }
 };
-//! Index into the bitmap array for degree symbol.
+// Index into the bitmap array for degree symbol.
 const int DEGREE_ICON_IDX = 0;
 const int LEFT_TRIANGLE_IDX = 1;
 const int RIGHT_TRIANGLE_IDX = 2;
@@ -118,10 +87,7 @@ const int HEAT_IDX = 5;
 
 void setup() {
   Serial.begin(115200);
-
   while (!Serial) delay(1);  // wait for Serial on Leonardo/Zero, etc
-
-  // Serial.println("{\"message\":\"MAX31855 test\"}");
   // wait for MAX chip to stabilize
   delay(500);
   initialized = true;
@@ -138,15 +104,13 @@ void setup() {
     while (1) delay(10);
   }
   Serial.println("{\"message\":\"Done initializing thermocouples\"}");
-
-  pinMode(LPELTIER_RELAY, OUTPUT);  // sets the digital pin as output
-  pinMode(LPELTIER, OUTPUT);        // sets the PWM pin as output
-  pinMode(RPELTIER_RELAY, OUTPUT);  // sets the digital pin as output
-  pinMode(RPELTIER, OUTPUT);        // sets the PWM pin as output
+  pinMode(peltier_relay[LEFT], OUTPUT);  // sets the digital pin as output
+  pinMode(peltier_addr[LEFT], OUTPUT);        // sets the PWM pin as output
+  pinMode(peltier_relay[RIGHT], OUTPUT);  // sets the digital pin as output
+  pinMode(peltier_addr[RIGHT], OUTPUT);        // sets the PWM pin as output
+  // Clear the running average objects
   avgTC[LEFT].clear();
   avgTC[RIGHT].clear();
-  // leftTC.clear();
-  // rightTC.clear();
   lcd.begin(16, 2);
   // Define custom symbols
   lcd.createChar(DEGREE_ICON_IDX, icons[DEGREE_ICON_IDX]);
@@ -162,9 +126,11 @@ void setup() {
   // Initial state
   state = begin_splash_screen;
 }
-
-
-
+/* 
+ ###########################################################################
+                main loop
+ ###########################################################################
+*/
 void loop() {
   // Read thermocouples
   double c[] = { Thermocouples[LEFT].readCelsius(), Thermocouples[RIGHT].readCelsius() };
@@ -195,11 +161,10 @@ void loop() {
   setRight();
   delay(100);
 }
-
 // ###########################################################################
 
 
-void handle_request() {
+void handle_request() { // Handle incoming Serial requests
   // read the incoming byte:
   String incomingCmd = Serial.readStringUntil(terminator);
 
@@ -215,19 +180,15 @@ void handle_request() {
 
   if (incomingCmd == "ONLEFT") {
     peltier_on[LEFT] = true;
-    // digitalWrite(LPELTIER_RELAY, HIGH);  // sets the digital pin on
   }
   if (incomingCmd == "OFFLEFT") {
     peltier_on[LEFT] = false;
-    // digitalWrite(LPELTIER_RELAY, LOW);  // sets the digital pin off
   }
   if (incomingCmd == "ONRIGHT") {
     peltier_on[RIGHT] = true;
-    // digitalWrite(RPELTIER_RELAY, HIGH);  // sets the digital pin on
   }
   if (incomingCmd == "OFFRIGHT") {
     peltier_on[RIGHT] = false;
-    // digitalWrite(RPELTIER_RELAY, LOW);  // sets the digital pin off
   }
   if (incomingCmd == "SETLTEMP") {
     setDegC[LEFT] = Serial.parseFloat();
@@ -250,22 +211,8 @@ void handle_request() {
 
   if (incomingCmd == "POLL") {
     Serial.print("{\"LEFT\":");
-    // double c = leftThermocouple.readCelsius();
-    // if (!isnan(c)) {
-    //   Serial.print(c);
-    // } else {
-    //   Serial.print(-999.9);
-    // }
-    // leftTC.getAverage();
     avgTC[LEFT].getAverage();
     Serial.print(",\"RIGHT\":");
-    // c = rightThermocouple.readCelsius();
-    // if (!isnan(c)) {
-    //   Serial.print(c);
-    // } else {
-    //   Serial.print(-999.9);
-    // }
-    // rightTC.getAverage();
     avgTC[RIGHT].getAverage();
     Serial.print(",");
     Serial.print("\"LTARGET\":");
@@ -383,9 +330,6 @@ void show_summary() {
   static bool update = true;
 
   // Read the temperature as Celsius:
-
-  // double lc = leftTC.getAverage();
-  // double rc = rightTC.getAverage();
   double lc = avgTC[LEFT].getAverage();
   double rc = avgTC[RIGHT].getAverage();
 
@@ -474,8 +418,6 @@ void checkPeltier() {
     Serial.print("false");
   }
   Serial.print("]");
-  // int peltier_level = analogRead(PELTIER);
-  // int power = map(peltier_level, 0, 1024, 0, 100);
   Serial.print(", \"LeftPower\":");
   Serial.print(power[LEFT]);
   Serial.print(", \"RightPower\":");
@@ -578,50 +520,35 @@ void setPeltier(int side) {
 //   }
 // }
 
-void setpower(int side, int setpower) {
-  int* power;
-  int peltier_addr;
-  if (side == LEFT) {
-    peltier_addr = LPELTIER;
-    power = &leftpower;
-  } else if (side == RIGHT) {
-    peltier_addr = RPELTIER;
-    power = &rightpower;
-  }
-  if (setpower > 100) {
-    power = 100;
-  } else if (setpower < 0) {
-    power = 0;
+void setpower(int side, int _power) {
+  int* set_power;
+  if (_power > 100) {
+    set_power = 100;
+  } else if (_power < 0) {
+    set_power = 0;
   } else {
-    power = setpower;
+    set_power = _power;
   }
-  bool peltier_on;
-  if (side == LEFT && peltier_on[LEFT]) {
-    peltier_on = true;
-  }
-  if (side == RIGHT && peltier_on[RIGHT]) {
-    peltier_on = true;
-  }
-  if (peltier_on) {
+  if (peltier_on[side]) {
     int peltier_level = map(power, 0, 100, 0, 255);
-    analogWrite(peltier_addr, peltier_level);  //Write this new value out to the port
+    analogWrite(peltier_addr[side], peltier_level);  //Write this new value out to the port
   } else {
-    analogWrite(peltier_addr, 0);
+    analogWrite(peltier_addr[side], 0);
   }
 }
 
 void togglePeltier() {
-  bool peltier_on = false;
+  bool _on = false;
   if (peltier_on[LEFT]) {
-    peltier_on = true;
-    digitalWrite(LPELTIER_RELAY, HIGH);
+    _on = true;
+    digitalWrite(peltier_relay[LEFT], HIGH);
   }
   if (peltier_on[RIGHT]) {
-    peltier_on = true;
-    digitalWrite(RPELTIER_RELAY, HIGH);
+    _on = true;
+    digitalWrite(eltier_relay[RIGHT], HIGH);
   }
-  if (!peltier_on) {
-    digitalWrite(LPELTIER_RELAY, LOW);
-    digitalWrite(RPELTIER_RELAY, LOW);
+  if (!peltier_on[LEFT] & !peltier_on[RIGHT]) {
+    digitalWrite(peltier_relay[LEFT], LOW);
+    digitalWrite(peltier_relay[RIGHT], LOW);
   }
 }
