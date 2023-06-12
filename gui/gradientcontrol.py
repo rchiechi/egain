@@ -138,6 +138,7 @@ class TempControl(tk.Frame):
         else:
             cmd = f'OFF{side.upper()}'
         if self.is_initialized:
+            print(f'Peltier: {cmd}')
             self.writeserial(cmd)
 
     def _checkPeltier(self, *args):
