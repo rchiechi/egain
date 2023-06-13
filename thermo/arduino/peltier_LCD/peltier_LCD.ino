@@ -32,13 +32,16 @@ double setDegC[] = { 25.0, 25.0 };     // Target temperatures
 uint8_t power[] = { 0, 0 };            // Power to MOSTFETs
 bool peltier_on[] = { false, false };  // Keep track of left pletier power state
 uint8_t flow[] = { HEAT, COOL };       // Whether peltiers are in heating or cooling mode
-uint8_t peltier_addr[] = { LPELTIER, RPELTIER };
-uint8_t peltier_relay[] = { LPELTIER_RELAY, RPELTIER_RELAY };
 uint8_t peltier_polarity[] = { LPETLIER_POLARITY, RPLETIER_POLARITY };
+uint8_t const peltier_addr[] = { LPELTIER, RPELTIER };
+uint8_t const peltier_relay[] = { LPELTIER_RELAY, RPELTIER_RELAY };
 bool initialized;
 
 // Running averages for temperatures
-RunningAverage avgTC[] = { RunningAverage(10), RunningAverage(10) };
+RunningAverage avgTC[] = {
+  RunningAverage(10),  // LEFT
+  RunningAverage(10)   //RIGHT
+};
 
 void (*state)() = NULL;                // The current state.
 void (*last_state)() = NULL;           // The state prior to the current state.
@@ -62,7 +65,7 @@ enum BackLightColor { ON = 0x1,
 /*!
   Custom icons created using: http://www.quinapalus.com/hd44780udg.html
 */
-byte icons[6][8] = { // Array of custom bitmap icons.
+byte icons[6][8] = {  // Array of custom bitmap icons.
   { 0x0c, 0x12, 0x12, 0x0c, 0x00, 0x00, 0x00 },
   { 0x00, 0x08, 0x0c, 0x0e, 0x0c, 0x08, 0x00 },
   { 0x00, 0x02, 0x06, 0x0e, 0x06, 0x02, 0x00 },
@@ -71,12 +74,12 @@ byte icons[6][8] = { // Array of custom bitmap icons.
   { 0x0a, 0x00, 0x15, 0x15, 0x0a, 0x0e, 0x04 }
 };
 // Index into the bitmap array for degree symbol.
-const int DEGREE_ICON_IDX = 0;
-const int LEFT_TRIANGLE_IDX = 1;
-const int RIGHT_TRIANGLE_IDX = 2;
-const int X_IDX = 3;
-const int COOL_IDX = 4;
-const int HEAT_IDX = 5;
+const uint8_t DEGREE_ICON_IDX = 0;
+const uint8_t LEFT_TRIANGLE_IDX = 1;
+const uint8_t RIGHT_TRIANGLE_IDX = 2;
+const uint8_t X_IDX = 3;
+const uint8_t COOL_IDX = 4;
+const uint8_t HEAT_IDX = 5;
 
 /* 
  ###########################################################################
@@ -105,9 +108,9 @@ void setup() {
   for (uint8_t side = LEFT; side < RIGHT; ++side) {
     pinMode(peltier_relay[side], OUTPUT);  // sets the digital pin as output
     pinMode(peltier_addr[side], OUTPUT);   // sets the PWM pin as output
-    // Clear the running average objects
-    avgTC[side].clear();
+    avgTC[side].clear();                   // Clear the running average objects
   }
+  // Start the LCD screen
   lcd.begin(16, 2);
   // Define custom symbols
   lcd.createChar(DEGREE_ICON_IDX, icons[DEGREE_ICON_IDX]);
@@ -116,13 +119,20 @@ void setup() {
   lcd.createChar(X_IDX, icons[X_IDX]);
   lcd.createChar(COOL_IDX, icons[COOL_IDX]);
   lcd.createChar(HEAT_IDX, icons[HEAT_IDX]);
-  lcd.clear();
-  lcd.setCursor(0, 0);
-  lcd.setBacklight(ON);
+  
+  lcd.clear(); // Clear the screen
+  lcd.setCursor(0, 0); // Set cursor to origin
+  lcd.setBacklight(ON); // Switch on the LCD backlight (future: set backlight color)
   lcd.print("LCD initialized");
-  // Initial state
+  /*
+   * The state variable holds a pointer to the current state function
+   * when the device powers on, the first state is the splash screen
+   * to let the user know that everything has been set to power-on defaults
+   */
   state = begin_splash_screen;
 }
+
+
 /* 
  ###########################################################################
                 main loop
