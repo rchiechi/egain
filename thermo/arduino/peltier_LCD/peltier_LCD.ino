@@ -15,14 +15,6 @@ Adafruit_MAX31855 Thermocouples[] = { Adafruit_MAX31855(CLK, LCS, DO),
 //The LCD display object.
 Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
-// Terminator expected for Serial input from host
-#define terminator ';'
-
-// Strings
-// const char left[] PROGMEM = "left";
-// const char right[] PROGMEM = "right";
-// char side[16];
-// const char* const sides[] PROGMEM = {left, right};
 /*
     Set the values of these pins in the header file
 */
@@ -35,7 +27,8 @@ uint8_t flow[] = { HEAT, COOL };       // Whether peltiers are in heating or coo
 uint8_t peltier_polarity[] = { LPETLIER_POLARITY, RPLETIER_POLARITY };
 uint8_t const peltier_addr[] = { LPELTIER, RPELTIER };
 uint8_t const peltier_relay[] = { LPELTIER_RELAY, RPELTIER_RELAY };
-bool initialized;
+bool initialized; // when true, device is initialized
+bool update; // when true, update LCD status
 
 // Running averages for temperatures
 RunningAverage avgTC[] = {
@@ -129,6 +122,7 @@ void setup() {
   lcd.setCursor(0, 0); // Set cursor to origin
   lcd.setBacklight(ON); // Switch on the LCD backlight (future: set backlight color)
   lcd.print(F("LCD initialized"));
+  update = true;
   /*
    * The state variable holds a pointer to the current state function
    * when the device powers on, the first state is the splash screen
@@ -166,6 +160,7 @@ void loop() {
   // Handle any buffered Serial requests
   if (Serial.available() > 0) {
     handle_request();
+    update = true;
   }
   // Set peltier states according to peltier_on
   togglePeltier();

@@ -101,7 +101,6 @@ void show_set_menu() {
 void show_summary() {
   static double last_lc = 0;
   static double last_rc = 0;
-  static bool update = true;
 
   // Read the temperature as Celsius:
   double lc = avgTC[LEFT].getAverage();

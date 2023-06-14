@@ -206,6 +206,9 @@ class TempControl(tk.Frame):
                     if _val == 'INITIALIZED':
                         print("\nDevice initalized")
                         self.is_initialized = True
+                        time.sleep(0.5)
+                        self.writeserial('SHOWSTATUS')
+                        time.sleep(0.5)
                         self._checkPeltier()
                         return
                 except json.decoder.JSONDecodeError:

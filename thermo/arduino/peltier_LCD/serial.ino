@@ -2,6 +2,9 @@
 * Keep serial communication functions here
 */
 
+// Terminator expected for Serial input from host
+#define terminator ';'
+
 void handle_request() {  // Handle incoming Serial requests
   // read the incoming byte:
   String incomingCmd = Serial.readStringUntil(terminator);
@@ -45,6 +48,9 @@ void handle_request() {  // Handle incoming Serial requests
   }
   if (incomingCmd == "RIGHTCOOL") {
     flow[RIGHT] = COOL;
+  }
+  if (incomingCmd == "SHOWSTATUS") {
+    state = show_summary;
   }
 
   if (incomingCmd == "POLL") {
