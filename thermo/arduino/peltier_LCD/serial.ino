@@ -59,10 +59,10 @@ void handle_request() {  // Handle incoming Serial requests
     Serial.print(F(",\"RIGHT\":"));
     Serial.print(avgTC[RIGHT].getAverage());
     Serial.print(F(","));
-    Serial.print(F("\"LTARGET\":"));
+    Serial.print(F("\"LEFTTARGET\":"));
     Serial.print(setDegC[LEFT]);
     Serial.print(F(","));
-    Serial.print(F("\"RTARGET\":"));
+    Serial.print(F("\"RIGHTTARGET\":"));
     Serial.print(setDegC[RIGHT]);
     Serial.print(F(","));
     checkPeltier();
@@ -71,7 +71,7 @@ void handle_request() {  // Handle incoming Serial requests
 }
 
 void checkPeltier() {
-  Serial.print(F("\"Peltier_on\":["));
+  Serial.print(F("\"PELTIERON\":["));
   if (peltier_on[LEFT]) {
     Serial.print(F("true"));
   } else {
@@ -84,8 +84,8 @@ void checkPeltier() {
     Serial.print(F("false"));
   }
   Serial.print(F("]"));
-  Serial.print(F(", \"LeftPower\":"));
+  Serial.print(F(", \"LEFTPOWER\":"));
   Serial.print(power[LEFT]);
-  Serial.print(F(", \"RightPower\":"));
+  Serial.print(F(", \"RIGHTPOWER\":"));
   Serial.print(power[RIGHT]);
 }

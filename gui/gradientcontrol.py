@@ -22,6 +22,7 @@ class TempControl(tk.Frame):
     controller = None
     is_initialized = False
     last_read = 0
+    last_write = 0
     buffer = {}
     temps = {'left':0, 'right':0}
     widgets = {}
@@ -70,8 +71,13 @@ class TempControl(tk.Frame):
                                  labelanchor=N)
         setLeftTemp = tk.Entry(setFrame, textvariable=self.lefttargettemp, width=4)
         setRightTemp = tk.Entry(setFrame, textvariable=self.righttargettemp, width=4)
-        self.lefttargettemp.trace('w', self._setTemp)
-        self.righttargettemp.trace('w', self._setTemp)
+        self.lefttargettemp.set("25.0")
+        self.righttargettemp.set("25.0")
+        for n in ('<Return>', '<Leave>', '<Enter>'):
+            setLeftTemp.bind(n, self._setTemp)
+            setRightTemp.bind(n, self._setTemp)
+        # self.lefttargettemp.trace('w', self._setTemp)
+        # self.righttargettemp.trace('w', self._setTemp)
         toggleFrame = tk.Frame(self)
         peltierLeftCheck = tk.Checkbutton(toggleFrame,
                                           text='Left Peliter On',
@@ -147,11 +153,11 @@ class TempControl(tk.Frame):
             self.widgets[_widget].configure(state=NORMAL)
         self.widgets['peltierRightCheck'].after('2000', self._checkPeltier)
         _msg = self.readserial()
-        lpower = _msg.get('LeftPower', 0)
-        rpower = _msg.get('RightPower', 0)
+        lpower = _msg.get('LEFTPOWER', 0)
+        rpower = _msg.get('RIGHTPOWER', 0)
         self.leftPeltierPowerString.set(str(lpower))
         self.rightPeltierPowerString.set(str(rpower))
-        _state = _msg.get('Peltier_on', [False, False])
+        _state = _msg.get('PELTIERON', [False, False])
         if _state[0] is True:
             self.left_peltier_on.set(1)
         else:
@@ -161,10 +167,33 @@ class TempControl(tk.Frame):
         else:
             self.right_peltier_on.set(0)
 
+    def _getTemp(self, *args):
+        _msg = self.readserial()
+        try:
+            if float(self.lefttargettemp.get()) != _msg.get('LEFTTARGET', 25.0):
+                self.lefttargettemp.set(_msg.get('LEFTTARGET', 25.0))
+        except ValueError:
+            pass
+        try:
+            if float(self.righttargettemp.get()) != _msg.get('RIGHTTARGET', 25.0):
+                self.righttargettemp.set(_msg.get('RIGHTTARGET', 25.0))
+        except ValueError:
+            pass
+
     def _setTemp(self, *args):
-        print(f"Setting peltier to left:{self.lefttargettemp.get()} right:{self.righttargettemp.get()} °C")
-        self.writeserial('SETLEFTTEMP', self.lefttargettemp.get())
-        self.writeserial('SETRIGHTTEMP', self.righttargettemp.get())
+        try:
+            float(self.lefttargettemp.get())
+            print(f"Setting peltier to left:{self.lefttargettemp.get()} °C")
+            self.writeserial('SETLEFTTEMP', self.lefttargettemp.get())
+        except ValueError:
+            self.widgets['peltierLeftCheck'].after(1000, self._getTemp)
+            return
+        try:
+            float(self.righttargettemp.get())
+            print(f"right:{self.righttargettemp.get()} °C")
+            self.writeserial('SETRIGHTTEMP', self.righttargettemp.get())
+        except ValueError:
+            self.widgets['peltierRightCheck'].after(1000, self._getTemp)
 
     def _readTemps(self):
         self.tempFrame.after('500', self._readTemps)
@@ -209,6 +238,7 @@ class TempControl(tk.Frame):
                         time.sleep(0.5)
                         self.writeserial('SHOWSTATUS')
                         time.sleep(0.5)
+                        self._getTemp()
                         self._checkPeltier()
                         return
                 except json.decoder.JSONDecodeError:
@@ -249,6 +279,8 @@ class TempControl(tk.Frame):
             return
         if not cmd:
             return
+        if time.time() - self.last_write < 0.5:
+            time.sleep(0.5)
         try:
             self.controller.write(bytes(cmd, encoding='utf8')+b';')
             # print(f"Wrote {cmd};", end="")
@@ -258,6 +290,7 @@ class TempControl(tk.Frame):
             # print(f" to {self.controller.name}.")
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
+        self.last_write = time.time()
 
 def _enumerateDevices():
     _filter = ''

@@ -119,7 +119,7 @@ void show_summary() {
       lcd.write(X_IDX);
     }
     lcd.print(F("R: "));
-    lcd.print(avgTC[LEFT].getAverage(), 1);
+    lcd.print(lc, 1);
     lcd.write(0x7E);
     lcd.print(setDegC[LEFT], 1);
     lcd.print(F(" "));
@@ -136,7 +136,7 @@ void show_summary() {
       lcd.write(X_IDX);
     }
     lcd.print(F("L: "));
-    lcd.print(avgTC[RIGHT].getAverage(), 1);
+    lcd.print(rc, 1);
     lcd.write(0x7E);
     lcd.print(setDegC[RIGHT], 1);
     lcd.print(F(" "));
