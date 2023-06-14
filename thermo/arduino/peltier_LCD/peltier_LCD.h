@@ -22,3 +22,4 @@
 #define RIGHT 1
 #define COOL LOW   // Defined as pin polarities
 #define HEAT HIGH  // Defined as pin polarities
+

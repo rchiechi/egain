@@ -120,10 +120,10 @@ void show_summary() {
       lcd.write(X_IDX);
     }
     lcd.print(F("R: "));
-    lcd.print(lc, 1);
+    lcd.print(avgTC[LEFT].getAverage(), 1);
     lcd.write(0x7E);
     lcd.print(setDegC[LEFT], 1);
-    lcd.print(" ");
+    lcd.print(F(" "));
     lcd.write(DEGREE_ICON_IDX);
     lcd.print(F("C "));
     lcd.setCursor(0, 1);
@@ -137,10 +137,10 @@ void show_summary() {
       lcd.write(X_IDX);
     }
     lcd.print(F("L: "));
-    lcd.print(rc, 1);
+    lcd.print(avgTC[RIGHT].getAverage(), 1);
     lcd.write(0x7E);
     lcd.print(setDegC[RIGHT], 1);
-    lcd.print(" ");
+    lcd.print(F(" "));
     lcd.write(DEGREE_ICON_IDX);
     lcd.print(F("C "));
   }

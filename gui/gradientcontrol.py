@@ -129,16 +129,15 @@ class TempControl(tk.Frame):
         self._readTemps()
 
     def shutdown(self):
-        self.writeserial('OFFLEFT')
-        self.writeserial('OFFRIGHT')
+        self.writeserial('LEFTOFF')
+        self.writeserial('RIGHTOFF')
 
     def _setPeltier(self, side):
         if getattr(self, f'{side.lower()}_peltier_on').get():
-            cmd = f'ON{side.upper()}'
+            cmd = f'{side.upper()}ON'
         else:
-            cmd = f'OFF{side.upper()}'
+            cmd = f'{side.upper()}OFF'
         if self.is_initialized:
-            print(f'Peltier: {cmd}')
             self.writeserial(cmd)
 
     def _checkPeltier(self, *args):
@@ -164,8 +163,8 @@ class TempControl(tk.Frame):
 
     def _setTemp(self, *args):
         print(f"Setting peltier to left:{self.lefttargettemp.get()} right:{self.righttargettemp.get()} °C")
-        self.writeserial('SETLTEMP', self.lefttargettemp.get())
-        self.writeserial('SETRTEMP', self.righttargettemp.get())
+        self.writeserial('SETLEFTTEMP', self.lefttargettemp.get())
+        self.writeserial('SETRIGHTTEMP', self.righttargettemp.get())
 
     def _readTemps(self):
         self.tempFrame.after('500', self._readTemps)
@@ -179,12 +178,13 @@ class TempControl(tk.Frame):
 
     def _heatcoolbuttonclick(self, widget):
         _state = self.widgets[widget]['text']
+        _sides = {'L':'LEFT', 'R':'RIGHT'}
         if _state == 'Heat':
             self.widgets[widget].config(text='Cool')
-            self.writeserial(f'{widget.upper()[0]}COOL')
+            self.writeserial(f'{_sides[widget.upper()[0]]}COOL')
         elif _state == 'Cool':
             self.widgets[widget].config(text='Heat')
-            self.writeserial(f'{widget.upper()[0]}HEAT')
+            self.writeserial(f'{_sides[widget.upper()[0]]}HEAT')
 
     def _initdevice(self, *args):
         if self.device.get() == DEFAULTUSBDEVICE or self.is_initialized is True:
@@ -203,7 +203,7 @@ class TempControl(tk.Frame):
                 try:
                     _msg = json.loads(_json)
                     _val = _msg.get('message', '')
-                    if _val == 'Done initializing thermocouples':
+                    if _val == 'INITIALIZED':
                         print("\nDevice initalized")
                         self.is_initialized = True
                         self._checkPeltier()

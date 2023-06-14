@@ -67,7 +67,7 @@ void setpower(uint8_t _side, uint8_t _power) {
 * Set the on/off state of a pletier based on the value of peltier_on
 */
 void togglePeltier() {
-  for (uint8_t side = LEFT; side < RIGHT; ++side) {
+  for (uint8_t side = LEFT; side <= RIGHT; ++side) {
     if (peltier_on[side]) {
       digitalWrite(peltier_relay[side], HIGH);
     }
@@ -76,7 +76,7 @@ void togglePeltier() {
     }
   }
   if (!peltier_on[LEFT] & !peltier_on[RIGHT]) {
-    for (uint8_t side = LEFT; side < RIGHT; ++side) {
+    for (uint8_t side = LEFT; side <= RIGHT; ++side) {
       digitalWrite(peltier_relay[side], LOW);
     }
   }
@@ -88,11 +88,11 @@ void togglePeltier() {
 */
 void setPolarity(uint8_t _side, uint8_t _flow) {
   // Set both relays to off
-  for (int side = LEFT; side < RIGHT; ++side) {
+  for (int side = LEFT; side <= RIGHT; ++side) {
     digitalWrite(peltier_relay[side], LOW);
   }
   delay(100);
-  for (int side = LEFT; side < RIGHT; ++side) {
+  for (int side = LEFT; side <= RIGHT; ++side) {
     digitalWrite(peltier_polarity[_side], flow[_side]);
   }
   delay(100);

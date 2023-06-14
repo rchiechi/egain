@@ -81,6 +81,11 @@ const uint8_t X_IDX = 3;
 const uint8_t COOL_IDX = 4;
 const uint8_t HEAT_IDX = 5;
 
+const String message = "message";
+const char leftbrace = "{";
+const char rightbrace = "}";
+const char quote = "\"";
+
 /* 
  ###########################################################################
                 setup
@@ -92,20 +97,20 @@ void setup() {
   // wait for MAX chip to stabilize
   delay(500);
   initialized = true;
-  Serial.println("{\"message\":\"Left Thermocouple Initializing\"}");
+  // Serial.println("{\"message\":\"Left Thermocouple Initializing\"}");
   if (!Thermocouples[LEFT].begin()) {
     initialized = false;
-    Serial.println("{\"message\":\"ERROR\"}");
+    Serial.println(F("{\"message\":\"ERROR\"}"));
     while (1) delay(10);
   }
-  Serial.println("{\"message\":\"Right Thermocouple Initializing\"}");
+  // Serial.println("{\"message\":\"Right Thermocouple Initializing\"}");
   if (!Thermocouples[RIGHT].begin()) {
     initialized = false;
-    Serial.println("{\"message\":\"ERROR\"}");
+    Serial.println(F("{\"message\":\"ERROR\"}"));
     while (1) delay(10);
   }
-  Serial.println("{\"message\":\"Done initializing thermocouples\"}");
-  for (uint8_t side = LEFT; side < RIGHT; ++side) {
+  Serial.println(F("{\"message\":\"INITIALIZED\"}"));
+  for (uint8_t side = LEFT; side <= RIGHT; ++side) {
     pinMode(peltier_relay[side], OUTPUT);  // sets the digital pin as output
     pinMode(peltier_addr[side], OUTPUT);   // sets the PWM pin as output
     avgTC[side].clear();                   // Clear the running average objects
@@ -123,7 +128,7 @@ void setup() {
   lcd.clear(); // Clear the screen
   lcd.setCursor(0, 0); // Set cursor to origin
   lcd.setBacklight(ON); // Switch on the LCD backlight (future: set backlight color)
-  lcd.print("LCD initialized");
+  lcd.print(F("LCD initialized"));
   /*
    * The state variable holds a pointer to the current state function
    * when the device powers on, the first state is the splash screen
@@ -141,7 +146,7 @@ void setup() {
 void loop() {
   // Read thermocouples
   double c;
-  for (uint8_t side = LEFT; side < RIGHT; ++side) {
+  for (uint8_t side = LEFT; side <= RIGHT; ++side) {
     c = Thermocouples[side].readCelsius();
     if (!isnan(c)) {
       avgTC[side].addValue(c);
@@ -165,7 +170,7 @@ void loop() {
   // Set peltier states according to peltier_on
   togglePeltier();
   // Set the power to the MOSFETS according to setDegC
-  for (uint8_t side = LEFT; side < RIGHT; ++side) {
+  for (uint8_t side = LEFT; side <= RIGHT; ++side) {
     setPeltier(side);
   }
   delay(100);

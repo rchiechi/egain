@@ -7,79 +7,79 @@ void handle_request() {  // Handle incoming Serial requests
   String incomingCmd = Serial.readStringUntil(terminator);
 
   if (incomingCmd == "INIT") {
-    Serial.print("{\"INITIALIZED:\":");
+    Serial.print(F("{\"INITIALIZED:\":"));
     if (initialized) {
-      Serial.print("true");
+      Serial.print(F("true"));
     } else {
-      Serial.print("false");
+      Serial.print(F("false"));
     };
-    Serial.println("}");
+    Serial.println(F("}"));
   }
 
-  if (incomingCmd == "ONLEFT") {
+  if (incomingCmd == "LEFTON") {
     peltier_on[LEFT] = true;
   }
-  if (incomingCmd == "OFFLEFT") {
+  if (incomingCmd == "LEFTOFF") {
     peltier_on[LEFT] = false;
   }
-  if (incomingCmd == "ONRIGHT") {
+  if (incomingCmd == "RIGHTON") {
     peltier_on[RIGHT] = true;
   }
-  if (incomingCmd == "OFFRIGHT") {
+  if (incomingCmd == "RIGHTOFF") {
     peltier_on[RIGHT] = false;
   }
-  if (incomingCmd == "SETLTEMP") {
+  if (incomingCmd == "SETLEFTTEMP") {
     setDegC[LEFT] = Serial.parseFloat();
   }
-  if (incomingCmd == "SETRTEMP") {
+  if (incomingCmd == "SETRIGHTTEMP") {
     setDegC[RIGHT] = Serial.parseFloat();
   }
-  if (incomingCmd == "LHEAT") {
+  if (incomingCmd == "LEFTHEAT") {
     flow[LEFT] = HEAT;
   }
-  if (incomingCmd == "LCOOL") {
+  if (incomingCmd == "LEFTCOOL") {
     flow[LEFT] = COOL;
   }
-  if (incomingCmd == "RHEAT") {
+  if (incomingCmd == "RIGHTHEAT") {
     flow[RIGHT] = HEAT;
   }
-  if (incomingCmd == "RCOOL") {
+  if (incomingCmd == "RIGHTCOOL") {
     flow[RIGHT] = COOL;
   }
 
   if (incomingCmd == "POLL") {
-    Serial.print("{\"LEFT\":");
-    avgTC[LEFT].getAverage();
-    Serial.print(",\"RIGHT\":");
-    avgTC[RIGHT].getAverage();
-    Serial.print(",");
-    Serial.print("\"LTARGET\":");
+    Serial.print(F("{\"LEFT\":"));
+    Serial.print(avgTC[LEFT].getAverage());
+    Serial.print(F(",\"RIGHT\":"));
+    Serial.print(avgTC[RIGHT].getAverage());
+    Serial.print(F(","));
+    Serial.print(F("\"LTARGET\":"));
     Serial.print(setDegC[LEFT]);
-    Serial.print(",");
-    Serial.print("\"RTARGET\":");
+    Serial.print(F(","));
+    Serial.print(F("\"RTARGET\":"));
     Serial.print(setDegC[RIGHT]);
-    Serial.print(",");
+    Serial.print(F(","));
     checkPeltier();
-    Serial.println("}");
+    Serial.println(F("}"));
   }
 }
 
 void checkPeltier() {
-  Serial.print("\"Peltier_on\":[");
+  Serial.print(F("\"Peltier_on\":["));
   if (peltier_on[LEFT]) {
-    Serial.print("true");
+    Serial.print(F("true"));
   } else {
-    Serial.print("false");
+    Serial.print(F("false"));
   }
-  Serial.print(", ");
+  Serial.print(F(", "));
   if (peltier_on[RIGHT]) {
-    Serial.print("true");
+    Serial.print(F("true"));
   } else {
-    Serial.print("false");
+    Serial.print(F("false"));
   }
-  Serial.print("]");
-  Serial.print(", \"LeftPower\":");
+  Serial.print(F("]"));
+  Serial.print(F(", \"LeftPower\":"));
   Serial.print(power[LEFT]);
-  Serial.print(", \"RightPower\":");
+  Serial.print(F(", \"RightPower\":"));
   Serial.print(power[RIGHT]);
 }
