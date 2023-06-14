@@ -39,10 +39,11 @@ from tkinter import DISABLED, NORMAL  # pylint: disable=unused-import
 from tkinter import PhotoImage
 from tkinter.font import Font
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
-from gui.datacanvas import dataCanvas
-from gui.stagecontrol import StageControls
-from gui.tempcontrol import TempControl
-from gui.measurement import MeasurementControl
+from .datacanvas import dataCanvas
+from .stagecontrol import StageControls
+from .tempcontrol import TempControl
+from .measurement import MeasurementControl
+from .tooltip import CreateTooltip
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -154,10 +155,11 @@ class MainFrame(tk.Frame):
                                    textvariable=reference_size,
                                    font=Font(size=10))
         referencesizeEntry.pack(side=LEFT)
-
+        CreateTooltip(referencesizeEntry, "Size of a reference object on screen")
         junctionsizeEntryLabel = Label(master=magFrame,
                                        text='Junction size (cm):')
         junctionsizeEntryLabel.pack(side=LEFT)
+
         junction_size = StringVar(value='1.0')
         self.variables['junction_size'] = junction_size
         junctionsizeEntry = Entry(master=magFrame,
@@ -165,6 +167,7 @@ class MainFrame(tk.Frame):
                                   textvariable=junction_size,
                                   font=Font(size=10))
         junctionsizeEntry.pack(side=LEFT)
+        CreateTooltip(junctionsizeEntry, "Size of the junction on screen")
 
         junctionmagEntryLabel = Label(master=magFrame,
                                       text='Magnification:')
@@ -179,6 +182,7 @@ class MainFrame(tk.Frame):
                                  textvariable=junction_mag,
                                  width=4)
         junctionmag.pack(side=LEFT)
+        CreateTooltip(junctionmag, "Magnification value on zoom lens")
 
         outputFrame.pack(side=TOP, fill=X)
         magFrame.pack(side=TOP, fill=X)
