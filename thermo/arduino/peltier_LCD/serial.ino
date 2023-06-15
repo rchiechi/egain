@@ -39,15 +39,19 @@ void handle_request() {  // Handle incoming Serial requests
   }
   if (incomingCmd == "LEFTHEAT") {
     flow[LEFT] = HEAT;
+    togglePolarity();
   }
   if (incomingCmd == "LEFTCOOL") {
     flow[LEFT] = COOL;
+    togglePolarity();
   }
   if (incomingCmd == "RIGHTHEAT") {
     flow[RIGHT] = HEAT;
+    togglePolarity();
   }
   if (incomingCmd == "RIGHTCOOL") {
     flow[RIGHT] = COOL;
+    togglePolarity();
   }
   if (incomingCmd == "SHOWSTATUS") {
     state = show_summary;
@@ -70,6 +74,7 @@ void handle_request() {  // Handle incoming Serial requests
   }
 }
 
+
 void checkPeltier() {
   Serial.print(F("\"PELTIERON\":["));
   if (peltier_on[LEFT]) {
@@ -88,4 +93,21 @@ void checkPeltier() {
   Serial.print(power[LEFT]);
   Serial.print(F(", \"RIGHTPOWER\":"));
   Serial.print(power[RIGHT]);
+
+  Serial.print(F(", \"LEFTFLOW\":\""));
+  if (flow[LEFT] == HEAT){
+    Serial.print(F("HEAT"));
+  } else if (flow[LEFT] == COOL){
+    Serial.print(F("COOL"));
+  }
+  Serial.print(F("\""));
+
+  Serial.print(F(", \"RIGHTFLOW\":\""));
+  if (flow[RIGHT] == HEAT){
+    Serial.print(F("HEAT"));
+  } else if (flow[RIGHT] == COOL){
+    Serial.print(F("COOL"));
+  }
+  Serial.print(F("\""));
+ 
 }

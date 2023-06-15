@@ -86,7 +86,7 @@ void togglePeltier() {
 * Switch off both peltier relays and then 
 * Set the polarity of a peltier based on the value of flow[side]
 */
-void setPolarity(uint8_t _side, uint8_t _flow) {
+void togglePolarity() {
   // Set both relays to off
   for (int side = LEFT; side <= RIGHT; ++side) {
     digitalWrite(peltier_relay[side], LOW);
