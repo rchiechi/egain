@@ -23,7 +23,7 @@ class TempControl(tk.Frame):
     is_initialized = False
     last_read = 0
     last_write = 0
-    buffer = {}
+    readbuffer = {}
     temps = {'left':0, 'right':0}
     widgets = {}
 
@@ -151,7 +151,7 @@ class TempControl(tk.Frame):
             return
         for _widget in self.widgets:
             self.widgets[_widget].configure(state=NORMAL)
-        self.widgets['peltierRightCheck'].after('2000', self._checkPeltier)
+        self.widgets['peltierRightCheck'].after('1000', self._checkPeltier)
         _msg = self.readserial()
         lpower = _msg.get('LEFTPOWER', 0)
         rpower = _msg.get('RIGHTPOWER', 0)
@@ -166,9 +166,12 @@ class TempControl(tk.Frame):
             self.right_peltier_on.set(1)
         else:
             self.right_peltier_on.set(0)
+        self._getTemp(msg = _msg)
+        self._getflow(msg = _msg)
+        self._readTemps(msg = _msg)
 
-    def _getTemp(self, *args):
-        _msg = self.readserial()
+    def _getTemp(self, *args, **kwargs):
+        _msg = kwargs.get('msg', self.readserial())
         try:
             if float(self.lefttargettemp.get()) != _msg.get('LEFTTARGET', 25.0):
                 self.lefttargettemp.set(_msg.get('LEFTTARGET', 25.0))
@@ -186,18 +189,17 @@ class TempControl(tk.Frame):
             print(f"Setting peltier to left:{self.lefttargettemp.get()} °C")
             self.writeserial('SETLEFTTEMP', self.lefttargettemp.get())
         except ValueError:
-            self.widgets['peltierLeftCheck'].after(1000, self._getTemp)
-            return
+            pass
         try:
             float(self.righttargettemp.get())
             print(f"right:{self.righttargettemp.get()} °C")
             self.writeserial('SETRIGHTTEMP', self.righttargettemp.get())
         except ValueError:
-            self.widgets['peltierRightCheck'].after(1000, self._getTemp)
+            pass
 
-    def _readTemps(self):
-        self.tempFrame.after('500', self._readTemps)
-        _temps = self.readserial()
+    def _readTemps(self, **kwargs):
+        # self.tempFrame.after('500', self._readTemps)
+        _temps = kwargs.get('msg', self.readserial())
         self.temps['left'] = float(_temps.get('LEFT', -999.9))
         self.temps['right'] = float(_temps.get('RIGHT', -999.9))
         if self.temps['left'] > -1000:
@@ -214,6 +216,11 @@ class TempControl(tk.Frame):
         elif _state == 'Cool':
             self.widgets[widget].config(text='Heat')
             self.writeserial(f'{_sides[widget.upper()[0]]}HEAT')
+
+    def _getflow(self, *args, **kwargs):
+        _msg = kwargs.get('msg', self.readserial())
+        self.widgets['leftheatcoolButton'].config(text=_msg.get("LEFTFLOW", "?").capitalize()) 
+        self.widgets['rightheatcoolButton'].config(text=_msg.get("RIGHTFLOW", "?").capitalize())
 
     def _initdevice(self, *args):
         if self.device.get() == DEFAULTUSBDEVICE or self.is_initialized is True:
@@ -238,7 +245,6 @@ class TempControl(tk.Frame):
                         time.sleep(0.5)
                         self.writeserial('SHOWSTATUS')
                         time.sleep(0.5)
-                        self._getTemp()
                         self._checkPeltier()
                         return
                 except json.decoder.JSONDecodeError:
@@ -252,7 +258,7 @@ class TempControl(tk.Frame):
         if not self.is_initialized:
             return {}
         if time.time() - self.last_read < 0.5:
-            return self.buffer
+            return self.readbuffer
         try:
             _json = ''
             while not _json:
@@ -261,7 +267,7 @@ class TempControl(tk.Frame):
                 try:
                     msg = json.loads(_json)
                     self.last_read = time.time()
-                    self.buffer = msg
+                    self.readbuffer = msg
                     # print(msg)
                     if 'message' in msg:
                         print(msg)
@@ -272,7 +278,7 @@ class TempControl(tk.Frame):
         except serial.serialutil.SerialException:
             pass
         print(f"Error reading from {self.controller.name}.")
-        return self.buffer
+        return self.readbuffer
 
     def writeserial(self, cmd, val=None):
         if not self.is_initialized:
@@ -286,7 +292,7 @@ class TempControl(tk.Frame):
             # print(f"Wrote {cmd};", end="")
             if val is not None:
                 self.controller.write(bytes(val, encoding='utf8'))
-                print(f"{val}", end="")
+                # print(f"{val}", end="")
             # print(f" to {self.controller.name}.")
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
