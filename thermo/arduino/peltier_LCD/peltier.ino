@@ -93,7 +93,7 @@ void togglePolarity() {
   }
   delay(100);
   for (int side = LEFT; side <= RIGHT; ++side) {
-    digitalWrite(peltier_polarity[_side], flow[_side]);
+    digitalWrite(peltier_polarity[side], flow[side]);
   }
   delay(100);
   togglePeltier();
