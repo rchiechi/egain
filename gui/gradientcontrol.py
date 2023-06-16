@@ -97,7 +97,7 @@ class TempControl(tk.Frame):
                                         command=lambda: self._heatcoolbuttonclick('rigthheatcoolButton'),
                                         width=5)
         self.widgets['leftheatcoolButton'] = leftheatcoolButton
-        self.widgets['rigthheatcoolButton'] = rigthheatcoolButton
+        self.widgets['rightheatcoolButton'] = rigthheatcoolButton
 
         leftPeltierPower = tk.Label(master=setFrame,
                                     textvariable=self.leftPeltierPowerString,
@@ -166,9 +166,9 @@ class TempControl(tk.Frame):
             self.right_peltier_on.set(1)
         else:
             self.right_peltier_on.set(0)
-        self._getTemp(msg = _msg)
-        self._getflow(msg = _msg)
-        self._readTemps(msg = _msg)
+        self._getTemp(msg=_msg)
+        self._getflow(msg=_msg)
+        self._readTemps(msg=_msg)
 
     def _getTemp(self, *args, **kwargs):
         _msg = kwargs.get('msg', self.readserial())
@@ -219,7 +219,7 @@ class TempControl(tk.Frame):
 
     def _getflow(self, *args, **kwargs):
         _msg = kwargs.get('msg', self.readserial())
-        self.widgets['leftheatcoolButton'].config(text=_msg.get("LEFTFLOW", "?").capitalize()) 
+        self.widgets['leftheatcoolButton'].config(text=_msg.get("LEFTFLOW", "?").capitalize())
         self.widgets['rightheatcoolButton'].config(text=_msg.get("RIGHTFLOW", "?").capitalize())
 
     def _initdevice(self, *args):
