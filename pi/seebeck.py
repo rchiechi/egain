@@ -134,7 +134,8 @@ if __name__ == '__main__':
             y += font.getsize(V)[1]
 
             # Display image.
-            disp.image(image, rotation)
+            with thermothread.lock:
+                disp.image(image, rotation)
             time.sleep(0.1)
 
     except KeyboardInterrupt:

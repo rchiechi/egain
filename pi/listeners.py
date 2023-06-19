@@ -12,6 +12,7 @@ class thermo():
     last_lt = 0.0
     last_rt = 0.0
     command = COMMAND_RUN
+    _lock = threading.Lock()
     
     def __init__(self, alive, thermocouples={'left':None, 'right':None}, **kwargs):
         self.alive = alive
@@ -83,11 +84,16 @@ class thermo():
     def __update(self):
         if self.lt is not None and self.rt is not None:
             try:
-                self.last_lt = float(self.lt.temperature)
-                self.last_rt = float(self.rt.temperature)
+                with self._lock:
+                    self.last_lt = float(self.lt.temperature)
+                    self.last_rt = float(self.rt.temperature)
             except ValueError:
                 self.last_lt = -999.99
                 self.last_rt = -999.99
+
+    @property
+    def lock(self):
+        return self._lock
 
     @property
     def commthread(self):
