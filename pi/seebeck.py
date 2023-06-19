@@ -117,7 +117,7 @@ if __name__ == '__main__':
                 _i = 0
             print(f"{spinner[_i]}", end="\033[F\033[F")
             _i += 1
-            V = "Voltage = 0.000 V"
+            V = "Voltage: 0.000 V"
             cmd = "hostname -I | cut -d' ' -f1"
             IP = "IP: " + subprocess.check_output(cmd, shell=True).decode("utf-8")
             # Draw a black filled box to clear the image.
