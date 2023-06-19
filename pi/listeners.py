@@ -2,7 +2,7 @@
 import time
 import threading
 from multiprocessing.connection import Client, Listener
-from .shared import THERMO_PORT, VOLTA_PORT, COMMKEY, COMMAND_READ
+from .shared import THERMO_PORT, VOLTA_PORT, COMMKEY, COMMAND_READ, COMMAND_STAT, STAT_OK, STAT_ERROR
 
 COMMAND_RUN = 'RUN'
 COMMAND_STOP = 'STOP'
@@ -11,6 +11,7 @@ class thermo():
 
     last_lt = 0.0
     last_rt = 0.0
+    last_v = 0.0
     command = COMMAND_RUN
     _lock = threading.Lock()
     
@@ -40,9 +41,8 @@ class thermo():
         """
         self.alive.clear()
         self.command = COMMAND_STOP
-        client = Client(self.addr, authkey=self.authkey)
-        client.send(COMMAND_STOP)
-        client.close()
+        with Client(self.addr, authkey=self.authkey) as client:
+            client.send(COMMAND_STOP)
         self._listener_thread.join()
         self._updater_thread.join()
 
@@ -67,7 +67,14 @@ class thermo():
                 if isinstance(message, str) and message == COMMAND_READ:
                     self.__update()
                     conn.send({'left': self.last_lt,
-                               'right': self.last_rt})
+                               'right': self.last_rt,
+                               'voltage:' self.last_v})
+                if isinstance(message, str) and message == COMMAND_STAT:
+                    if self.lt is not None and self.rt is not None:
+                        _status = STAT_OK
+                    else:
+                        _status = STAT_ERROR
+                    conn.send({'status': _status})
 
     def _updater_main(self):
         print("Starting 5 second updater")

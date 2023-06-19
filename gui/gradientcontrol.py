@@ -2,6 +2,7 @@ import os
 import json
 import platform
 import time
+import subprocess
 import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
@@ -13,6 +14,8 @@ from tkinter import PhotoImage
 from tkinter.font import Font
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 import serial
+from multiprocessing.connection import Client, Listener
+from pi.shared import THERMO_PORT, VOLTA_PORT, COMMKEY, COMMAND_READ, COMMAND_STAT, STAT_OK, STAT_ERROR
 
 TEMPS = {'LEFT':None, 'RIGHT':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'
@@ -171,6 +174,8 @@ class TempControl(tk.Frame):
         self._readTemps(msg=_msg)
 
     def _getTemp(self, *args, **kwargs):
+        if not self.is_initialized:
+            return
         _msg = kwargs.get('msg', self.readserial())
         try:
             if float(self.lefttargettemp.get()) != _msg.get('LEFTTARGET', 25.0):
@@ -184,6 +189,8 @@ class TempControl(tk.Frame):
             pass
 
     def _setTemp(self, *args):
+        if not self.is_initialized:
+            return
         try:
             float(self.lefttargettemp.get())
             print(f"Setting peltier to left:{self.lefttargettemp.get()} °C")
@@ -297,6 +304,138 @@ class TempControl(tk.Frame):
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
         self.last_write = time.time()
+
+
+class SeebeckMeas(tk.Frame):
+
+    _lt = 0.0
+    _rt = 0.0
+    _v = 0.0
+    _initialized = False
+    widgets = {}
+
+    def __init__(self, root):
+        self.master = root
+        super().__init__(self.master)
+        self.left_temp_reading = StringVar(value='0.0')
+        self.right_temp_reading = StringVar(value='0.0')
+        self.voltage_reading = StringVar(value='0.0')
+        self.addr = StringVar(value=f'127.0.0.1:{THERMO_PORT}')
+        self.createWidgets()
+        self.readtemps()
+
+    def createWidgets(self):
+        tempFrame = tk.LabelFrame(self,
+                                 text='Surface Temperatures (°C)',
+                                 labelanchor=N)
+        tk.Label(tempFrame,
+                 padding=5,
+                 text='Left: ').pack(side=LEFT)
+        tk.Label(tempFrame,
+                 padding=5,
+                 textvariable=self.left_temp_reading).pack(side=LEFT)
+        tk.Label(tempFrame,
+                 padding=5,
+                 textvariable=self.left_temp_reading).pack(side=RIGHT)
+        tk.Label(tempFrame,
+                 padding=5,
+                 text='Right: ').pack(side=RIGHT)
+        voltFrame = tk.LabelFrame(self,
+                                 text='Surface Voltage (V)',
+                                 labelanchor=N)
+        tk.Label(voltFrame,
+                 textvariable=self.voltage_reading).pack(side=TOP)
+        deviceFrame = tk.LabelFrame(self,
+                                 text='Device Settings',
+                                 labelanchor=N)
+        tk.Label(deviceFrame,
+                 text='Address:').pack(side=LEFT)
+        tk.Entry(deviceFrame,
+                 width=15,
+                 textvariable=self.addr).pack(side=LEFT)
+        tempFrame.pack(side=TOP)
+        voltFrame.pack(side=TOP)
+        deviceFrame.pack(side=TOP)
+
+    def _checkconnetion(self):
+        if not ping(self.host):
+            self._initalized = False
+            return False
+        try:
+            with Client((self.host, self.port), authkey=COMMKEY) as client:
+                client.send(COMMAND_STAT)
+                msg = client.recv()
+                if not isinstance(msg, dict):
+                    msg = {}
+            if msg.get('status', STAT_ERROR) == STAT_OK:
+                self._initalized = True
+                return True
+        except ConnectionRefusedError:
+            print(f"Host {self.addr.get().strip()} is down.")
+        self._initalized = False
+        return False
+
+    def readtemps(self, *args):
+        if not self.connected:
+            self.after(5000, self.readtemps)
+            return
+        with Client((self.host, self.port), authkey=COMMKEY) as client:
+            client.send(COMMAND_READ)
+            msg = client.recv()
+            if not isinstance(msg, dict):
+                msg = {}
+        self._lt = msg.get('left', -999.99)
+        self._rt = msg.get('right', -999.99)
+        self._v = msg.get('voltage', 0.0)
+        self.left_temp_reading.set(f'{self._lt:0.2f}')
+        self.right_temp_reading.set(f'{self._rt:0.2f}')
+        self.voltage_reading.set(f'{self._v:0.4f}')
+        self.after(1000, self.readtemps)
+
+    @property
+    def host(self):
+        try:
+            _addr, _port = self.addr.get().strip().split(':')
+            if validateip(_addr):
+                return _addr
+        except ValueError:
+            pass
+        return None
+
+    @property
+    def port(self):
+        try:
+            _addr, _port = self.addr.get().strip().split(':')
+            return int(_port)
+        except ValueError:
+            return None
+    @property
+    def connected(self):
+        return self._checkconnetion()
+    @property
+    def initialized(self):
+        return self._initalized
+    @property
+    def temps(self):
+        self.readtemps()
+        return {'left': self._lt, 'right': self._rt}
+
+
+def ping(host):
+    if host is not None:
+        p = subprocess.run(['/usr/bin/ping', '-q', '-c1', '-W1', '-n', host], stdout=subprocess.PIPE)
+        if p.returncode == 0:
+            return True
+    return False
+
+def validateip(addr):
+    try:
+        a, b, c, d = addr.split(".")
+        map(int, [a,b,c,d])
+        return True
+    except ValueError:
+        pass
+    return False
 
 def _enumerateDevices():
     _filter = ''

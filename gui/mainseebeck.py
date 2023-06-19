@@ -39,10 +39,10 @@ from tkinter import DISABLED, NORMAL  # pylint: disable=unused-import
 from tkinter import PhotoImage
 from tkinter.font import Font
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
-from gui.datacanvas import dataCanvas
-from gui.stagecontrol import StageControls
-from gui.gradientcontrol import TempControl
-from gui.measurement import MeasurementControl, MeasurementReadV
+from .datacanvas import dataCanvas
+from .stagecontrol import StageControls
+from .gradientcontrol import TempControl, SeebeckMeas
+from .measurement import MeasurementControl, MeasurementReadV
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -93,20 +93,25 @@ class MainFrame(tk.Frame):
         self.variables['busy'] = busy
         dataFrame = tk.Frame(self)
         controlsFrame = tk.Frame(self)
-        voltmeterFrame = tk.LabelFrame(controlsFrame, text='Voltmeter Controls')
-        voltmetercontrols = MeasurementReadV(voltmeterFrame, busy=busy)
-        self.widgets['voltmetercontrols'] = voltmetercontrols
-        tempcontrolFrame = tk.LabelFrame(controlsFrame, text='Temperature Gradient Controls')
-        tempcontrols = TempControl(tempcontrolFrame)
+        controlsFrameWest = tk.LabelFrame(controlsFrame, text='Seebeck Measurements')
+        controlsFrameEast = tk.LabelFrame(controlsFrame, text='Temperature Gradient Controls')
+        controlsFrameSouth = tk.Frame(controlsFrame)
+        seebeckmeasFrame = SeebeckMeas(controlsFrameWest)
+        self.widgets['seebeckmeasFrame'] = seebeckmeasFrame
+        # voltmeterFrame = tk.LabelFrame(controlsFrameWest, text='Voltmeter Controls')
+        # voltmetercontrols = MeasurementReadV(voltmeterFrame, busy=busy)
+        # self.widgets['voltmetercontrols'] = voltmetercontrols
+        # tempcontrolFrame = tk.LabelFrame(controlsFrameEast, text='Temperature Gradient Controls')
+        tempcontrols = TempControl(controlsFrameEast)
         self.widgets['tempcontrols'] = tempcontrols
         optionsFrame = tk.Frame(self)
         outputFrame = tk.Frame(optionsFrame)
         buttonFrame = tk.Frame(self)
+        statusFrame = tk.Frame(self)
 
         dataplot = dataCanvas(dataFrame, xlabel='ΔT', ylabel='Voltage')
         self.widgets['dataplot'] = dataplot
 
-        statusFrame = tk.Frame(controlsFrame)
         sattusLabelprefix = Label(master=statusFrame, text="Status: ")
         statusVar = StringVar(value=NOT_INITIALIZED)
         statusLabel = Label(master=statusFrame,
@@ -154,14 +159,15 @@ class MainFrame(tk.Frame):
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         sattusLabelprefix.pack(side=LEFT)
         statusLabel.pack(side=LEFT)
-        statusFrame.pack(side=BOTTOM)
-        controlsFrame.pack(side=TOP)
-        voltmeterFrame.pack(side=LEFT)
-        tempcontrolFrame.pack(side=LEFT)
-        voltmetercontrols.pack(side=LEFT, fill=Y)
+        controlsFrame.pack(side=TOP, fill=Y)
+        controlsFrameWest.pack(side=LEFT, fill=Y)
+        controlsFrameEast.pack(side=LEFT, fill=Y)
+        seebeckmeasFrame.pack(side=TOP)
+        # voltmeterFrame.pack(side=TOP)
+        # voltmetercontrols.pack(side=LEFT, fill=Y)
         tempcontrols.pack(side=RIGHT, fill=Y)
-
-        tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
+        tk.Separator(controlsFrame, orient=HORIZONTAL).pack(side=TOP, fill=X)
+        statusFrame.pack(side=BOTTOM)
         buttonFrame.pack(side=BOTTOM, fill=X)
 
     def quitButtonClick(self):
@@ -170,7 +176,7 @@ class MainFrame(tk.Frame):
         self.__quit()
 
     def __quit(self):
-        self.widgets['voltmetercontrols'].shutdown()
+        # self.widgets['voltmetercontrols'].shutdown()
         self.widgets['tempcontrols'].shutdown()
         time.sleep(1)
         self.root.quit()
@@ -222,12 +228,15 @@ class MainFrame(tk.Frame):
         if self.widgets['tempcontrols'].initialized:
             _connected.append('Peltier')
             _initialized[0] = True
-        if self.widgets['voltmetercontrols'].initialized:
-            _connected.append('Voltmeter')
+        if self.widgets['seebeckmeasFrame'].initialized:
+            _connected.append('Seebeck Meas')
             _initialized[1] = True
+        # if self.widgets['voltmetercontrols'].initialized:
+        #     _connected.append('Voltmeter')
+        #     _initialized[1] = True
         if len(_connected) > 1:
             _connected = _connected[:-1]+['and', _connected[-1]]
-        if _initialized[0] is True:
+        if _initialized[1] is True:
             self.widgets['measButton']['state'] = NORMAL
         if False in _initialized and not self.variables['busy'].get():
             self.widgets['measButton'].after(100, self.checkOptions)
