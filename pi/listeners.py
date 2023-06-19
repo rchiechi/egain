@@ -59,6 +59,7 @@ class thermo():
 
                 # if it's a shut down command, return to stop this thread
                 if isinstance(message, str) and message == COMMAND_STOP:
+                    print(f"Listener {self.addr} dying.")
                     self.alive.clear()
                     self.message = COMMAND_STOP
                     return
@@ -74,6 +75,8 @@ class thermo():
             if time.time() - start_time > 5:
                 self.__update()
                 start_time = time.time()
+            time.sleep(0.1)
+        print("Updater thread dying.")
         self.alive.clear()
         self.message = COMMAND_STOP
 

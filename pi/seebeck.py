@@ -94,22 +94,30 @@ font = ImageFont.truetype(os.path.join(absdir, "DejaVuSans.ttf"), 24)
 
 
 if __name__ == '__main__':
-    
+    spinner = ['|', '\\', '—', '/']    
     alive = threading.Event()
     alive.set()
     thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, authkey=COMMKEY)
     thermothread.start()
     backlight.value = True
+    start_time = time.time()
+    _i = 0
     try:
         while True:
-            GPIO.output(led, GPIO.HIGH)
-            time.sleep(1)
-            GPIO.output(led, GPIO.LOW)
-            time.sleep(1)
+            if time.time() - start_time < 1:
+                GPIO.output(led, GPIO.HIGH)
+            elif time.time() - start_time > 2:
+                GPIO.output(led, GPIO.LOW)
+                start_time = time.time()
             LT = f"Left:  {thermothread.lefttemp:0.1f} °C"
             RT = f"Right: {thermothread.righttemp:0.1f} °C"
             print(f"\r{LT}")
-            print(f"{RT}", end="\033[F")
+            print(f"{RT}")
+            if _i == len(spinner):
+                _i = 0
+            print(f"{spinner[_i]}", end="\033[F\033[F")
+            _i += 1
+            V = "Voltage = 0.000 V"
             cmd = "hostname -I | cut -d' ' -f1"
             IP = "IP: " + subprocess.check_output(cmd, shell=True).decode("utf-8")
             # Draw a black filled box to clear the image.
@@ -122,7 +130,6 @@ if __name__ == '__main__':
             y += font.getsize(LT)[1]
             draw.text((x, y), RT, font=font, fill="#00FF00")
             y += font.getsize(RT)[1]
-            V = "Voltage = 0.000 V"
             draw.text((x, y), V, font=font, fill="#0000FF")
             y += font.getsize(V)[1]
 
