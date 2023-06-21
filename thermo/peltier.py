@@ -15,6 +15,7 @@ COMMAND_STOP = 'STOP'
 class Gradient():
 
     last_json = {}
+    last_serial = 0
     command = COMMAND_RUN
     _lock = threading.Lock()
 
@@ -58,7 +59,6 @@ class Gradient():
 
                 # receive the subscription request from the client
                 message = conn.recv()
-
                 # if it's a shut down command, return to stop this thread
                 if isinstance(message, str) and message == COMMAND_STOP:
                     print(f"Listener {self.addr} dying.")
@@ -72,6 +72,11 @@ class Gradient():
 
                 if isinstance(message, str) and message == COMMAND_STAT:
                     conn.send({'status': self.__statcheck()})
+
+                if isinstance(message, str) and message[0] == COMMAND_SEND:
+                    _cmd = conn.recv()
+                    if isinstance(_cmd, list) and len(_cmd) == 2:
+                        self.writeserial(*_cmd)
 
     def _updater_main(self):
         print("Starting 5 second updater")
@@ -94,6 +99,8 @@ class Gradient():
         self.readserial()
 
     def readserial(self, update=True):
+        if time.time() - self.last_serial > 1:
+            time.sleep(1)
         try:
             _msg = ''
             _json = {}
@@ -108,9 +115,12 @@ class Gradient():
                     print(f'JSON Error: {err}')
         except serial.serialutil.SerialException as msg:
             print(f"Serial error {msg}")
+        self.last_serial = time.time()
         return _json
 
     def writeserial(self, cmd, val=None):
+        if time.time() - self.last_serial > 1:
+            time.sleep(1)
         if not isinstance(cmd, bytes):
             cmd = bytes(cmd, encoding='utf-8')
         if not isinstance(val, bytes) and val is not None:
@@ -122,6 +132,7 @@ class Gradient():
                     self.controller.write(val+TERMINATOR)
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
+        self.last_serial = time.time()
 
     @property
     def lock(self):
@@ -196,6 +207,12 @@ if __name__ == '__main__':
     if peltier is not None:
         gradcomm = Gradient(alive, peltier)
         gradcomm.start()
-        print(gradcomm.status)
+        while True:
+            time.sleep(1)
+            try:
+                print(gradcomm.status, end='\r')
+            except KeyboardInterrupt:
+                pass
         gradcomm.stop()
+    time.sleep(1)
     alive.clear()
