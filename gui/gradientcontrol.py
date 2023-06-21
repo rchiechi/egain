@@ -15,7 +15,7 @@ from tkinter.font import Font
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 import serial
 from multiprocessing.connection import Client, Listener
-from pi.shared import THERMO_PORT, VOLTA_PORT, COMMKEY, COMMAND_READ, COMMAND_STAT, STAT_OK, STAT_ERROR
+from thermo.constants import THERMO_PORT, VOLTA_PORT, AUTH_KEY, COMMAND_READ, COMMAND_STAT, STAT_OK, STAT_ERROR
 
 TEMPS = {'LEFT':None, 'RIGHT':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'
@@ -362,7 +362,7 @@ class SeebeckMeas(tk.Frame):
             self._initalized = False
             return False
         try:
-            with Client((self.host, self.port), authkey=COMMKEY) as client:
+            with Client((self.host, self.port), authkey=AUTH_KEY) as client:
                 client.send(COMMAND_STAT)
                 msg = client.recv()
                 if not isinstance(msg, dict):
@@ -379,7 +379,7 @@ class SeebeckMeas(tk.Frame):
         if not self.connected:
             self.after(5000, self.readtemps)
             return
-        with Client((self.host, self.port), authkey=COMMKEY) as client:
+        with Client((self.host, self.port), authkey=AUTH_KEY) as client:
             client.send(COMMAND_READ)
             msg = client.recv()
             if not isinstance(msg, dict):
@@ -423,7 +423,8 @@ class SeebeckMeas(tk.Frame):
 
 def ping(host):
     if host is not None:
-        p = subprocess.run(['/usr/bin/ping', '-q', '-c1', '-W1', '-n', host], stdout=subprocess.PIPE)
+        _ping = subprocess.run(['which','ping'], capture_output=True)
+        p = subprocess.run([_ping.stdout.decode('utf-8').strip(), '-q', '-c1', '-W1', '-n', host], stdout=subprocess.PIPE)
         if p.returncode == 0:
             return True
     return False
