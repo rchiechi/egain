@@ -4,16 +4,16 @@
 */
 
 // Software SPI digital IO pins for thermocouples
-#define DO 11
-#define RCS 9
-#define CLK 13
-#define LCS 10
+#define DO 4
+#define RCS 5
+#define CLK 3
+#define LCS 6
 
 // Define pins to control peltier relays and MOSFETs
-#define RPELTIER 6
-#define RPELTIER_RELAY 4
-#define LPELTIER 5
-#define LPELTIER_RELAY 4     // For future use if two power supplies are needed
+#define RPELTIER 9
+#define RPELTIER_RELAY 2
+#define LPELTIER 10
+#define LPELTIER_RELAY 2     // For future use if two power supplies are needed
 #define LPETLIER_POLARITY 7  // For future use for DPDT polarity switch
 #define RPLETIER_POLARITY 8  //For future use for DPDT polarity switch
 
