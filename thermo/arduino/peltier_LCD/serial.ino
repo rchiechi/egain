@@ -10,7 +10,7 @@ void handle_request() {  // Handle incoming Serial requests
   String incomingCmd = Serial.readStringUntil(terminator);
 
   if (incomingCmd == "INIT") {
-    Serial.print(F("{\"INITIALIZED:\":"));
+    Serial.print(F("{\"INITIALIZED\":"));
     if (initialized) {
       Serial.print(F("true"));
     } else {

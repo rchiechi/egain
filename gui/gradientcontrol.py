@@ -36,6 +36,7 @@ class Meas(tk.Frame):
         super().__init__(self.master)
         self.addr = StringVar(value=f'{self._host}:{self._port}')
         self.createWidgets()
+        self._checkconnetion()
         self.readstatus()
 
     def createWidgets(self):
@@ -43,7 +44,7 @@ class Meas(tk.Frame):
 
     def _checkconnetion(self):
         if not ping(self.host):
-            self._initalized = False
+            self._initialized = False
             return False
         try:
             with Client((self.host, self.port), authkey=tc.AUTH_KEY) as client:
@@ -52,30 +53,35 @@ class Meas(tk.Frame):
                 if not isinstance(msg, dict):
                     msg = {}
             if msg.get('status', tc.STAT_ERROR) == tc.STAT_OK:
-                self._initalized = True
+                self._initialized = True
+                print("Initialized")
                 return True
         except ConnectionRefusedError:
             print(f"Host {self.addr.get().strip()} is down.")
-        self._initalized = False
+        self._initialized = False
         return False
 
     def readstatus(self, *args):
-        if not self.connected:
-            self.after(5000, self.readstatus)
+        if not self.initialized:
+            self.after(5000, self._checkconnetion)
+            self.after(6000, self.readstatus)
             return
         with Client((self.host, self.port), authkey=tc.AUTH_KEY) as client:
             client.send(tc.COMMAND_READ)
             msg = client.recv()
             if not isinstance(msg, dict):
                 msg = {}
+                self.after(1000, self._checkconnetion)
         self.after(1000, self.readstatus)
         self.last_status = msg
 
     def sendcommand(self, cmd, val=None):
-        if not self.connected:
+        if not self.initialized:
             return
         with Client((self.host, self.port), authkey=tc.AUTH_KEY) as client:
+            print(f"Sending {tc.COMMAND_SEND}")
             client.send(tc.COMMAND_SEND)
+            print(f"Sending: {cmd}, {val}")
             client.send([cmd, val])
 
     @property
@@ -130,13 +136,13 @@ class TempControl(Meas):
         setFrame = tk.LabelFrame(self,
                                  text='Target Temperatures (°C)',
                                  labelanchor=N)
-        tc.SETLEFTTEMP = tk.Entry(setFrame, textvariable=self.lefttargettemp, width=4)
-        tc.SETRIGHTTEMP = tk.Entry(setFrame, textvariable=self.righttargettemp, width=4)
+        setlefttempEntry = tk.Entry(setFrame, textvariable=self.lefttargettemp, width=4)
+        setrighttempEntry = tk.Entry(setFrame, textvariable=self.righttargettemp, width=4)
         self.lefttargettemp.set("25.0")
         self.righttargettemp.set("25.0")
         for n in ('<Return>', '<Leave>', '<Enter>'):
-            tc.SETLEFTTEMP.bind(n, self._setTemp)
-            tc.SETRIGHTTEMP.bind(n, self._setTemp)
+            setlefttempEntry.bind(n, self._setTemp)
+            setrighttempEntry.bind(n, self._setTemp)
         # self.lefttargettemp.trace('w', self._setTemp)
         # self.righttargettemp.trace('w', self._setTemp)
         toggleFrame = tk.Frame(self)
@@ -155,7 +161,7 @@ class TempControl(Meas):
                                        command=lambda: self._heatcoolbuttonclick('leftheatcoolButton'),
                                        width=5)
         rigthheatcoolButton = tk.Button(heatcoolFrame, text="Cool",
-                                        command=lambda: self._heatcoolbuttonclick('rigthheatcoolButton'),
+                                        command=lambda: self._heatcoolbuttonclick('rightheatcoolButton'),
                                         width=5)
         self.widgets['leftheatcoolButton'] = leftheatcoolButton
         self.widgets['rightheatcoolButton'] = rigthheatcoolButton
@@ -177,9 +183,9 @@ class TempControl(Meas):
                  width=15,
                  textvariable=self.addr).pack(side=LEFT)
 
-        tc.SETLEFTTEMP.pack(side=LEFT)
+        setlefttempEntry.pack(side=LEFT)
         leftPeltierPower.pack(side=LEFT)
-        tc.SETRIGHTTEMP.pack(side=LEFT)
+        setrighttempEntry.pack(side=LEFT)
         rightPeltierPower.pack(side=LEFT)
         peltierRightCheck.pack(side=RIGHT)
         peltierLeftCheck.pack(side=RIGHT)
@@ -212,7 +218,6 @@ class TempControl(Meas):
 
     def _checkPeltier(self, *args):
         self.after('1000', self._checkPeltier)
-        print(self.last_status)
         if not self.initialized:
             return
         for _widget in self.widgets:
@@ -250,15 +255,16 @@ class TempControl(Meas):
         if not self.initialized:
             return
         try:
-            float(self.lefttargettemp.get())
-            print(f"Setting peltier to left:{self.lefttargettemp.get()} °C")
-            self.sendcommand(tc.SETLEFTTEMP, self.lefttargettemp.get())
+            _temp = float(self.lefttargettemp.get())
+            print(f"Setting left peltier: {_temp}°C")
+            self.sendcommand(tc.SETLEFTTEMP, _temp)
         except ValueError:
             pass
+        time.sleep(0.5)
         try:
-            float(self.righttargettemp.get())
-            print(f"right:{self.righttargettemp.get()} °C")
-            self.sendcommand(tc.SETRIGHTTEMP, self.righttargettemp.get())
+            _temp = float(self.righttargettemp.get())
+            print(f"Setting right peltier: {_temp}°C")
+            self.sendcommand(tc.SETRIGHTTEMP, _temp)
         except ValueError:
             pass
 
@@ -364,22 +370,6 @@ def validateip(addr):
     except ValueError:
         pass
     return False
-
-# def _checkconnetion(self, addr):
-#     host, port = *addr
-#     if not ping(host):
-#         return False
-#     try:
-#         with Client((host, port), authkey=tc.AUTH_KEY) as client:
-#             client.send(tc.COMMAND_STAT)
-#             msg = client.recv()
-#             if not isinstance(msg, dict):
-#                 msg = {}
-#         if msg.get('status', tc.STAT_ERROR) == tc.STAT_OK:
-#             return True
-#     except ConnectionRefusedError:
-#         print(f"Host {addr.get().strip()} is down.")
-#     return False
 
 def _enumerateDevices():
     _filter = ''

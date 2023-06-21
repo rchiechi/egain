@@ -40,9 +40,7 @@ from tkinter import PhotoImage
 from tkinter.font import Font
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from .datacanvas import dataCanvas
-from .stagecontrol import StageControls
 from .gradientcontrol import TempControl, SeebeckMeas
-from .measurement import MeasurementControl, MeasurementReadV
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -231,9 +229,6 @@ class MainFrame(tk.Frame):
         if self.widgets['seebeckmeasFrame'].initialized:
             _connected.append('Seebeck Meas')
             _initialized[1] = True
-        # if self.widgets['voltmetercontrols'].initialized:
-        #     _connected.append('Voltmeter')
-        #     _initialized[1] = True
         if len(_connected) > 1:
             _connected = _connected[:-1]+['and', _connected[-1]]
         if _initialized[1] is True:

@@ -14,8 +14,8 @@
 #define RPELTIER_RELAY 2
 #define LPELTIER 10
 #define LPELTIER_RELAY 2     // For future use if two power supplies are needed
-#define LPETLIER_POLARITY 7  // For future use for DPDT polarity switch
-#define RPLETIER_POLARITY 8  //For future use for DPDT polarity switch
+#define LPETLIER_POLARITY 12  // For future use for DPDT polarity switch
+#define RPLETIER_POLARITY 13  //For future use for DPDT polarity switch
 
 // Constants
 #define LEFT 0
