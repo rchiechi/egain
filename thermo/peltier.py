@@ -3,6 +3,7 @@ import os
 import sys
 import time
 import threading
+import queue
 from multiprocessing.connection import Client, Listener
 import serial
 import json
@@ -14,6 +15,8 @@ class Gradient():
 
     last_json = {}
     last_serial = 0
+    _initialized = False
+    cmdq = queue.Queue()
     command = tc.COMMAND_RUN
     _lock = threading.Lock()
 
@@ -70,11 +73,11 @@ class Gradient():
                     return
 
                 if isinstance(message, str) and message == tc.COMMAND_READ:
-                    self.__update()
+                    # self.__update()
                     conn.send(self.last_json)
 
                 if isinstance(message, str) and message == tc.COMMAND_STAT:
-                    if self.__statcheck():
+                    if self._initialized:
                         conn.send({'status': tc.STAT_OK})
                     else:
                         conn.send({'status': tc.STAT_ERROR})
@@ -85,30 +88,37 @@ class Gradient():
                     except EOFError:
                         return
                     if isinstance(_cmd, list) and len(_cmd) == 2:
-                        self.writeserial(*_cmd)
+                        self.cmdq.put(_cmd)
+                        # self.writeserial(*_cmd)
 
     def _updater_main(self):
         print("Starting 5 second updater")
-        start_time = time.time()
+        start_time = [time.time(), time.time()]
         while self.alive.is_set() and self.command == tc.COMMAND_RUN:
-            if time.time() - start_time > 5:
+            if time.time() - start_time[0] > 5:
                 self.__update()
-                start_time = time.time()
-            time.sleep(0.1)
+                start_time[0] = time.time()
+            time.sleep(0.25)
+            elif time.time() - start_time[1] > 2:
+                self.__statcheck()
+                start_time[1] = time.time()
+            if not cmdq.empty():
+                self.writeserial(*cmdq.get())
+
         print("Updater thread dying.")
         self.alive.clear()
         self.message = tc.COMMAND_STOP
 
     def __statcheck(self):
         self.writeserial(tc.INIT)
-        return self.readserial(False).get(tc.INITIALIZED, False)
+        self._initialized = self.readserial(False).get(tc.INITIALIZED, False)
 
     def __update(self):
         self.writeserial(tc.POLL)
         self.readserial()
 
     def readserial(self, update=True):
-        if time.time() - self.last_serial > 1:
+        if time.time() - self.last_serial < 1:
             time.sleep(1)
         try:
             _msg = ''
@@ -128,7 +138,7 @@ class Gradient():
         return _json
 
     def writeserial(self, cmd, val=None):
-        if time.time() - self.last_serial > 1:
+        if time.time() - self.last_serial < 1:
             time.sleep(1)
         if not isinstance(cmd, bytes):
             cmd = bytes(str(cmd), encoding='utf-8')
