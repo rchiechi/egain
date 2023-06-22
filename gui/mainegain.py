@@ -242,15 +242,15 @@ class MainFrame(tk.Frame):
 
     def maketipButtonClick(self):
         _t = 0
-        _alive, _res = self.widgets['measurementFrame'].getResistanceReader()
-        _meas = _res.read().split(b'\r')[0]
+        _res = self.widgets['measurementFrame'].getResistanceReader()
+        _meas = _res.read()
         try:
             ohms = float(_meas)
         except ValueError:
             ohms = 1000000.0
         if ohms > 200:  # 20Ω is compliance
             messagebox.showerror("Error", "No tip contact.")
-            _alive.clear()
+            _res.kill()
             return
         self.widgets['stagecontroller'].raiseZaxis()
         time.sleep(0.1)
@@ -269,7 +269,7 @@ class MainFrame(tk.Frame):
                 break
             time.sleep(0.1)
         self.widgets['stagecontroller'].stopZaxis()
-        _alive.clear()
+        _res.kill()
         self.widgets['quitButton']['state'] = NORMAL
         messagebox.showinfo("Tip", "I think I made a tip..?")
 

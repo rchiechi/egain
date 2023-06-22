@@ -124,7 +124,7 @@ class Gradient():
             _msg = ''
             _json = {}
             while not _json:
-                with self._lock:
+                with self.lock:
                     _msg = str(self.peltier.readline(), encoding='utf8').strip()
                 try:
                     _json = json.loads(_msg)

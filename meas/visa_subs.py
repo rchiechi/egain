@@ -24,6 +24,7 @@ import threading
 from contextlib import contextmanager
 import pyvisa as visa
 import serial
+import threading
 rm = visa.ResourceManager()
 
 #############
@@ -90,6 +91,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
     try:
         print(f"Opening serial device {name}")
         serial_visa = SerialVisa(visatoserial(name), flowcontrol=kwargs.get("flowcontrol", False))
+        serial_visa.timeout = 500
         i = 0
         while i < 5:
             print(idn)
@@ -103,6 +105,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
             if IDN:
                 print(IDN)
                 serial_visa.playchord()
+                serial_visa.timeout = 1000
                 return serial_visa
             else:
                 serial_visa.close()
@@ -149,19 +152,20 @@ def visatoserial(visa_address):
 
 class SerialVisa():
 
-    buffer = []
+    buff = []
     encoding = 'ascii'
     timeout_s = 1
     read_termination_b = b"\n"
     write_termination_b = b"\r"
     cmd_delay = 0.05
     smu = None
+    lock = threading.Lock()
 
-    def __init__(self, address, baud=9600, timeout=1, flowcontrol=False):
+    def __init__(self, address, baud=9600, flowcontrol=False):
         self.delta = time.time()
         # self.address = address
         # self.timeout = timeout
-        self.smu = serial.Serial(address, baud, timeout=timeout, xonxoff=flowcontrol)
+        self.smu = serial.Serial(address, baud, timeout=1, xonxoff=flowcontrol)
         # self.playchord()
 
     @property
@@ -170,9 +174,8 @@ class SerialVisa():
 
     @timeout.setter
     def timeout(self, ms):
-        self.timeout_s = ms/1000.0
         if self.smu is not None:
-            # print(self.timeout_s)
+            self.timeout_s = ms/1000.0
             self.smu.timeout = self.timeout_s
 
     @property
@@ -199,20 +202,21 @@ class SerialVisa():
 
     def __writebuffer(self, cmd_, data_):
         # print(data_)
-        if len(self.buffer) > 100:
-            self.buffer = self.buffer[-100:]
+        # if len(self.buff) > 100:
+        #     self.buff = self.buff[-100:]
         for _d in data_.split(self.read_termination_b):
             if _d:
                 # print(_d)
-                self.buffer.append((cmd_,
-                                   str(_d.strip(self.read_termination_b),
-                                    encoding=self.encoding)))
-        # print(self.buffer)
+                self.buff.append((cmd_, str(_d, encoding=self.encoding)))
+
+    @property
+    def buffer(self):
+        return self.buff
 
     @property
     def lastreading(self):
-        if len(self.buffer):
-            return self.buffer[-1][1]
+        if len(self.buff):
+            return self.buff.pop()[1]
         else:
             return ''
 
@@ -223,60 +227,62 @@ class SerialVisa():
         self.smu.open()
 
     def playchord(self):
-        self.smu.write(b':SYST:BEEP:STAT ON'+self.write_termination_b)
-        self.smu.write(b'SYST:BEEP:IMM 261.63,0.25'+self.write_termination_b)
-        time.sleep(0.25)
-        self.smu.write(b'SYST:BEEP:IMM 329.63,0.25'+self.write_termination_b)
-        time.sleep(0.25)
-        self.smu.write(b'SYST:BEEP:IMM 392.00,0.25'+self.write_termination_b)
-        time.sleep(0.25)
-        self.smu.write(b'SYST:BEEP:IMM 523.25,1'+self.write_termination_b)
-        time.sleep(0.5)
+        with self.lock:
+            self.smu.write(b':SYST:BEEP:STAT ON'+self.write_termination_b)
+            self.smu.write(b'SYST:BEEP:IMM 261.63,0.25'+self.write_termination_b)
+            time.sleep(0.25)
+            self.smu.write(b'SYST:BEEP:IMM 329.63,0.25'+self.write_termination_b)
+            time.sleep(0.25)
+            self.smu.write(b'SYST:BEEP:IMM 392.00,0.25'+self.write_termination_b)
+            time.sleep(0.25)
+            self.smu.write(b'SYST:BEEP:IMM 523.25,1'+self.write_termination_b)
+            time.sleep(0.5)
 
     def write(self, cmd):
         self.__delay()
-        self.smu.write(bytes(cmd, encoding=self.encoding)+self.write_termination_b)
-        if DEBUG:
-            print(f'>> {bytes(cmd, encoding=self.encoding)+self.write_termination_b}')
+        with self.lock:
+            self.smu.write(bytes(cmd, encoding=self.encoding)+self.write_termination_b)
+            if DEBUG:
+                print(f'>> {bytes(cmd, encoding=self.encoding)+self.write_termination_b}')
 
     def read(self, _bytes=1):
         self.__delay()
-        return self.smu.read(_bytes)
+        with self.lock:
+            return self.smu.read(_bytes)
 
     def query(self, cmd):
         self.write(cmd)
-        self.__writebuffer(cmd, self.smu.read_until(self.read_termination_b))
+        with self.lock:
+            self.__writebuffer(cmd, self.smu.read_until(self.read_termination_b))
         if DEBUG:
             print(f'<< {self.lastreading}')
         return self.lastreading
 
     def get_wait_for_meas(self):
-        self.write('*OPC?')
-        alive = threading.Event()
-        alive.set()
-        opcthread = OPCThread(self.smu, alive)
-        return alive, opcthread
+        with self.lock:
+            self.write('*OPC?')
+        return OPCThread(self.smu, self.lock)
+
 
     def get_reader(self):
-        alive = threading.Event()
-        alive.set()
-        redthread = READThread(self.smu,
-                               alive, self.read_termination_b,
-                               self.write_termination_b)
-        return alive, redthread
+        return READThread(self.smu, self.lock,
+                          self.read_termination_b,
+                          self.write_termination_b)
 
 
 class OPCThread(threading.Thread):
 
-    def __init__(self, smu, alive):
+    def __init__(self, smu, lock):
         super().__init__()
         self.smu = smu
-        self.alive = alive
+        self.lock = lock
+        self.alive = threading.Event()
 
     def run(self):
         starttime = time.time()
         while self.alive.is_set():
-            _s = self.smu.read(1)
+            with self.lock:
+                _s = self.smu.read(1)
             if _s == b'1':
                 self.alive.clear()
                 break
@@ -286,16 +292,24 @@ class OPCThread(threading.Thread):
                 break
             time.sleep(1)
 
+    def kill(self):
+        self.alive.clear()
+
     @property
     def active(self):
         return self.alive.is_set()
 
+    @property
+    def alive_event(self):
+        return self.alive
+
 class READThread(threading.Thread):
 
-    def __init__(self, smu, alive, read_termination, write_termination):
+    def __init__(self, smu, lock, read_termination, write_termination):
         super().__init__()
         self.smu = smu
-        self.alive = alive
+        self.lock = lock
+        self.alive = threading.Event()
         self.read_termination = read_termination
         self.write_termination = write_termination
 
@@ -310,17 +324,23 @@ class READThread(threading.Thread):
     def active(self):
         return self.alive.is_set()
 
+    @property
+    def alive_event(self):
+        return self.alive
+
     def read(self):
         if self.alive.is_set():
-            self.smu.write(b':READ?'+self.write_termination)
-            if DEBUG:
-                print(">>:READ?")
-            i = 0
-            _data = b''
-            while not _data and i < 3:
-                _data = self.smu.read_until(self.read_termination)
-                time.sleep(1)
-                i += 1
-            return _data
+            with self.lock:
+                self.smu.write(b':READ?'+self.write_termination)
+                time.sleep(0.1)
+                if DEBUG:
+                    print(">>:READ?")
+                i = 0
+                _data = b''
+                while not _data and i < 3:
+                    _data = self.smu.read_until(self.read_termination)
+                    time.sleep(1)
+                    i += 1
+            return _data.strip()
         else:
             return b''
