@@ -3,6 +3,7 @@ import json
 import platform
 import time
 import subprocess
+import socket
 import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
@@ -355,6 +356,8 @@ class SeebeckMeas(Meas):
         return {'left': self._lt, 'right': self._rt}
 
 def ping(host):
+    if not validateip(host):
+        return False
     if host is not None:
         _ping = subprocess.run(['which','ping'], capture_output=True)
         p = subprocess.run([_ping.stdout.decode('utf-8').strip(), '-q', '-c1', '-W1', '-n', host], stdout=subprocess.PIPE)
@@ -364,12 +367,12 @@ def ping(host):
 
 def validateip(addr):
     try:
-        a, b, c, d = addr.split(".")
-        map(int, [a,b,c,d])
+        socket.inet_aton(addr)
+        # legal
         return True
-    except ValueError:
-        pass
-    return False
+    except socket.error:
+        # Not legal
+        return False
 
 def _enumerateDevices():
     _filter = ''

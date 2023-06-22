@@ -98,12 +98,12 @@ class Gradient():
             if time.time() - start_time[0] > 5:
                 self.__update()
                 start_time[0] = time.time()
-            time.sleep(0.25)
             elif time.time() - start_time[1] > 2:
                 self.__statcheck()
                 start_time[1] = time.time()
             if not cmdq.empty():
                 self.writeserial(*cmdq.get())
+            time.sleep(0.1)
 
         print("Updater thread dying.")
         self.alive.clear()
@@ -140,15 +140,17 @@ class Gradient():
     def writeserial(self, cmd, val=None):
         if time.time() - self.last_serial < 1:
             time.sleep(1)
-        if not isinstance(cmd, bytes):
-            cmd = bytes(str(cmd), encoding='utf-8')
-        if not isinstance(val, bytes) and val is not None:
-            val = bytes(str(val), encoding='utf-8')
+        if isinstance(cmd, str):
+            cmd = bytes(cmd, encoding='utf-8')
+        if isinstance(val, str):
+            val = bytes(val, encoding='utf-8')
         try:
             with self.lock:
-                self.peltier.write(cmd+tc.TERMINATOR)
+                self.peltier.write(cmd)
+                self.peltier.write(tc.TERMINATOR)
                 if val is not None:
-                    self.peltier.write(val+tc.TERMINATOR)
+                    self.peltier.write(val)
+                    self.peltier.write(tc.TERMINATOR)
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
         self.last_serial = time.time()
