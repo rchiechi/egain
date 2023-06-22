@@ -2,6 +2,7 @@ import os
 import platform
 import time
 from decimal import Decimal
+from appdirs import user_config_dir
 import tkinter.ttk as tk
 from tkinter import Tk
 # from tkinter import Toplevel
@@ -17,6 +18,7 @@ from meas.k6430 import K6430
 from meas.k2182A import K2182A
 from meas.visa_subs import enumerateDevices
 from meas.visa_subs import MODE_GPIB, MODE_SERIAL
+from gui.util import parseusersettings
 
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 
@@ -35,16 +37,15 @@ MEAS_MODE = MODE_SERIAL
 class MeasurementControl(tk.Frame):
 
     error = False
-    sweep = {'sweepLow': '-1.0',
-             'sweepHigh': '1.0',
-             'stepSize': '0.25',
-             'nsweeps': '5',
-             'reversed': '0'
-             }
-
-    meas = {'ADDRESS': '24',
-            'NPLC': '5'
-            }
+    # sweep = {'sweepLow': '-1.0',
+    #          'sweepHigh': '1.0',
+    #          'stepSize': '0.25',
+    #          'nsweeps': '5',
+    #          'reversed': '0'
+    #          }
+    # meas = {'ADDRESS': '24',
+    #         'NPLC': '5'
+    #         }
     _isbusy = False
     mode = MEAS_MODE
     smu = None
@@ -60,6 +61,14 @@ class MeasurementControl(tk.Frame):
         self.measdone.set(False)
         super().__init__(self.master)
         self.labelFont = Font(size=8)
+        self.config = parseusersettings(os.path.join(user_config_dir('egain'), 'MeasurementControl.json'))
+        self.sweep = self.config.get('sweep', {'sweepLow': '-1.0',
+                                               'sweepHigh': '1.0',
+                                               'stepSize': '0.25',
+                                               'nsweeps': '5',
+                                               'reversed': '0'
+                                    })
+        self.meas = self.config.get('meas', {'ADDRESS': '24', 'NPLC': '5'})
         self.deviceString = StringVar()
         self.createWidgets()
 
@@ -149,10 +158,15 @@ class MeasurementControl(tk.Frame):
         measdevicePickerLabel = tk.Label(measFrame, text='Adress:', font=self.labelFont)
         measdevicePickerLabel.pack(side=LEFT)
         devicePicker.pack(side=LEFT)
+        if 'device_string' in self.config:
+            self.deviceString.set(self.config['device_string'])
 
     def shutdown(self):
         if self.smu is not None:
             self.smu.close()
+
+    def _saveconfig(self):
+        parseusersettings(os.path.join(user_config_dir('egain'), 'MeasurementControl.json'), self.config)
 
     def _initdevice(self, *args):
         self.busy.set(True)
@@ -161,6 +175,8 @@ class MeasurementControl(tk.Frame):
             _smu = K6430(self.deviceString.get())
             if _smu.initialize(auto_sense_range=True):
                 self.smu = _smu
+                self.config['device_string'] = self.deviceString.get()
+                self._saveconfig()
         if self.smu is not None:
             self.is_initialized = True
         self.busy.set(False)
@@ -173,10 +189,6 @@ class MeasurementControl(tk.Frame):
                 if _var:
                     float(_var)
                     self.sweep[_StringVar] = _var
-                # if _StringVar in ('nsweeps', 'reversed'):
-                #    self.sweep[_StringVar] = int(getattr(self, _StringVar).get())
-                # else:
-                #    self.sweep[_StringVar] = float(getattr(self, _StringVar).get())
         except ValueError as msg:
             getattr(self, _StringVar).set(self.sweep[_StringVar])
             print(f'{_StringVar} invalid.')
@@ -184,6 +196,8 @@ class MeasurementControl(tk.Frame):
             self.error = True
             return
         self.error = False
+        self.config['sweep'] = self.sweep
+        self._saveconfig()
 
     def _validateMeas(self, *args):
         try:
@@ -198,6 +212,8 @@ class MeasurementControl(tk.Frame):
             self.error = True
             return
         self.error = False
+        self.config['meas'] = self.meas
+        self._saveconfig()
 
     def stop_measurement(self):
         for _key in self.child_threads:

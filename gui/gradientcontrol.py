@@ -2,8 +2,6 @@ import os
 import json
 import platform
 import time
-import subprocess
-import socket
 import json
 from appdirs import user_config_dir
 import tkinter.ttk as tk
@@ -19,6 +17,7 @@ from tkinter.font import Font
 import serial
 from multiprocessing.connection import Client, Listener
 import thermo.constants as tc
+from gui.util import ping, parseusersettings
 
 TEMPS = {'LEFT':None, 'RIGHT':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'
@@ -369,44 +368,7 @@ class SeebeckMeas(Meas):
         self.readtemps()
         return {'left': self._lt, 'right': self._rt}
 
-def ping(host):
-    if host is None:
-        return False
-    if not validateip(host):
-        return False
-    if host is not None:
-        _ping = subprocess.run(['which','ping'], capture_output=True)
-        p = subprocess.run([_ping.stdout.decode('utf-8').strip(), '-q', '-c1', '-W1', '-n', host], stdout=subprocess.PIPE)
-        if p.returncode == 0:
-            return True
-    return False
 
-def validateip(addr):
-    try:
-        socket.inet_aton(addr)
-        # legal
-        return True
-    except socket.error:
-        # Not legal
-        return False
-
-def parseusersettings(config_file, payload={}):
-    if not os.path.exists(os.path.split(config_file)[0]):
-        os.makedirs(os.path.split(config_file)[0])
-    try:
-        if not payload:
-            with open(config_file) as fh:
-                return json.load(fh)
-        else:
-            with open(config_file, 'wt') as fh:
-                json.dump(payload, fh)
-    except json.decoder.JSONDecodeError:
-        print("Error parsing user settings.")
-    except IOError as msg:
-        print(f"IOError parsing user settings: {msg}.")
-    except FileNotFoundError:
-        print(f"{config_file} not found.")
-    return {}
 
 def _enumerateDevices():
     _filter = ''
