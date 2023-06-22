@@ -101,8 +101,8 @@ class Gradient():
             elif time.time() - start_time[1] > 2:
                 self.__statcheck()
                 start_time[1] = time.time()
-            if not cmdq.empty():
-                self.writeserial(*cmdq.get())
+            if not self.cmdq.empty():
+                self.writeserial(*self.cmdq.get())
             time.sleep(0.1)
 
         print("Updater thread dying.")
