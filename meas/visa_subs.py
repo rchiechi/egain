@@ -93,8 +93,13 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
         i = 0
         while i < 5:
             print(idn)
-            serial_visa.write(idn)
-            IDN = serial_visa.read(128)
+            # serial_visa.write(idn)
+            IDN = b''
+            _c = serial_visa.read(1)
+            while _c:
+                IDN += _c
+                _c = serial_visa.read(1)
+            # IDN = serial_visa.read(128)
             if IDN:
                 print(IDN)
                 serial_visa.playchord()
