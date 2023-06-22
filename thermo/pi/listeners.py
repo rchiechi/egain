@@ -15,10 +15,11 @@ class thermo():
     command = COMMAND_RUN
     _lock = threading.Lock()
 
-    def __init__(self, alive, thermocouples={'left':None, 'right':None}, **kwargs):
+    def __init__(self, alive, thermocouples={'left':None, 'right':None}, voltmeter=None, **kwargs):
         self.alive = alive
         self.addr = (kwargs.get('address', '0.0.0.0'), kwargs.get('port', THERMO_PORT))
         self.authkey = kwargs.get('authkey', AUTH_KEY)
+        self.voltmeter = voltmeter
         self.lt = thermocouples['left']
         self.rt = thermocouples['right']
         self.__update()
@@ -96,6 +97,12 @@ class thermo():
             except ValueError:
                 self.last_lt = -999.99
                 self.last_rt = -999.99
+        if self.voltmeter is not None:
+            try:
+                with self._lock:
+                    self.last_v = float(self.voltmeter.fetch_data())
+            except ValueError:
+                self.last_v = 0.0
 
     @property
     def lock(self):
@@ -118,47 +125,47 @@ class thermo():
         return self.last_rt
 
 
-class volta(threading.Thread):
+# class volta(threading.Thread):
 
-    last_v = 0.0
+#     last_v = 0.0
 
-    def __init__(self, alive, smu={'voltmeter':None}, **kwargs):
-        super().__init__()
-        self.alive = alive
-        self.addr = (kwargs.get('address', '0.0.0.0'), kwargs.get('port', VOLTA_PORT))
-        self.authkey = kwargs.get('authkey', b'1234')
-        self.lt = thermocouples['left']
-        self.rt = thermocouples['right']
+#     def __init__(self, alive, smu={'voltmeter':None}, **kwargs):
+#         super().__init__()
+#         self.alive = alive
+#         self.addr = (kwargs.get('address', '0.0.0.0'), kwargs.get('port', VOLTA_PORT))
+#         self.authkey = kwargs.get('authkey', b'1234')
+#         self.lt = thermocouples['left']
+#         self.rt = thermocouples['right']
 
-    def run(self):
-        print(f"Starting listener in {self.addr}")
-        listener = Listener(self.addr, authkey=self.authkey)
-        while self.alive.is_set():
-            with listener.accept() as conn:
-                msg = conn.recv()
-                if msg == 'close':
-                    conn.close()
-                    self.kill()
-                    break
-                if msg == 'read':
-                    self.sendtemps(conn)
-        listener.close()
+#     def run(self):
+#         print(f"Starting listener in {self.addr}")
+#         listener = Listener(self.addr, authkey=self.authkey)
+#         while self.alive.is_set():
+#             with listener.accept() as conn:
+#                 msg = conn.recv()
+#                 if msg == 'close':
+#                     conn.close()
+#                     self.kill()
+#                     break
+#                 if msg == 'read':
+#                     self.sendtemps(conn)
+#         listener.close()
 
-    def kill(self):
-        print(f"{self.name} dying.")
-        self.alive.clear()
+#     def kill(self):
+#         print(f"{self.name} dying.")
+#         self.alive.clear()
 
-    def sendvoltage(self, conn):
-        return
+#     def sendvoltage(self, conn):
+#         return
 
-    @property
-    def voltage(self):
-        return self.last_v
+#     @property
+#     def voltage(self):
+#         return self.last_v
 
 if __name__ == '__main__':
     alive = threading.Event()
     alive.set()
     thermocomm = thermo(alive)
-    voltacomm = volta(alive)
+    # voltacomm = volta(alive)
     alive.clear()
          

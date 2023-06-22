@@ -14,7 +14,8 @@ import threading
 from PIL import Image, ImageDraw, ImageFont
 from adafruit_rgb_display import st7789
 import adafruit_max31856
-from .listeners import thermo, volta
+from .listeners import thermo
+from meas.k2182A import K2182A
 import thermo.constants as tc
 
 led = 26
@@ -90,14 +91,29 @@ absdir = os.path.dirname(os.path.realpath(__file__))
 font = ImageFont.truetype(os.path.join(absdir, "DejaVuSans.ttf"), 24)
 
 
-
+def _enumerateDevices():
+    _filter = ''
+    if platform.system() == "Darwin":
+        _filter = 'usbmodem'
+    if platform.system() == "Linux":
+        _filter = 'ttyACM'
+    _devs = ['/dev/serial0']
+    for _dev in os.listdir('/dev'):
+        if _filter.lower() in _dev.lower():
+            _devs.append(_dev)
+    return _devs
 
 
 if __name__ == '__main__':
     spinner = ['|', '\\', '—', '/']    
     alive = threading.Event()
     alive.set()
-    thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, authkey=tc.AUTH_KEY)
+    for _dev in _enumerateDevices():
+        voltmeter = K2182Ar(_dev)
+        if voltmeter.initialize(auto_sense_range=True):
+            break
+        voltmeter = None
+    thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, voltmeter, authkey=tc.AUTH_KEY)
     thermothread.start()
     backlight.value = True
     start_time = time.time()
