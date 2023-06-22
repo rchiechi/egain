@@ -115,6 +115,7 @@ class Meas(tk.Frame):
 class TempControl(Meas):
 
     _port = tc.PELTIER_PORT
+    last_temps = {'left':25.0, 'right':25.0}
 
     def createWidgets(self):
         self.leftTempString = StringVar()
@@ -257,21 +258,25 @@ class TempControl(Meas):
             return
         try:
             _temp = float(self.lefttargettemp.get())
-            print(f"Setting left peltier: {_temp}°C")
-            self.sendcommand(tc.SETLEFTTEMP, _temp)
+            if _temp != self.last_temps['left']:
+                self.last_temps['left'] = _temp
+                print(f"Setting left peltier: {_temp}°C")
+                self.sendcommand(tc.SETLEFTTEMP, _temp)
         except ValueError:
             pass
-        time.sleep(0.5)
+
         try:
             _temp = float(self.righttargettemp.get())
-            print(f"Setting right peltier: {_temp}°C")
-            self.sendcommand(tc.SETRIGHTTEMP, _temp)
+            if _temp != self.last_temps['right']:
+                self.last_temps['right'] = _temp
+                print(f"Setting right peltier: {_temp}°C")
+                self.sendcommand(tc.SETRIGHTTEMP, _temp)
         except ValueError:
             pass
 
     def _readTemps(self, **kwargs):
-        self._lt = float(self.last_status.get(LEFT, -999.9))
-        self._rt = float(self.last_status.get(RIGHT, -999.9))
+        self._lt = float(self.last_status.get(tc.LEFT, -999.9))
+        self._rt = float(self.last_status.get(tc.RIGHT, -999.9))
         if self._lt > -1000:
             self.leftTempString.set('left: %0.2f °C' % self._lt)
         if self._rt > -1000:
