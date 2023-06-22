@@ -140,10 +140,10 @@ class Gradient():
     def writeserial(self, cmd, val=None):
         if time.time() - self.last_serial < 1:
             time.sleep(1)
-        if isinstance(cmd, str):
-            cmd = bytes(cmd, encoding='utf-8')
-        if isinstance(val, str):
-            val = bytes(val, encoding='utf-8')
+        if not isinstance(cmd, bytes):
+            cmd = bytes(str(cmd), encoding='utf-8')
+        if not isinstance(val, bytes) and val is not None:
+            val = bytes(str(val), encoding='utf-8')
         try:
             with self.lock:
                 self.peltier.write(cmd)
