@@ -280,7 +280,7 @@ class OPCThread(threading.Thread):
             if _s == b'1':
                 self.alive.clear()
                 break
-            elif time.time() - starttime > 120:
+            elif time.time() - starttime > 300:
                 print("OPCThread timeout reached.")
                 self.alive.clear()
                 break
