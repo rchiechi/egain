@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFont
 from adafruit_rgb_display import st7789
 import adafruit_max31856
 from .listeners import thermo, volta
-from .shared import COMMKEY
+import thermo.constants as tc
 
 led = 26
 
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     spinner = ['|', '\\', '—', '/']    
     alive = threading.Event()
     alive.set()
-    thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, authkey=COMMKEY)
+    thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, authkey=tc.AUTH_KEY)
     thermothread.start()
     backlight.value = True
     start_time = time.time()

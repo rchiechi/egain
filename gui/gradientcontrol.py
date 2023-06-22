@@ -342,14 +342,16 @@ class SeebeckMeas(Meas):
         tempFrame.pack(side=TOP)
         voltFrame.pack(side=TOP)
         deviceFrame.pack(side=TOP)
+        self.readtemps()
 
     def readtemps(self, *args):
         self._lt = self.last_status.get('left', -999.99)
-        self._rt = self.last_status.get.get('right', -999.99)
-        self._v = self.last_status.get.get('voltage', 0.0)
+        self._rt = self.last_status.get('right', -999.99)
+        self._v = self.last_status.get('voltage', 0.0)
         self.left_temp_reading.set(f'{self._lt:0.2f}')
         self.right_temp_reading.set(f'{self._rt:0.2f}')
         self.voltage_reading.set(f'{self._v:0.4f}')
+        self.after(500, self.readtemps)
 
     @property
     def voltage(self):
@@ -361,6 +363,8 @@ class SeebeckMeas(Meas):
         return {'left': self._lt, 'right': self._rt}
 
 def ping(host):
+    if host is None:
+        return False
     if not validateip(host):
         return False
     if host is not None:
