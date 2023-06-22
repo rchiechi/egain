@@ -4,6 +4,8 @@ import platform
 import time
 import subprocess
 import socket
+import json
+from appdirs import user_config_dir
 import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
@@ -21,7 +23,6 @@ import thermo.constants as tc
 TEMPS = {'LEFT':None, 'RIGHT':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'
 
-
 class Meas(tk.Frame):
 
     _lt = 0.0
@@ -31,11 +32,13 @@ class Meas(tk.Frame):
     widgets = {}
     _host = '127.0.0.1'
     _port = '6000'
+    config_file = 'Meas.json'
 
     def __init__(self, root):
         self.master = root
         super().__init__(self.master)
-        self.addr = StringVar(value=f'{self._host}:{self._port}')
+        _config = parseusersettings(os.path.join(user_config_dir('egain'), self.config_file))
+        self.addr = StringVar(value=f"{_config.get('host', self._host)}:{_config.get('port', self._port)}")
         self.createWidgets()
         self._checkconnetion()
         self.readstatus()
@@ -73,6 +76,8 @@ class Meas(tk.Frame):
             if not isinstance(msg, dict):
                 msg = {}
                 self.after(1000, self._checkconnetion)
+        parseusersettings(os.path.join(user_config_dir('egain'), self.config_file),
+                          {'host':self.host, 'port':self.port, 'last_status':msg})
         self.after(1000, self.readstatus)
         self.last_status = msg
 
@@ -116,6 +121,7 @@ class TempControl(Meas):
 
     _port = tc.PELTIER_PORT
     last_temps = {'left':25.0, 'right':25.0}
+    config_file = 'TempControl.json'
 
     def createWidgets(self):
         self.leftTempString = StringVar()
@@ -306,6 +312,7 @@ class SeebeckMeas(Meas):
 
     _port = tc.THERMO_PORT
     _v = 0.0
+    config_file = 'SeebeckMeas.json'
 
     def createWidgets(self):
         self.left_temp_reading = StringVar(value='0.0')
@@ -382,6 +389,24 @@ def validateip(addr):
     except socket.error:
         # Not legal
         return False
+
+def parseusersettings(config_file, payload={}):
+    if not os.path.exists(os.path.split(config_file)[0]):
+        os.makedirs(os.path.split(config_file)[0])
+    try:
+        if not payload:
+            with open(config_file) as fh:
+                return json.load(fh)
+        else:
+            with open(config_file, 'wt') as fh:
+                json.dump(payload, fh)
+    except json.decoder.JSONDecodeError:
+        print("Error parsing user settings.")
+    except IOError as msg:
+        print(f"IOError parsing user settings: {msg}.")
+    except FileNotFoundError:
+        print(f"{config_file} not found.")
+    return {}
 
 def _enumerateDevices():
     _filter = ''

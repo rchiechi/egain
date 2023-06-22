@@ -183,8 +183,8 @@ class MainFrame(tk.Frame):
         if not self.measuring:
             return
         self.vt_data['V'].append(self.widgets['voltmetercontrols'].voltage)
-        self.vt_data['leftT'].append(self.widgets['tempcontrols'].lefttemp)
-        self.vt_data['rightT'].append(self.widgets['tempcontrols'].righttemp)
+        self.vt_data['leftT'].append(self.widgets['voltmetercontrols'].lefttemp)
+        self.vt_data['rightT'].append(self.widgets['voltmetercontrols'].righttemp)
         _dt = time.time() - self.timer
         self.vt_data['time'].append(_dt)
         self.widgets['measButton'].configure(text=f'Recording {_dt:.0f}')
