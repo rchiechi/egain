@@ -93,7 +93,7 @@ class MainFrame(tk.Frame):
         controlsFrame = tk.Frame(self)
         controlsFrameWest = tk.LabelFrame(controlsFrame, text='Seebeck Measurements')
         controlsFrameEast = tk.LabelFrame(controlsFrame, text='Temperature Gradient Controls')
-        controlsFrameSouth = tk.Frame(controlsFrame)
+        # controlsFrameSouth = tk.Frame(controlsFrame)
         seebeckmeasFrame = SeebeckMeas(controlsFrameWest)
         self.widgets['seebeckmeasFrame'] = seebeckmeasFrame
         # voltmeterFrame = tk.LabelFrame(controlsFrameWest, text='Voltmeter Controls')
@@ -107,7 +107,7 @@ class MainFrame(tk.Frame):
         buttonFrame = tk.Frame(self)
         statusFrame = tk.Frame(self)
 
-        dataplot = dataCanvas(dataFrame, xlabel='ΔT', ylabel='Voltage')
+        dataplot = dataCanvas(dataFrame, xlabel='ΔT (K)', ylabel='Thermovoltage (mV)')
         self.widgets['dataplot'] = dataplot
 
         sattusLabelprefix = Label(master=statusFrame, text="Status: ")
@@ -244,12 +244,12 @@ class MainFrame(tk.Frame):
     def _updateData(self, *args):
         results = {'V':[], 'DT':[]}
         for _v in self.vt_data['V']:
-            results['V'].append(_v)
+            results['V'].append(_v*1000)
         _lt = self.vt_data['leftT']
         _rt = self.vt_data['rightT']
         for i in range(len(_lt)):
             results['DT'].append(_lt[i] - _rt[i])
-        self.widgets['dataplot'].displayData(results, xlabel='ΔT', ylabel='Voltage', xkey='DT', ykey='V')
+        self.widgets['dataplot'].displayData(results, xlabel='Δ (K)', ylabel='Thermovoltage (mV)', xkey='DT', ykey='V')
 
     def _writedata(self, finalize=False):
         if not self.vt_data['V']:
