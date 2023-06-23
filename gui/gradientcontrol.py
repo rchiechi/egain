@@ -328,7 +328,7 @@ class SeebeckMeas(Meas):
                  textvariable=self.left_temp_reading).pack(side=LEFT)
         tk.Label(tempFrame,
                  padding=5,
-                 textvariable=self.left_temp_reading).pack(side=RIGHT)
+                 textvariable=self.right_temp_reading).pack(side=RIGHT)
         tk.Label(tempFrame,
                  padding=5,
                  text='Right: ').pack(side=RIGHT)
