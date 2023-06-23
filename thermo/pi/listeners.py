@@ -98,6 +98,7 @@ class thermo():
                 self.last_lt = -999.99
                 self.last_rt = -999.99
         if self.voltmeter is not None:
+            time.sleep(0.5)
             try:
                 with self._lock:
                     self.last_v = float(self.voltmeter.fetch_data())
