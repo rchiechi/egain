@@ -129,7 +129,7 @@ if __name__ == '__main__':
             LT = f"Left:  {thermothread.lefttemp:0.1f} °C"
             RT = f"Right: {thermothread.righttemp:0.1f} °C"
             _v = thermothread.voltage
-            if _v < 0.01:
+            if abs(_v) < 0.01:
                 V = f"Voltage: {_v*1000:0.6f} mV"
             else:
                 V = f"Voltage: {_v:0.6f} V"
