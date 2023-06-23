@@ -95,7 +95,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
         i = 0
         while i < 5:
             print(idn)
-            # serial_visa.write(idn)
+            serial_visa.write(idn)
             IDN = b''
             _c = serial_visa.read(1)
             while _c:
