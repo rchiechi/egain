@@ -114,7 +114,7 @@ class thermo():
 
     @property
     def updatethread(self):
-        return self._updater_thread 
+        return self._updater_thread
 
     @property
     def lefttemp(self):
@@ -123,6 +123,10 @@ class thermo():
     @property
     def righttemp(self):
         return self.last_rt
+
+    @property
+    def voltage(self):
+        return self.last_v
 
 
 # class volta(threading.Thread):
