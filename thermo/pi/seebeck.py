@@ -130,10 +130,11 @@ if __name__ == '__main__':
             RT = f"Right: {thermothread.righttemp:0.1f} °C"
             V = f"Voltage: {thermothread.voltage:0.1f} V"
             print(f"\r{LT}")
-            print(f"{RT}")
+            print(RT)
+            print(V)
             if _i == len(spinner):
                 _i = 0
-            print(f"{spinner[_i]}", end="\033[F\033[F")
+            print(f"{spinner[_i]}", end="\033[F\033[F\033[F")
             _i += 1
             V = "Voltage: 0.000 V"
             cmd = "hostname -I | cut -d' ' -f1"
