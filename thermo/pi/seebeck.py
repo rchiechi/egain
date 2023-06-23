@@ -130,9 +130,9 @@ if __name__ == '__main__':
             RT = f"Right: {thermothread.righttemp:0.1f} °C"
             _v = thermothread.voltage
             if abs(_v) < 0.01:
-                V = f"Voltage: {_v*1000:0.6f} mV"
+                V = f"Volt.: {_v*1000:0.4f} mV"
             else:
-                V = f"Voltage: {_v:0.6f} V"
+                V = f"Volt.: {_v:0.6f} V"
             print(f"\r{LT}")
             print(RT)
             print(V)
