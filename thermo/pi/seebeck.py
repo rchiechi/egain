@@ -11,6 +11,7 @@ import os
 import time
 import subprocess
 import threading
+import platform
 from PIL import Image, ImageDraw, ImageFont
 from adafruit_rgb_display import st7789
 import adafruit_max31856
@@ -109,7 +110,7 @@ if __name__ == '__main__':
     alive = threading.Event()
     alive.set()
     for _dev in _enumerateDevices():
-        voltmeter = K2182Ar(_dev)
+        voltmeter = K2182A(_dev)
         if voltmeter.initialize(auto_sense_range=True):
             break
         voltmeter = None
