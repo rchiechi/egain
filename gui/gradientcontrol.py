@@ -1,9 +1,5 @@
 import os
-import json
 import platform
-import time
-import json
-from appdirs import user_config_dir
 import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
@@ -14,8 +10,7 @@ from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused
 from tkinter import PhotoImage
 from tkinter.font import Font
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
-import serial
-from multiprocessing.connection import Client, Listener
+from multiprocessing.connection import Client
 import thermo.constants as tc
 from gui.util import ping, parseusersettings, validateip
 
@@ -36,7 +31,7 @@ class Meas(tk.Frame):
     def __init__(self, root):
         self.master = root
         super().__init__(self.master)
-        _config = parseusersettings(os.path.join(user_config_dir('egain'), self.config_file))
+        _config = parseusersettings(self.config_file)
         self.addr = StringVar(value=f"{_config.get('host', self._host)}:{_config.get('port', self._port)}")
         self.createWidgets()
         self._checkconnetion()
@@ -75,7 +70,7 @@ class Meas(tk.Frame):
             if not isinstance(msg, dict):
                 msg = {}
                 self.after(1000, self._checkconnetion)
-        parseusersettings(os.path.join(user_config_dir('egain'), self.config_file),
+        parseusersettings(self.config_file,
                           {'host':self.host, 'port':self.port, 'last_status':msg})
         self.after(1000, self.readstatus)
         self.last_status = msg

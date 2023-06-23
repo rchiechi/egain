@@ -39,6 +39,8 @@ from tkinter import DISABLED, NORMAL  # pylint: disable=unused-import
 from tkinter import PhotoImage
 from tkinter.font import Font
 # from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
+from .util import parseusersettings
+from config.options import GLOBAL_OPTS
 from .datacanvas import dataCanvas
 from .gradientcontrol import TempControl, SeebeckMeas
 
@@ -62,6 +64,7 @@ class MainFrame(tk.Frame):
     vt_data = {'V':[], 'leftT':[], 'rightT':[], 'time':[]}
     measuring = False
     timer = 0
+    config_file = GLOBAL_OPTS
 
     def __init__(self, root, opts):
         self.root = root
@@ -119,7 +122,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntryLabel = Label(master=outputFrame,
                                          text='Output Filename Prefix:')
         outputfilenameEntryLabel.pack(side=LEFT)
-        outputdirstring = StringVar(value=self.opts.save_path+'/')
+        outputdirstring = StringVar(value=self.opts['save_path']+'/')
         self.variables['outputdirstring'] = outputdirstring
         outputdirLabel = Label(master=outputFrame,
                                textvariable=outputdirstring)
@@ -130,7 +133,7 @@ class MainFrame(tk.Frame):
         outputdirLabel.pack(side=LEFT)
         outputfilenameEntry.pack(side=LEFT)
         outputfilenameEntry.delete(0, END)
-        outputfilenameEntry.insert(0, self.opts.output_file_name)
+        outputfilenameEntry.insert(0, self.opts['output_file_name'])
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOptions)
 
@@ -208,14 +211,14 @@ class MainFrame(tk.Frame):
         self.measButtonClick()
 
     def SpawnSaveDialogClick(self):
-        self.opts.save_path = filedialog.askdirectory(
+        self.opts['save_path'] = filedialog.askdirectory(
             title="Path to save data",
-            initialdir=self.opts.save_path)
-        self.variables['outputdirstring'].set(self.opts.save_path)
+            initialdir=self.opts['save_path'])
+        self.variables['outputdirstring'].set(self.opts['save_path'])
         self.checkOptions()
 
     def checkOptions(self, *args):
-        self.opts.output_file_name = self.widgets['outputfilenameEntry'].get()
+        self.opts['output_file_name'] = self.widgets['outputfilenameEntry'].get()
         _outdir = f"/{self.variables['outputdirstring'].get().strip('/')}/"
         self.variables['outputdirstring'].set(_outdir)
         if self.variables['statusVar'].get() in (MEASURING):
@@ -240,6 +243,7 @@ class MainFrame(tk.Frame):
             self.initialized = True
         else:
             self.variables['statusVar'].set('Not Initialized')
+        parseusersettings(self.config_file, self.opts)
 
     def _updateData(self, *args):
         results = {'V':[], 'DT':[]}
@@ -255,7 +259,7 @@ class MainFrame(tk.Frame):
         if not self.vt_data['V']:
             return
         self.checkOptions()
-        _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
+        _fn = os.path.join(self.opts['save_path'], self.opts['output_file_name'])
         if finalize:
             if os.path.exists(_fn):
                 if not tk.askyesno("Overwrite?", f'{_fn} exists, overwrite it?'):

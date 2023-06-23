@@ -44,6 +44,8 @@ from .stagecontrol import StageControls
 from .tempcontrol import TempControl
 from .measurement import MeasurementControl
 from .tooltip import CreateTooltip
+from .util import parseusersettings
+from config.options import GLOBAL_OPTS
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
@@ -64,6 +66,7 @@ class MainFrame(tk.Frame):
     variables = {}
     initialized = False
     counter = 0
+    config_file = GLOBAL_OPTS
 
     def __init__(self, root, opts):
         self.root = root
@@ -125,7 +128,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntryLabel = Label(master=outputFrame,
                                          text='Output Filename Prefix:')
         outputfilenameEntryLabel.pack(side=LEFT)
-        outputdirstring = StringVar(value=self.opts.save_path+'/')
+        outputdirstring = StringVar(value=self.opts['save_path']+'/')
         self.variables['outputdirstring'] = outputdirstring
         outputdirLabel = Label(master=outputFrame,
                                textvariable=outputdirstring)
@@ -135,7 +138,7 @@ class MainFrame(tk.Frame):
         outputdirLabel.pack(side=LEFT)
         outputfilenameEntry.pack(side=LEFT)
         outputfilenameEntry.delete(0, END)
-        outputfilenameEntry.insert(0, self.opts.output_file_name)
+        outputfilenameEntry.insert(0, self.opts['output_file_name'])
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
         maketipButton = tk.Button(master=magFrame,
@@ -274,14 +277,14 @@ class MainFrame(tk.Frame):
         messagebox.showinfo("Tip", "I think I made a tip..?")
 
     def SpawnSaveDialogClick(self):
-        self.opts.save_path = filedialog.askdirectory(
+        self.opts['save_path'] = filedialog.askdirectory(
             title="Path to save data",
-            initialdir=self.opts.save_path)
-        self.variables['outputdirstring'].set(self.opts.save_path)
+            initialdir=self.opts['save_path'])
+        self.variables['outputdirstring'].set(self.opts['save_path'])
         self.checkOptions()
 
     def checkOutputfilename(self, event):
-        self.opts.output_file_name = event.widget.get()
+        self.opts['output_file_name'] = event.widget.get()
         self.checkOptions()
 
     def checkJunctionsize(self, event):
@@ -323,6 +326,7 @@ class MainFrame(tk.Frame):
             self.widgets['measButton'].after(100, self.checkOptions)
         if True in _initialized:
             self.initialized = True
+        parseusersettings(self.config_file, self.opts)
 
     def _updateData(self, *args):
         if self.variables['measdone'].get():
@@ -353,7 +357,7 @@ class MainFrame(tk.Frame):
             results['J'].append(_I/_area_in_cm)
             results['upper'].append(self.widgets['tempcontrols'].uppertemp)
             results['lower'].append(self.widgets['tempcontrols'].lowertemp)
-        _fn = os.path.join(self.opts.save_path, self.opts.output_file_name)
+        _fn = os.path.join(self.opts['save_path'], self.opts['output_file_name'])
         if finalize:
             if os.path.exists(_fn):
                 if not tk.askyesno("Overwrite?", f'{_fn} exists, overwrite it?'):
@@ -406,12 +410,15 @@ def write_data_to_file(fn, results):
         writer = csv.writer(csvfile, dialect='JV')
         writer.writerow(['V (V)', 'I (A)', 'J (A/cm2)', 'Time (s)', 'Upper Temp (°C)', 'Lower Temp (°C)'])
         for _idx, V in enumerate(results['V']):
-            writer.writerow([V,
-                             results['I'][_idx],
-                             results['J'][_idx],
-                             results['t'][_idx],
-                             results['upper'][_idx],
-                             results['lower'][_idx]])
+            try:
+                writer.writerow([V,
+                                 results['I'][_idx],
+                                 results['J'][_idx],
+                                 results['t'][_idx],
+                                 results['upper'][_idx],
+                                 results['lower'][_idx]])
+            except IndexError:
+                print("WARNING: Mismatch in lengths of data rows.")
 
 
 def maketip(smu, stage):

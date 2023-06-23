@@ -1,8 +1,5 @@
-import os
-import platform
 import time
 from decimal import Decimal
-from appdirs import user_config_dir
 import tkinter.ttk as tk
 from tkinter import Tk
 # from tkinter import Toplevel
@@ -52,6 +49,7 @@ class MeasurementControl(tk.Frame):
     is_initialized = False
     child_threads = {'meas': None, 'read': None}
     sweeps_done = 0
+    config_file = 'MeasurementControl.json'
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -61,7 +59,7 @@ class MeasurementControl(tk.Frame):
         self.measdone.set(False)
         super().__init__(self.master)
         self.labelFont = Font(size=8)
-        self.config = parseusersettings(os.path.join(user_config_dir('egain'), 'MeasurementControl.json'))
+        self.config = parseusersettings(self.config_file)
         self.sweep = self.config.get('sweep', {'sweepLow': '-1.0',
                                                'sweepHigh': '1.0',
                                                'stepSize': '0.25',
@@ -166,7 +164,7 @@ class MeasurementControl(tk.Frame):
             self.smu.close()
 
     def _saveconfig(self):
-        parseusersettings(os.path.join(user_config_dir('egain'), 'MeasurementControl.json'), self.config)
+        parseusersettings(self.config_file, self.config)
 
     def _initdevice(self, *args):
         self.busy.set(True)
@@ -217,9 +215,9 @@ class MeasurementControl(tk.Frame):
 
     def stop_measurement(self):
         for _key in self.child_threads:
-            if self.child_threads[key] is not None:
-                self.child_threads[key].kill()
-                while child_threads[key].is_alive():
+            if self.child_threads[_key] is not None:
+                self.child_threads[_key].kill()
+                while self.child_threads[_key].is_alive():
                     time.sleep(0.1)
         if self.smu is not None:
             self.smu.end_voltage_sweep()
@@ -258,11 +256,10 @@ class MeasurementControl(tk.Frame):
         self._isbusy = True
         if self.child_threads['read'] is not None:
             if self.child_threads['read'].active:
-                # print(self.child_threads['read'][-1][0].is_set())
                 self.after(100, self._readinbackground)
                 return
-            # else:
-            #     self.child_threads['read'] = None
+            else:
+                self.child_threads['read'] = None
         self.smu.disarm()
         self.busy.set(False)
         self._isbusy = False
@@ -276,7 +273,6 @@ class MeasurementControl(tk.Frame):
         if self.child_threads['meas'] is not None:
             if not self.child_threads['meas'].active:
                 self._process_data(self.smu.fetch_data().split(','))
-                # self.child_threads['meas'] = None
                 self.sweeps_done += 1
                 if self.sweeps_done < int(self.sweep["nsweeps"]):
                     self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep))
@@ -284,6 +280,7 @@ class MeasurementControl(tk.Frame):
                     self.child_threads['meas'].start()
                 else:
                     print(f'Completed {self.sweep["nsweeps"]} sweeps.')
+                    self.child_threads['meas'] = None
                     self.sweeps_done = 0
             self.after(100, self._measureinbackground)
             return
@@ -294,7 +291,7 @@ class MeasurementControl(tk.Frame):
         print('All sweeps completed.')
 
     def _process_data(self, data_):
-        # b'VOLT,CURR,TIME ---> self.visa.write(":FORM:ELEM VOLT,CURR,TIME") 
+        # b'VOLT,CURR,TIME ---> self.visa.write(":FORM:ELEM VOLT,CURR,TIME")
         # _data = DATA_FORMAT
         _keymap = {}
         for i, j in enumerate(K6430.DATA_FORMAT):
@@ -311,6 +308,14 @@ class MeasurementControl(tk.Frame):
                 print(f'Error convering {_d} to float.')
                 self.results[_keymap[i]].append(0.0)
             i += 1
+        # _l = 0
+        # for _key in self.results:
+        #     if _l < len(self.results[_key]):
+        #         _l = len(self.results[_key])
+        # for _key in self.results:
+        #     while len(self.results[_key]) < _l:
+        #         print(f'WARNING: padding {_key} with 0.0')
+        #         self.results[_key].append(0.0)
         # print(self.results)
 
 class MeasurementReadV(MeasurementControl):

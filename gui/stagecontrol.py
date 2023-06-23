@@ -17,6 +17,7 @@ from tkinter.font import Font
 from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from stage.backend import NetHost, GenericBackEnd, IP_ADDRESS, PORT
 from stage.mks import ESP302
+from gui.util import parseusersettings
 
 
 class StageControls(tk.Frame):
@@ -49,6 +50,7 @@ class StageControls(tk.Frame):
                'position': 0}
     msg_queue = []  # Hold a queue of messages
     msg_count = 0  # Hold a count of total messages
+    config_file = 'StageControls.json'
 
     def __init__(self, root, **kwargs):
         self.master = root
@@ -56,6 +58,7 @@ class StageControls(tk.Frame):
         super().__init__(self.master)
         self.relative_move_label = StringVar()
         self.unitStr = StringVar()
+        self.config = parseusersettings(self.config_file)
         # self.status = StringVar(value='Nominal')
         self.createWidgets()
         self.alive = threading.Event()
@@ -133,8 +136,8 @@ class StageControls(tk.Frame):
         addressFrame = tk.Frame(master=stageFrame)  # Create frame to hold stage address settings
         # Stage frame */
         # */ Address Frame
-        stageaddressvar = StringVar(value=IP_ADDRESS)  # Create GUI variable to hold IP address of stage
-        stageportvar = StringVar(value=PORT)  # Create GUI variable to hold network port of stage
+        stageaddressvar = StringVar(value=self.config.get('IP_ADDRESS', IP_ADDRESS))  # Create GUI variable to hold IP address of stage
+        stageportvar = StringVar(value=self.config.get('PORT', PORT))  # Create GUI variable to hold network port of stage
         stageaddressLabel = tk.Label(master=addressFrame, text='Address:')  # Create label for address
         stageaddressEntry = tk.Entry(master=addressFrame,  # Create entry to display address
                                      textvariable=stageaddressvar,
@@ -181,6 +184,9 @@ class StageControls(tk.Frame):
         stageFrame.pack(side=BOTTOM)
         xyzFrame.pack(side=TOP)
         # Pack widgets */ #################################################
+
+    def _saveconfig(self):
+        parseusersettings(self.config_file, self.config)
 
     def _checkformotion(self):
         if self.xyzstage['stage'].isMoving or self.busy.get():
@@ -247,7 +253,9 @@ class StageControls(tk.Frame):
             self._handleunitchange()
             self.widgets['initButton'].after(100, self._updateposition)
             self.widgets['initButton'].after(100, self._checkformotion)
-
+            self.confg['IP_ADDRESS'] = self.xyzstage['address'].get()
+            self.config['PORT'] = self.xyzstage['port'].get()
+            self._saveconfig()
         except IOError:
             self.xyzstage['initialized'] = False
 

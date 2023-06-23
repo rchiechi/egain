@@ -139,9 +139,10 @@ class Keithley(Instrument):
     def setNPLC(self, nplc):
         self.visa.write(f':SENSE:{self.sense}:NPLC {nplc}')
 
+    def clearbuffer(self):
+        self.visa.write(':TRAC:CLE')
+
     def start_voltage_sweep(self, v_list):
-        # self.visa.write('*RST')
-        # print(self.visa.query(':OUTP:STAT?'))
         self.visa.write(':SYST:TIME:RES')
         self.visa.write(':SOUR:FUNC:MODE VOLT')
         self.visa.write(":SENS:FUNC 'CURR:DC'")
@@ -188,7 +189,11 @@ class Keithley(Instrument):
             return True
 
     def fetch_data(self):
-        return self.visa.query('FETC?').strip()
+        # return self.visa.query('FETC?').strip()
+        # _data = self.visa.query(':TRAC:DATA?').strip()
+        _data = self.visa.query('FETC?').strip()
+        self.clearbuffer()
+        return _data
 
     def close(self):
         if self.visa is not None:

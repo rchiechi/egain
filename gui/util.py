@@ -2,6 +2,8 @@ import os
 import subprocess
 import socket
 import json
+from appdirs import user_config_dir
+
 
 def ping(host):
     if host is None:
@@ -24,7 +26,8 @@ def validateip(addr):
         # Not legal
         return False
 
-def parseusersettings(config_file, payload={}):
+def parseusersettings(_file, payload={}):
+    config_file = os.path.join(user_config_dir('egain'), _file)
     if not os.path.exists(os.path.split(config_file)[0]):
         os.makedirs(os.path.split(config_file)[0])
     try:

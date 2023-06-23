@@ -28,7 +28,7 @@ import serial
 rm = visa.ResourceManager()
 
 #############
-DEBUG = False
+DEBUG = True
 #############
 
 MODE_GPIB = 'GPIB'
@@ -206,7 +206,7 @@ class SerialVisa():
         #     self.buff = self.buff[-100:]
         for _d in data_.split(self.read_termination_b):
             if _d:
-                # print(_d)
+                print(_d)
                 self.buff.append((cmd_, str(_d, encoding=self.encoding)))
 
     @property
@@ -253,14 +253,21 @@ class SerialVisa():
     def query(self, cmd):
         self.write(cmd)
         with self.lock:
-            self.__writebuffer(cmd, self.smu.read_until(self.read_termination_b))
+            _data = self.smu.read_until(self.read_termination_b)
+            _c = self.smu.read()
+            while _c:
+                _data += _c
+                _c = self.smu.read()
+            self.__writebuffer(cmd, _data)
         if DEBUG:
-            print(f'<< {self.buffer[-1]}')
+            try:
+                print(f'<-> {self.buffer[-1]}')
+            except IndexError:
+                print(f'{cmd} failed to return result')
         return self.lastreading
 
     def get_wait_for_meas(self):
-        with self.lock:
-            self.write('*OPC?')
+        self.write('*OPC?')
         return OPCThread(self.smu, self.lock)
 
     def get_reader(self):
@@ -276,6 +283,7 @@ class OPCThread(threading.Thread):
         self.smu = smu
         self.lock = lock
         self.alive = threading.Event()
+        self.alive.set()
 
     def run(self):
         starttime = time.time()
@@ -283,6 +291,8 @@ class OPCThread(threading.Thread):
             with self.lock:
                 _s = self.smu.read(1)
             if _s == b'1':
+                if DEBUG:
+                    print("OPCThread completed.")
                 self.alive.clear()
                 break
             elif time.time() - starttime > 300:
@@ -309,6 +319,7 @@ class READThread(threading.Thread):
         self.smu = smu
         self.lock = lock
         self.alive = threading.Event()
+        self.alive.set()
         self.read_termination = read_termination
         self.write_termination = write_termination
 
