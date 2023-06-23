@@ -102,7 +102,7 @@ class thermo():
                 with self._lock:
                     self.last_v = float(self.voltmeter.fetch_data())
             except ValueError:
-                print(f"ValueError converting{self.voltmeter.fetch_data()}")
+                # print(f"ValueError converting{self.voltmeter.fetch_data()}")
                 self.last_v = 0.0
 
     @property

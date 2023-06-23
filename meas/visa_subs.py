@@ -255,7 +255,7 @@ class SerialVisa():
         with self.lock:
             self.__writebuffer(cmd, self.smu.read_until(self.read_termination_b))
         if DEBUG:
-            print(f'<< {self.lastreading}')
+            print(f'<< {self.buffer[-1]}')
         return self.lastreading
 
     def get_wait_for_meas(self):
