@@ -249,6 +249,16 @@ class KeithleyV(Instrument):
         self.visa.write(f":CONF:{self.sense}")
         self.visa.write("INIT:CONT ON")
         self.visa.write("TRIG:SOUR IMM")
+        # Switch off analog filter
+        self.visa.write(":SENS:VOLT:CHAN1:LPAS OFF")
+        # Set digital filter window to 5%
+        self.visa.write(":SENS:VOLT:CHAN1:DFIL:WIND 5")
+        # Set filter counter to 10
+        self.visa.write(":SENS:VOLT:CHAN1:DFIL:COUN 10")
+        # Switch moving filter on
+        self.visa.write(":SENS:VOLT:CHAN1:DFIL:TCON MOV")
+        # Switch digital filter on
+        self.visa.write(":SENS:VOLT:CHAN1:DFIL:STAT ON")
 
         return True
 
