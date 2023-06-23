@@ -1,12 +1,10 @@
 """
 forked from https://github.com/HuangJunye/GrapheneLab-Measurement-Code.git
 """
-import time
-import numpy as np
+
 import meas.visa_subs as visa_subs
 from meas.visa_subs import MODE_GPIB, MODE_SERIAL
-from meas.notes import Music
-# import serial
+# from meas.notes import Music
 
 VOLT = 'VOLT'
 CURR = 'CURR'

@@ -17,7 +17,7 @@ from tkinter.font import Font
 import serial
 from multiprocessing.connection import Client, Listener
 import thermo.constants as tc
-from gui.util import ping, parseusersettings
+from gui.util import ping, parseusersettings, validateip
 
 TEMPS = {'LEFT':None, 'RIGHT':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'

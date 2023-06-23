@@ -128,7 +128,7 @@ if __name__ == '__main__':
                 start_time = time.time()
             LT = f"Left:  {thermothread.lefttemp:0.1f} °C"
             RT = f"Right: {thermothread.righttemp:0.1f} °C"
-            V = f"Right: {thermothread.voltage:0.1f} °C"
+            V = f"Voltage: {thermothread.voltage:0.1f} V"
             print(f"\r{LT}")
             print(f"{RT}")
             if _i == len(spinner):

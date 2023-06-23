@@ -24,11 +24,11 @@ import threading
 from contextlib import contextmanager
 import pyvisa as visa
 import serial
-import threading
+
 rm = visa.ResourceManager()
 
 #############
-DEBUG = True
+DEBUG = False
 #############
 
 MODE_GPIB = 'GPIB'
@@ -262,7 +262,6 @@ class SerialVisa():
         with self.lock:
             self.write('*OPC?')
         return OPCThread(self.smu, self.lock)
-
 
     def get_reader(self):
         return READThread(self.smu, self.lock,

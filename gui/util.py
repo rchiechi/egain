@@ -6,7 +6,7 @@ import json
 def ping(host):
     if host is None:
         return False
-    if not _validateip(host):
+    if not validateip(host):
         return False
     if host is not None:
         _ping = subprocess.run(['which','ping'], capture_output=True)
@@ -15,7 +15,7 @@ def ping(host):
             return True
     return False
 
-def _validateip(addr):
+def validateip(addr):
     try:
         socket.inet_aton(addr)
         # legal
