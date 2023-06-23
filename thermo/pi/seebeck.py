@@ -128,7 +128,11 @@ if __name__ == '__main__':
                 start_time = time.time()
             LT = f"Left:  {thermothread.lefttemp:0.1f} °C"
             RT = f"Right: {thermothread.righttemp:0.1f} °C"
-            V = f"Voltage: {thermothread.voltage:0.6f} V"
+            _v = thermothread.voltage
+            if _v < 0.01:
+                V = f"Voltage: {_v*1000:0.6f} mV"
+            else:
+                V = f"Voltage: {_v:0.6f} V"
             print(f"\r{LT}")
             print(RT)
             print(V)
@@ -136,7 +140,6 @@ if __name__ == '__main__':
                 _i = 0
             print(f"{spinner[_i]}", end="\033[F\033[F\033[F")
             _i += 1
-            V = "Voltage: 0.000 V"
             cmd = "hostname -I | cut -d' ' -f1"
             IP = "IP: " + subprocess.check_output(cmd, shell=True).decode("utf-8")
             # Draw a black filled box to clear the image.
