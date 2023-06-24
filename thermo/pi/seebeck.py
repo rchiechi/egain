@@ -136,7 +136,7 @@ def main(stdscr):
                 V = f"Volt.: {_v*1000:0.4f} mV"
             else:
                 V = f"Volt.: {_v:0.6f} V"
-            temp_win.addstr(0, 5, {LT})
+            temp_win.addstr(0, 5, LT)
             temp_win.addstr(RT)
             temp_win.addstr(1, 5, V)
             temp_win.refresh()
