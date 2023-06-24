@@ -106,17 +106,9 @@ def _enumerateDevices():
     return _devs
 
 
-def main(stdscrn):
+def main(stdscr):
     spinner = ['|', '\\', '—', '/']
-    alive = threading.Event()
-    alive.set()
-    for _dev in _enumerateDevices():
-        voltmeter = K2182A(_dev)
-        if voltmeter.initialize(auto_sense_range=True):
-            break
-        voltmeter = None
-    thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, voltmeter, authkey=tc.AUTH_KEY)
-    thermothread.start()
+
     backlight.value = True
     start_time = time.time()
     curses.start_color()
@@ -185,6 +177,15 @@ def main(stdscrn):
 
 
 if __name__ == '__main__':
+    alive = threading.Event()
+    alive.set()
+    for _dev in _enumerateDevices():
+        voltmeter = K2182A(_dev)
+        if voltmeter.initialize(auto_sense_range=True):
+            break
+        voltmeter = None
+    thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, voltmeter, authkey=tc.AUTH_KEY)
+    thermothread.start()
     curses.wrapper(main)
     print("\nKilling threads")
     thermothread.stop()
@@ -194,5 +195,3 @@ if __name__ == '__main__':
     disp.image(image, rotation)
     backlight.value = False
     GPIO.cleanup()
-
-
