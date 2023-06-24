@@ -136,7 +136,7 @@ def main(stdscr):
 
             if _i == len(spinner):
                 _i = 0
-            stdscr.addstr(0, 0, f"{spinner[_i][0]}", color_pair(spinner[_i][1]))
+            stdscr.addstr(0, 0, f"{spinner[_i][0]}", curses.color_pair(spinner[_i][1]))
             stdscr.refresh()
 
             LT = f"Left:  {thermothread.lefttemp:0.1f} °C"
