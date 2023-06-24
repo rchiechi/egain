@@ -142,7 +142,7 @@ def main(stdscr):
             temp_win.refresh()
             if _i == len(spinner):
                 _i = 0
-            stdscr.addstr(f"{spinner[_i]}")
+            stdscr.addstr(0, 0, f"{spinner[_i]}")
             stdscr.refresh()
 
             _i += 1
