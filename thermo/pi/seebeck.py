@@ -121,9 +121,10 @@ def main(stdscr):
     curses.init_pair(252, 252, curses.COLOR_BLACK)
     curses.init_color(253, 1000, 0, 1000)
     curses.init_pair(253, 253, curses.COLOR_BLACK)
+    curses.curs_set(0)
     stdscr.clear()
     stdscr.nodelay(True)
-    temp_win = curses.newwin(6, 48, 2, 0)
+    temp_win = curses.newwin(4, 36, 2, 0)
     temp_win.border()
     _i = 0
     try:
@@ -146,10 +147,10 @@ def main(stdscr):
                 V = f"Volt.: {_v*1000:0.4f} mV"
             else:
                 V = f"Volt.: {_v:0.6f} V"
-            temp_win.addstr(3, 5, LT, curses.A_BOLD)
+            temp_win.addstr(2, 5, LT, curses.A_BOLD)
             temp_win.addstr('  ')
             temp_win.addstr(RT, curses.A_BOLD)
-            temp_win.addstr(4, 5, V, curses.A_BOLD)
+            temp_win.addstr(3, 5, V, curses.A_BOLD)
             temp_win.refresh()
    
 
