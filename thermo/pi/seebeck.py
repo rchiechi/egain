@@ -11,6 +11,7 @@ import os
 import time
 import subprocess
 import threading
+import curses
 import platform
 from PIL import Image, ImageDraw, ImageFont
 from adafruit_rgb_display import st7789
@@ -105,7 +106,7 @@ def _enumerateDevices():
     return _devs
 
 
-if __name__ == '__main__':
+def main(stdscrn):
     spinner = ['|', '\\', '—', '/']
     alive = threading.Event()
     alive.set()
@@ -118,6 +119,16 @@ if __name__ == '__main__':
     thermothread.start()
     backlight.value = True
     start_time = time.time()
+    curses.start_color()
+    # use 250 to not interfere with tests later
+    curses.init_color(250, 1000, 0, 0)
+    curses.init_pair(250, 250, curses.COLOR_BLACK)
+    curses.init_color(251, 0, 1000, 0)
+    curses.init_pair(251, 251, curses.COLOR_BLACK)
+    stdscr.clear()
+    stdscr.nodelay(True)
+    temp_win = curses.newwin(5, 48, 2, 0)
+    temp_win.border()
     _i = 0
     try:
         while True:
@@ -133,12 +144,15 @@ if __name__ == '__main__':
                 V = f"Volt.: {_v*1000:0.4f} mV"
             else:
                 V = f"Volt.: {_v:0.6f} V"
-            print(f"\r{LT}")
-            print(RT)
-            print(V)
+            temp_win.addstr(0, 5, {LT})
+            temp_win.addstr(RT)
+            temp_win.addstr(1, 5, V)
+            temp_win.refresh()
             if _i == len(spinner):
                 _i = 0
-            print(f"{spinner[_i]}", end="\033[F\033[F\033[F")
+            stdscr.addstr(f"{spinner[_i]}")
+            stdscr.refresh()
+
             _i += 1
             cmd = "hostname -I | cut -d' ' -f1"
             IP = "IP: " + subprocess.check_output(cmd, shell=True).decode("utf-8")
@@ -158,14 +172,27 @@ if __name__ == '__main__':
             # Display image.
             with thermothread.lock:
                 disp.image(image, rotation)
-            time.sleep(0.1)
+                time.sleep(0.1)
+
+            if stdscr.getch() in (113, 120):
+                temp_win.ednwin()
+                stdscr.endwin()
+                raise KeyboardInterrupt
 
     except KeyboardInterrupt:
-        print("\nKilling threads")
-        thermothread.stop()
-        alive.clear()
-        time.sleep(1)
-        draw.rectangle((0, 0, width, height), outline=0, fill=0)
-        disp.image(image, rotation)
-        backlight.value = False
-        GPIO.cleanup()
+        temp_win.clear()
+        stdscr.clear()
+
+
+if __name__ == '__main__':
+    curses.wrapper(main)
+    print("\nKilling threads")
+    thermothread.stop()
+    alive.clear()
+    time.sleep(1)
+    draw.rectangle((0, 0, width, height), outline=0, fill=0)
+    disp.image(image, rotation)
+    backlight.value = False
+    GPIO.cleanup()
+
+
