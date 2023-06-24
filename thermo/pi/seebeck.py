@@ -107,7 +107,7 @@ def _enumerateDevices():
 
 
 def main(stdscr):
-    spinner = ['|', '\\', '—', '/']
+    spinner = [('|', 250), ('\\', 251), ('—', 252), ('/', 253)]
 
     backlight.value = True
     start_time = time.time()
@@ -117,6 +117,10 @@ def main(stdscr):
     curses.init_pair(250, 250, curses.COLOR_BLACK)
     curses.init_color(251, 0, 1000, 0)
     curses.init_pair(251, 251, curses.COLOR_BLACK)
+    curses.init_color(252, 0, 0, 1000)
+    curses.init_pair(252, 252, curses.COLOR_BLACK)
+    curses.init_color(253, 1000, 0, 1000)
+    curses.init_pair(253, 253, curses.COLOR_BLACK)
     stdscr.clear()
     stdscr.nodelay(True)
     temp_win = curses.newwin(5, 48, 2, 0)
@@ -129,6 +133,12 @@ def main(stdscr):
             elif time.time() - start_time > 2:
                 GPIO.output(led, GPIO.LOW)
                 start_time = time.time()
+
+            if _i == len(spinner):
+                _i = 0
+            stdscr.addstr(0, 0, f"{spinner[_i][0]}", color_pair(spinner[_i][1]))
+            stdscr.refresh()
+
             LT = f"Left:  {thermothread.lefttemp:0.1f} °C"
             RT = f"Right: {thermothread.righttemp:0.1f} °C"
             _v = thermothread.voltage
@@ -140,10 +150,7 @@ def main(stdscr):
             temp_win.addstr(RT)
             temp_win.addstr(1, 5, V)
             temp_win.refresh()
-            if _i == len(spinner):
-                _i = 0
-            stdscr.addstr(0, 0, f"{spinner[_i]}")
-            stdscr.refresh()
+   
 
             _i += 1
             cmd = "hostname -I | cut -d' ' -f1"
@@ -167,7 +174,6 @@ def main(stdscr):
                 time.sleep(0.1)
 
             if stdscr.getch() in (113, 120):
-                temp_win.endwin()
                 stdscr.endwin()
                 raise KeyboardInterrupt
 
