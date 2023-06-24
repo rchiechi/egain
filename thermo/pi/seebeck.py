@@ -175,7 +175,6 @@ def main(stdscr):
                 time.sleep(0.1)
 
             if stdscr.getch() in (113, 120):
-                stdscr.endwin()
                 raise KeyboardInterrupt
 
     except KeyboardInterrupt:
