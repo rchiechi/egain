@@ -123,7 +123,7 @@ def main(stdscr):
     curses.init_pair(253, 253, curses.COLOR_BLACK)
     stdscr.clear()
     stdscr.nodelay(True)
-    temp_win = curses.newwin(5, 48, 2, 0)
+    temp_win = curses.newwin(6, 48, 2, 0)
     temp_win.border()
     _i = 0
     try:
@@ -139,16 +139,17 @@ def main(stdscr):
             stdscr.addstr(0, 0, f"{spinner[_i][0]}", curses.color_pair(spinner[_i][1]))
             stdscr.refresh()
 
-            LT = f"Left:  {thermothread.lefttemp:0.1f} °C"
+            LT = f"Left: {thermothread.lefttemp:0.1f} °C"
             RT = f"Right: {thermothread.righttemp:0.1f} °C"
             _v = thermothread.voltage
             if abs(_v) < 0.01:
                 V = f"Volt.: {_v*1000:0.4f} mV"
             else:
                 V = f"Volt.: {_v:0.6f} V"
-            temp_win.addstr(0, 5, LT)
-            temp_win.addstr(RT)
-            temp_win.addstr(1, 5, V)
+            temp_win.addstr(3, 5, LT, curses.A_BOLD)
+            temp_win.addstr('  ')
+            temp_win.addstr(RT, curses.A_BOLD)
+            temp_win.addstr(4, 5, V, curses.A_BOLD)
             temp_win.refresh()
    
 
