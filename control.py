@@ -201,7 +201,7 @@ def main(stdscr):
     # stdout_buff = StringIO()
     # sys.stdout = stdout_buff
     # stream_pos = 0  # lst read position of the stdout stream.
-    sys.stdout = open('/dev/null', 'wb')
+    sys.stdout = open('/dev/null', 'wt')
     spinner = [('|', 250), ('\\', 251), ('—', 252), ('/', 253)]
     curses.start_color()
     curses.init_color(250, 1000, 0, 0)
