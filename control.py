@@ -142,7 +142,7 @@ class peltierstats:
             self.grad_win.addstr('Right: ', curses.color_pair(250) | curses.A_BOLD)
         elif self.gradcomm.status.get(tc.RIGHTFLOW, tc.HEAT) == tc.COOL:
             self.grad_win.addstr('Right: ', curses.color_pair(252) | curses.A_BOLD)
-        self.addstr(RT)
+        self.grad_win.addstr(RT)
         self.grad_win.refresh()
 
     @property
