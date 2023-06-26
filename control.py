@@ -53,7 +53,7 @@ class curses_updater:
         self._initialized = False
 
     def clearline(self):
-        row = self.win.getyx()
+        row = self.win.getyx()[0]
         while row < self.win.getmaxyx()[0]:
             self.win.addch(' ')
 
