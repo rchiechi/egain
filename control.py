@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
 import os
+import sys
 import curses
 import threading
 import time
 import platform
+from io import StringIO
 from meas.k2182A import K2182A
 from thermo.peltier import Gradient
 from thermo.peltier import _initdevice as init_peltier
@@ -195,6 +197,10 @@ def _enumerateDevices():
 
 
 def main(stdscr):
+    external_output = ''
+    stdout_buff = StringIO()
+    sys.stdout = stdout_buff
+    stream_pos = 0  # lst read position of the stdout stream.
     spinner = [('|', 250), ('\\', 251), ('—', 252), ('/', 253)]
     curses.start_color()
     curses.init_color(250, 1000, 0, 0)
@@ -240,6 +246,13 @@ def main(stdscr):
             grad_win.border()
             thermo_win.update()
             pelt_win.update()
+            stdscr.move(10,0)
+            stdscr.clrtobot()
+            if stdout_buff.tell() > stream_pos:
+                stdout_buff.seek(stream_pos)
+                external_output = stdout_buff.read()
+                stream_pos = stdout_buff.tell()
+                stdscr.addstr(external_output, curses.A_DIM)
             _i += 1
             _chr = stdscr.getch()
             if _chr == RIGHT_ARROW:
@@ -258,8 +271,5 @@ def main(stdscr):
 
 
 if __name__ == "__main__":
-    # alive, thermothread = init_pi()
     curses.wrapper(main)
     print("\nKilling threads")
-    # thermothread.stop()
-    # alive.clear()
