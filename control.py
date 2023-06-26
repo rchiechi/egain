@@ -19,9 +19,6 @@ try:
 except ModuleNotFoundError:
     ON_PI = False
 
-    def get_thermocouples():
-        return None, None
-
 LEFT_ARROW = 260
 RIGHT_ARROW = 261
 UP_ARROW = 259
@@ -32,9 +29,35 @@ Q_KEY = 113
 X_KEY = 120
 ON_OFF_MAP = {False: 'OFF', True: 'ON'}
 
-class seebeckstats:
+class curses_updater:
 
     _initialized = False
+
+    def __init__(self, win):
+        self.win = win
+
+    def update(self):
+        self.win.addstr(1, 3, "Not initialized.")
+        self.win.refresh()
+
+    def toggle(self):
+        if self.initialized:
+            self.stop()
+        else:
+            self.start()
+
+    def start(self):
+        self._initialized = True
+
+    def stop(self):
+        self._initialized = False
+
+    @property
+    def initialized(self):
+        return self._initialized
+
+class seebeckstats(curses_updater):
+
     thermothread = None
 
     def __init__(self, temp_win):
@@ -42,20 +65,14 @@ class seebeckstats:
         self.alive = threading.Event()
         self.display = pidisplay()
 
-    def toggle(self):
-        if self.initialized:
-            self.stop_pi()
-        else:
-            self.start_pi()
-
-    def stop_pi(self):
+    def stop(self):
         self.alive.clear()
         if self.thermothread is not None:
-            self.thermothread.kill()
+            self.thermothread.stop()
         self._initialized = False
         self.display.blank()
 
-    def start_pi(self):
+    def start(self):
         self.alive.set()
         for _dev in _enumerateDevices('/dev/serial0'):
             voltmeter = K2182A(_dev)
@@ -91,32 +108,22 @@ class seebeckstats:
         self.temp_win.addstr(V, curses.A_BOLD)
         self.temp_win.refresh()
 
-    @property
-    def initialized(self):
-        return self._initialized
 
-class peltierstats:
+class peltierstats(curses_updater):
 
-    _initialized = False
     gradcomm = None
 
     def __init__(self, grad_win):
         self.grad_win = grad_win
         self.alive = threading.Event()
 
-    def toggle(self):
-        if self.initialized:
-            self.stop_peltier()
-        else:
-            self.start_peltier()
-
-    def stop_peltier(self):
+    def stop(self):
         self.alive.clear()
         if self.gradcomm is not None:
             self.gradcomm.stop()
         self._initialized = False
 
-    def start_peltier(self):
+    def start(self):
         self.alive.set()
         for _dev in _enumerateDevices('ttyACM0'):
             peltier = init_peltier(_dev)
@@ -132,7 +139,6 @@ class peltierstats:
             self.grad_win.addstr(1, 3, "Not initialized.")
             self.grad_win.refresh()
             return
-        # self.grad_win.addstr(1, 3, 'Left: ')
         LT = f"{self.gradcomm.status.get(tc.LEFT, 0.0):0.1f} °C"
         if self.gradcomm.status.get(tc.LEFTFLOW, tc.COOL) == tc.HEAT:
             self.grad_win.addstr(1, 3, 'Left: ', curses.color_pair(250) | curses.A_BOLD)
@@ -140,7 +146,6 @@ class peltierstats:
             self.grad_win.addstr(1, 3, 'Left: ', curses.color_pair(252) | curses.A_BOLD)
         self.grad_win.addstr(LT, curses.A_BOLD)
         self.grad_win.addstr('  ')
-        # self.grad_win.addstr('Right: ')
         RT = f"{self.gradcomm.status.get(tc.RIGHT, 0.0):0.1f} °C"
         if self.gradcomm.status.get(tc.RIGHTFLOW, tc.HEAT) == tc.HEAT:
             self.grad_win.addstr('Right: ', curses.color_pair(250) | curses.A_BOLD)
@@ -210,7 +215,7 @@ def main(stdscr):
     # stdout_buff = StringIO()
     # sys.stdout = stdout_buff
     # stream_pos = 0  # lst read position of the stdout stream.
-    sys.stdout = open('/dev/null', 'wt')
+    # sys.stdout = open('/dev/null', 'wt')
     spinner = [('|', 250), ('\\', 251), ('—', 252), ('/', 253)]
     curses.start_color()
     curses.init_color(250, 1000, 0, 0)
@@ -225,7 +230,10 @@ def main(stdscr):
     stdscr.clear()
     stdscr.nodelay(True)
     temp_win = curses.newwin(4, 36, 4, 0)
-    thermo_win = seebeckstats(temp_win)
+    if ON_PI:
+        thermo_win = seebeckstats(temp_win)
+    else:
+        thermo_win = curses_updater(temp_win)
     grad_win = curses.newwin(4, 36, 4, 38)
     pelt_win = peltierstats(grad_win)
     _idx = menu_idx()
@@ -279,8 +287,8 @@ def main(stdscr):
     except KeyboardInterrupt:
         temp_win.clear()
         stdscr.clear()
-        thermo_win.stop_pi()
-        grad_win.stop_peltier()
+        thermo_win.stop()
+        grad_win.stop()
 
 
 if __name__ == "__main__":

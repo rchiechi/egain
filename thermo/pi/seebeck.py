@@ -75,7 +75,6 @@ class pidisplay:
         self.rotation = 90
         # Get drawing object to draw on image.
         self.draw = ImageDraw.Draw(self.image)
-        self.blank()
         # Draw some shapes.
         # First define some constants to allow easy resizing of shapes.
         padding = -2
