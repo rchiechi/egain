@@ -34,9 +34,11 @@ Lcs.direction = digitalio.Direction.OUTPUT
 Rcs = digitalio.DigitalInOut(board.D6)
 Rcs.direction = digitalio.Direction.OUTPUT
 
-# create a thermocouple object with the above
-Lthermocouple = adafruit_max31856.MAX31856(spi, Lcs, thermocouple_type = adafruit_max31856.ThermocoupleType.T)
-Rthermocouple = adafruit_max31856.MAX31856(spi, Rcs, thermocouple_type = adafruit_max31856.ThermocoupleType.T)
+def get_thermocouples():
+    # create a thermocouple object with the above
+    Lthermocouple = adafruit_max31856.MAX31856(spi, Lcs, thermocouple_type=adafruit_max31856.ThermocoupleType.T)
+    Rthermocouple = adafruit_max31856.MAX31856(spi, Rcs, thermocouple_type=adafruit_max31856.ThermocoupleType.T)
+    return Lthermocouple, Rthermocouple
 
 # Configuration for CS and DC pins (these are FeatherWing defaults on M0/M4):
 cs_pin = digitalio.DigitalInOut(board.CE0)
@@ -91,6 +93,29 @@ x = 0
 # Some other nice fonts to try: http://www.dafont.com/bitmap.php
 absdir = os.path.dirname(os.path.realpath(__file__))
 font = ImageFont.truetype(os.path.join(absdir, "DejaVuSans.ttf"), 24)
+
+def pidisplay(lock, **kwargs):
+    LT = kwargs.get('LT', 'Left: 0 °C')
+    RT = kwargs.get('RT', 'Right: 0 °C')
+    V = kwargs.get('V', 'Voltage: 0 mV')
+    cmd = "hostname -I | cut -d' ' -f1"
+    IP = "IP: " + subprocess.check_output(cmd, shell=True).decode("utf-8")
+    # Draw a black filled box to clear the image.
+    draw.rectangle((0, 0, width, height), outline=0, fill=0)
+    # Write four lines of text.
+    y = top
+    draw.text((x, y), IP, font=font, fill="#FFFFFF")
+    y += font.getsize(IP)[1]
+    draw.text((x, y), LT, font=font, fill="#FFFF00")
+    y += font.getsize(LT)[1]
+    draw.text((x, y), RT, font=font, fill="#00FF00")
+    y += font.getsize(RT)[1]
+    draw.text((x, y), V, font=font, fill="#0000FF")
+    y += font.getsize(V)[1]
+    # Display image.
+    with lock:
+        disp.image(image, rotation)
+        time.sleep(0.1)
 
 
 def _enumerateDevices():
@@ -152,28 +177,9 @@ def main(stdscr):
             temp_win.addstr(RT, curses.A_BOLD)
             temp_win.addstr(2, 3, V, curses.A_BOLD)
             temp_win.refresh()
-   
-
             _i += 1
-            cmd = "hostname -I | cut -d' ' -f1"
-            IP = "IP: " + subprocess.check_output(cmd, shell=True).decode("utf-8")
-            # Draw a black filled box to clear the image.
-            draw.rectangle((0, 0, width, height), outline=0, fill=0)
-            # Write four lines of text.
-            y = top
-            draw.text((x, y), IP, font=font, fill="#FFFFFF")
-            y += font.getsize(IP)[1]
-            draw.text((x, y), LT, font=font, fill="#FFFF00")
-            y += font.getsize(LT)[1]
-            draw.text((x, y), RT, font=font, fill="#00FF00")
-            y += font.getsize(RT)[1]
-            draw.text((x, y), V, font=font, fill="#0000FF")
-            y += font.getsize(V)[1]
 
-            # Display image.
-            with thermothread.lock:
-                disp.image(image, rotation)
-                time.sleep(0.1)
+            pidisplay(thermothread.lock, LT=LT, RT=RT, V=V)
 
             if stdscr.getch() in (113, 120):
                 raise KeyboardInterrupt
@@ -191,6 +197,7 @@ if __name__ == '__main__':
         if voltmeter.initialize(auto_sense_range=True):
             break
         voltmeter = None
+    Lthermocouple, Rthermocouple = get_thermocouples()
     thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, voltmeter, authkey=tc.AUTH_KEY)
     thermothread.start()
     curses.wrapper(main)
