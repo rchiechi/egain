@@ -129,14 +129,14 @@ class peltierstats:
             self.grad_win.refresh()
             return
         self.grad_win.addstr(1, 3, 'Left: ')
-        LT = f"{self.gradcomm.status[tc.LEFTTEMP]:0.1f}"
+        LT = f"{self.gradcomm.status[tc.LEFT]:0.1f}"
         if self.gradcomm.status[tc.LEFTFLOW] == tc.COOL:
             self.grad_win.addstr(f"{LT}  °C", curses.color_pair(250) | curses.A_BOLD)
         elif self.gradcomm.status[tc.LEFTFLOW] == tc.COOL:
             self.grad_win.addstr(f"{LT}  °C", curses.color_pair(252) | curses.A_BOLD)
         self.grad_win.addstr('  ')
         self.grad_win.addstr('Right: ')
-        RT = f"{self.gradcomm.status[tc.RIGHTTEMP]:0.1f} °C"
+        RT = f"{self.gradcomm.status[tc.RIGHT]:0.1f} °C"
         if self.gradcomm.status[tc.RIGHTFLOW] == tc.COOL:
             self.grad_win.addstr(f"{RT}  °C", curses.color_pair(250) | curses.A_BOLD)
         elif self.gradcomm.status[tc.RIGHTFLOW] == tc.COOL:
@@ -183,7 +183,7 @@ class menu_idx:
         if _val > 0:
             self._range = _val
 
-def _enumerateDevices(_first = None):
+def _enumerateDevices(_first=None):
     _filter = ''
     if platform.system() == "Darwin":
         _filter = 'usbmodem'
@@ -256,8 +256,6 @@ def main(stdscr):
             #     stdout_buff.seek(stream_pos)
             #     external_output = stdout_buff.read()
             #     stream_pos = stdout_buff.tell()
-            #     if isinstance(external_output, bytes):
-            #         external_output = str(external_output, encoding='utf-8')
             #     for _ln, _l in enumerate(external_output.split('\n')):
             #         stdscr.addstr(10+_ln, 0, external_output, curses.A_DIM)
             _i += 1
