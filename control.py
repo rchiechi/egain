@@ -273,8 +273,8 @@ def main(stdscr):
                 for _ln, _l in enumerate(external_output.split('\n')):
                     try:
                         _row = 10+_ln
-                        if _row >= stdscr.getmaxyx()[0]:
-                            stdscr.addstr(_row, 0, external_output.strip(), curses.A_DIM)
+                        if _row < stdscr.getmaxyx()[0]:
+                            stdscr.addstr(_row, 0, _l.strip(), curses.A_DIM)
                     except curses.error:
                         pass
             _i += 1
