@@ -55,7 +55,7 @@ class seebeckstats:
 
     def start_pi(self):
         self.alive.set()
-        for _dev in _enumerateDevices():
+        for _dev in _enumerateDevices('/dev/serial0'):
             voltmeter = K2182A(_dev)
             if voltmeter.initialize(auto_sense_range=True):
                 break
@@ -115,7 +115,7 @@ class peltierstats:
 
     def start_peltier(self):
         self.alive.set()
-        for _dev in _enumerateDevices():
+        for _dev in _enumerateDevices('ttyACM0'):
             peltier = init_peltier(_dev)
             if peltier is not None:
                 break
@@ -183,13 +183,16 @@ class menu_idx:
         if _val > 0:
             self._range = _val
 
-def _enumerateDevices():
+def _enumerateDevices(_first = None):
     _filter = ''
     if platform.system() == "Darwin":
         _filter = 'usbmodem'
     if platform.system() == "Linux":
         _filter = 'ttyACM'
-    _devs = ['/dev/serial0']
+    if _first is not None:
+        _devs = [_first]
+    else:
+        _devs = []
     for _dev in os.listdir('/dev'):
         if _filter.lower() in _dev.lower():
             _devs.append(_dev)
