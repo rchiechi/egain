@@ -52,7 +52,7 @@ class pidisplay:
         # Configure the backlight
         backlight = digitalio.DigitalInOut(board.D22)
         backlight.switch_to_output()
-        # backlight.value = True
+        backlight.value = True
         # Config for display baudrate (default max is 24mhz):
         BAUDRATE = 64000000
         # Create the ST7789 display:
