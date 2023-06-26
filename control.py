@@ -247,8 +247,8 @@ def main(stdscr):
             thermo_win.update()
             pelt_win.update()
             stdscr.move(10,0)
-            stdscr.clrtobot()
             if stdout_buff.tell() > stream_pos:
+                stdscr.clrtobot()
                 stdout_buff.seek(stream_pos)
                 external_output = stdout_buff.read()
                 stream_pos = stdout_buff.tell()
