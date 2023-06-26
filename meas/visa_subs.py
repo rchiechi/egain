@@ -28,7 +28,7 @@ import serial
 rm = visa.ResourceManager()
 
 #############
-DEBUG = True
+DEBUG = False
 #############
 
 MODE_GPIB = 'GPIB'
