@@ -272,8 +272,10 @@ def main(stdscr):
                 stream_pos = stdout_buff.tell()
                 for _ln, _l in enumerate(external_output.split('\n')):
                     try:
-                        stdscr.addstr(10+_ln, 0, external_output.strip(), curses.A_DIM)
-                    except Exception:
+                        _row = 10+_ln
+                        if _row >= stdscr.getmaxyx()[0]:
+                            stdscr.addstr(_row, 0, external_output.strip(), curses.A_DIM)
+                    except curses.error:
                         pass
             _i += 1
             _chr = stdscr.getch()
