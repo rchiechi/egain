@@ -40,6 +40,7 @@ class seebeckstats:
     def __init__(self, temp_win):
         self.temp_win = temp_win
         self.alive = threading.Event()
+        self.display = pidisplay()
 
     def toggle(self):
         if self.initialized:
@@ -63,6 +64,7 @@ class seebeckstats:
         Lthermocouple, Rthermocouple = get_thermocouples()
         self.thermothread = thermo(self.alive, {'left':Lthermocouple, 'right':Rthermocouple}, voltmeter, authkey=tc.AUTH_KEY)
         self.thermothread.start()
+        self.pidisplay.lock = self.thermothread.lock
         self._initialized = True
 
     def update(self):
@@ -74,7 +76,7 @@ class seebeckstats:
                 V = f"Volt.: {_v*1000:0.4f} mV"
             else:
                 V = f"Volt.: {_v:0.6f} V"
-            pidisplay(self.thermothread.lock, LT=LT, RT=RT, V=V)
+            self.display.update(LT=LT, RT=RT, V=V)
         else:
             LT = "null"
             RT = 'null'
@@ -135,7 +137,7 @@ class peltierstats:
             self.grad_win.addstr(1, 3, 'Left: ', curses.color_pair(250) | curses.A_BOLD)
         elif self.gradcomm.status.get(tc.LEFTFLOW, tc.COOL) == tc.COOL:
             self.grad_win.addstr(1, 3, 'Left: ', curses.color_pair(252) | curses.A_BOLD)
-        self.grad_win.addstr(LT)
+        self.grad_win.addstr(LT, curses.A_BOLD)
         self.grad_win.addstr('  ')
         # self.grad_win.addstr('Right: ')
         RT = f"{self.gradcomm.status.get(tc.RIGHT, 0.0):0.1f} °C"
@@ -143,7 +145,7 @@ class peltierstats:
             self.grad_win.addstr('Right: ', curses.color_pair(250) | curses.A_BOLD)
         elif self.gradcomm.status.get(tc.RIGHTFLOW, tc.HEAT) == tc.COOL:
             self.grad_win.addstr('Right: ', curses.color_pair(252) | curses.A_BOLD)
-        self.grad_win.addstr(RT)
+        self.grad_win.addstr(RT, curses.A_BOLD)
         self.grad_win.refresh()
 
     @property
