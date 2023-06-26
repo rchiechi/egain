@@ -20,12 +20,43 @@ class Gradient():
     command = tc.COMMAND_RUN
     _lock = threading.Lock()
 
-    def __init__(self, alive, peltier, **kwargs):
-        self.alive = alive
-        self.peltier = peltier
-        self.addr = (kwargs.get('address', '0.0.0.0'), kwargs.get('port', tc.PELTIER_PORT))
-        self.authkey = kwargs.get('authkey', tc.AUTH_KEY)
-        self.__update()
+    def __init__(self, alive=None, peltier=None, **kwargs):
+        self._alive = alive
+        self._peltier = peltier
+        self._addr = (kwargs.get('address', '0.0.0.0'), kwargs.get('port', tc.PELTIER_PORT))
+        self._authkey = kwargs.get('authkey', tc.AUTH_KEY)
+
+    @property
+    def alive(self):
+        return self._alive
+
+    @alive.setter
+    def alive(self, alive):
+        self._alive = alive
+
+    @property
+    def peltier(self):
+        return self._peltier
+
+    @peltier.setter
+    def peltier(self, peltier):
+        self._peltier = peltier
+
+    @property
+    def addr(self):
+        return self._addr
+
+    @addr.setter
+    def addr(self, addr):
+        self._addr = addr
+
+    @property
+    def authkey(self):
+        return self._authkey
+
+    @authkey.setter
+    def authkey(self, authkey):
+        self._authkey = authkey
 
     def start(self):
         """
@@ -37,6 +68,7 @@ class Gradient():
         self._listener_thread.start()
         self._updater_thread = threading.Thread(target=self._updater_main, daemon=True)
         self._updater_thread.start()
+        self.__update()
 
     def stop(self):
         """
@@ -170,6 +202,10 @@ class Gradient():
     @property
     def status(self):
         return self.last_json
+
+    @property
+    def initialized(self):
+        return self._initialized
 
 
 def _enumerateDevices():

@@ -4,9 +4,9 @@ try:
     import board
     import RPi.GPIO as GPIO
 except ModuleNotFoundError:
-    import sys
+    # import sys
     print("Make sure you are running this script on a Raspberry Pi")
-    sys.exit()
+    # sys.exit()
 import os
 import time
 import subprocess
