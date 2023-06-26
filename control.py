@@ -252,7 +252,10 @@ def main(stdscr):
                 stdout_buff.seek(stream_pos)
                 external_output = stdout_buff.read()
                 stream_pos = stdout_buff.tell()
-                stdscr.addstr(external_output, curses.A_DIM)
+                if isinstance(external_output, bytes):
+                    external_output = str(external_output, encoding='utf-8')
+                for _ln, _l in enumerate(external_output.split('\n')):
+                    stdscr.addstr(10+_ln, 0, external_output, curses.A_DIM)
             _i += 1
             _chr = stdscr.getch()
             if _chr == RIGHT_ARROW:
