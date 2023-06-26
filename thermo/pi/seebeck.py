@@ -111,7 +111,7 @@ class pidisplay:
         self.draw.text((x, y), V, font=self.font, fill="#0000FF")
         y += self.font.getsize(V)[1]
         # Display image.
-        with self.ock:
+        with self.lock:
             self.disp.image(self.image, self.rotation)
             time.sleep(0.1)
 
