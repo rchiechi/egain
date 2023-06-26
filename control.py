@@ -99,10 +99,10 @@ class seebeckstats(curses_updater):
             RT = f"{self.thermothread.righttemp:0.1f} °C"
             _v = self.thermothread.voltage
             if abs(_v) < 0.01:
-                V = f"Volt.: {_v*1000:0.4f} mV"
+                V = f"{_v*1000:0.4f} mV"
             else:
-                V = f"Volt.: {_v:0.6f} V"
-            self.display.update(LT=LT, RT=RT, V=V)
+                V = f"{_v:0.6f} V"
+            self.display.update(LT=f"L: {LT}", RT=f"R: {RT}", V=f"ΔV: {V}")
         else:
             LT = "null"
             RT = 'null'
@@ -112,7 +112,7 @@ class seebeckstats(curses_updater):
         self.win.addstr('  ')
         self.win.addstr('Left: ')
         self.win.addstr(RT, curses.A_BOLD)
-        self.win.addstr(2, 3, 'Volt.: ')
+        self.win.addstr(2, 3, 'ΔV: ')
         self.win.addstr(V, curses.A_BOLD)
         self.clearline()
         self.win.refresh()
