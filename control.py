@@ -55,7 +55,7 @@ class curses_updater:
     def clearline(self):
         row = self.win.getyx()[0]
         while row < self.win.getmaxyx()[0]:
-            self.win.addch(' ')
+            self.win.addch(SPACE_KEY)
 
     @property
     def initialized(self):
