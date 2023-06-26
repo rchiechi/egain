@@ -121,6 +121,7 @@ class peltierstats:
                 break
         if peltier is not None:
             self.gradcomm = Gradient(self.alive, peltier)
+            self.gradcomm.start()
             self._initialized = True
 
     def update(self):
