@@ -75,9 +75,7 @@ class pidisplay:
         self.rotation = 90
         # Get drawing object to draw on image.
         self.draw = ImageDraw.Draw(self.image)
-        # Draw a black filled box to clear the image.
-        self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=(0, 0, 0))
-        self.disp.image(self.image, self.rotation)
+        self.blank()
         # Draw some shapes.
         # First define some constants to allow easy resizing of shapes.
         padding = -2
@@ -90,6 +88,11 @@ class pidisplay:
         # Some other nice fonts to try: http://www.dafont.com/bitmap.php
         absdir = os.path.dirname(os.path.realpath(__file__))
         self.font = ImageFont.truetype(os.path.join(absdir, "DejaVuSans.ttf"), 24)
+
+    def blank(self):
+        # Draw a black filled box to clear the image.
+        self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=(0, 0, 0))
+        self._display()
 
     def update(self, **kwargs):
         LT = kwargs.get('LT', 'Left: 0 °C')
@@ -110,6 +113,9 @@ class pidisplay:
         y += self.font.getsize(RT)[1]
         self.draw.text((x, y), V, font=self.font, fill="#0000FF")
         y += self.font.getsize(V)[1]
+        self._display()
+
+    def _display(self):
         # Display image.
         with self.lock:
             self.disp.image(self.image, self.rotation)
@@ -193,6 +199,7 @@ def main(stdscr):
     except KeyboardInterrupt:
         temp_win.clear()
         stdscr.clear()
+        display.blank()
 
 
 if __name__ == '__main__':

@@ -53,6 +53,7 @@ class seebeckstats:
         if self.thermothread is not None:
             self.thermothread.kill()
         self._initialized = False
+        self.display.blank()
 
     def start_pi(self):
         self.alive.set()
@@ -278,6 +279,8 @@ def main(stdscr):
     except KeyboardInterrupt:
         temp_win.clear()
         stdscr.clear()
+        thermo_win.stop_pi()
+        grad_win.stop_peltier()
 
 
 if __name__ == "__main__":
