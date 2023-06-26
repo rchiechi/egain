@@ -52,6 +52,11 @@ class curses_updater:
     def stop(self):
         self._initialized = False
 
+    def clearline(self):
+        row = self.win.getyx()
+        while row < self.win.getmaxyx()[0]:
+            self.win.addch(' ')
+
     @property
     def initialized(self):
         return self._initialized
@@ -106,7 +111,7 @@ class seebeckstats(curses_updater):
         self.temp_win.addstr(RT, curses.A_BOLD)
         self.temp_win.addstr(2, 3, 'Volt.: ')
         self.temp_win.addstr(V, curses.A_BOLD)
-        self.temp_win.clrtoeol()
+        self.clearline()
         self.temp_win.refresh()
 
 
@@ -153,7 +158,7 @@ class peltierstats(curses_updater):
         elif self.gradcomm.status.get(tc.RIGHTFLOW, tc.HEAT) == tc.COOL:
             self.grad_win.addstr('Right: ', curses.color_pair(252) | curses.A_BOLD)
         self.grad_win.addstr(RT, curses.A_BOLD)
-        self.grad_win.clrtoeol()
+        self.clearline()
         self.grad_win.refresh()
 
     @property
