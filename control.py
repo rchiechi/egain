@@ -64,7 +64,7 @@ class seebeckstats:
         Lthermocouple, Rthermocouple = get_thermocouples()
         self.thermothread = thermo(self.alive, {'left':Lthermocouple, 'right':Rthermocouple}, voltmeter, authkey=tc.AUTH_KEY)
         self.thermothread.start()
-        self.pidisplay.lock = self.thermothread.lock
+        self.display.lock = self.thermothread.lock
         self._initialized = True
 
     def update(self):
