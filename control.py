@@ -12,6 +12,37 @@ from thermo.pi.seebeck import get_thermocouples, pidisplay
 import thermo.constants as tc
 
 
+class thermostats():
+
+    _initialized = False
+
+    def __init__(self, temp_win):
+        self.temp_win = temp_win
+
+    def update(self):
+        if self._initialized:
+            LT = f"{thermothread.lefttemp:0.1f} °C"
+            RT = f"{thermothread.righttemp:0.1f} °C"
+            _v = thermothread.voltage
+            if abs(_v) < 0.01:
+                V = f"Volt.: {_v*1000:0.4f} mV"
+            else:
+                V = f"Volt.: {_v:0.6f} V"
+            pidisplay(thermothread.lock, LT=LT, RT=RT, V=V)
+        else:
+            LT = "null"
+            RT = 'null'
+            V = 'null'
+        self.temp_win.addstr(1, 3, 'Right: ')
+        self.temp_win.addstr(LT, curses.A_BOLD)
+        self.temp_win.addstr('  ')
+        self.temp_win.addstr('Left: ')
+        self.temp_win.addstr(RT, curses.A_BOLD)
+        self.temp_win.addstr(2, 3, 'Volt.: ')
+        self.temp_win.addstr(V, curses.A_BOLD)
+        self.temp_win.refresh()
+
+
 def _enumerateDevices():
     _filter = ''
     if platform.system() == "Darwin":
@@ -40,7 +71,6 @@ def init_pi():
 def main(stdscr):
     spinner = [('|', 250), ('\\', 251), ('—', 252), ('/', 253)]
     curses.start_color()
-    # use 250 to not interfere with tests later
     curses.init_color(250, 1000, 0, 0)
     curses.init_pair(250, 250, curses.COLOR_BLACK)
     curses.init_color(251, 0, 1000, 0)
@@ -54,6 +84,7 @@ def main(stdscr):
     stdscr.nodelay(True)
     temp_win = curses.newwin(4, 36, 2, 0)
     temp_win.border()
+    thermo_win = thermostats(temp_win)
     _i = 0
     try:
         while True:
@@ -61,20 +92,8 @@ def main(stdscr):
                 _i = 0
             stdscr.addstr(0, 0, f"{spinner[_i][0]}", curses.color_pair(spinner[_i][1]))
             stdscr.refresh()
-            LT = f"Left: {thermothread.lefttemp:0.1f} °C"
-            RT = f"Right: {thermothread.righttemp:0.1f} °C"
-            _v = thermothread.voltage
-            if abs(_v) < 0.01:
-                V = f"Volt.: {_v*1000:0.4f} mV"
-            else:
-                V = f"Volt.: {_v:0.6f} V"
-            temp_win.addstr(1, 3, LT, curses.A_BOLD)
-            temp_win.addstr('  ')
-            temp_win.addstr(RT, curses.A_BOLD)
-            temp_win.addstr(2, 3, V, curses.A_BOLD)
-            temp_win.refresh()
+            thermo_win.update()
             _i += 1
-            pidisplay(thermothread.lock, LT=LT, RT=RT, V=V)
             if stdscr.getch() in (113, 120):
                 raise KeyboardInterrupt
 
