@@ -197,10 +197,11 @@ def _enumerateDevices():
 
 
 def main(stdscr):
-    external_output = ''
-    stdout_buff = StringIO()
-    sys.stdout = stdout_buff
-    stream_pos = 0  # lst read position of the stdout stream.
+    # external_output = ''
+    # stdout_buff = StringIO()
+    # sys.stdout = stdout_buff
+    # stream_pos = 0  # lst read position of the stdout stream.
+    sys.stdout = open('/dev/null', 'wb')
     spinner = [('|', 250), ('\\', 251), ('—', 252), ('/', 253)]
     curses.start_color()
     curses.init_color(250, 1000, 0, 0)
@@ -247,15 +248,15 @@ def main(stdscr):
             thermo_win.update()
             pelt_win.update()
             stdscr.move(10,0)
-            if stdout_buff.tell() > stream_pos:
-                stdscr.clrtobot()
-                stdout_buff.seek(stream_pos)
-                external_output = stdout_buff.read()
-                stream_pos = stdout_buff.tell()
-                if isinstance(external_output, bytes):
-                    external_output = str(external_output, encoding='utf-8')
-                for _ln, _l in enumerate(external_output.split('\n')):
-                    stdscr.addstr(10+_ln, 0, external_output, curses.A_DIM)
+            # if stdout_buff.tell() > stream_pos:
+            #     stdscr.clrtobot()
+            #     stdout_buff.seek(stream_pos)
+            #     external_output = stdout_buff.read()
+            #     stream_pos = stdout_buff.tell()
+            #     if isinstance(external_output, bytes):
+            #         external_output = str(external_output, encoding='utf-8')
+            #     for _ln, _l in enumerate(external_output.split('\n')):
+            #         stdscr.addstr(10+_ln, 0, external_output, curses.A_DIM)
             _i += 1
             _chr = stdscr.getch()
             if _chr == RIGHT_ARROW:
