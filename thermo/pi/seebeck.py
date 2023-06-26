@@ -50,9 +50,9 @@ class pidisplay:
         dc_pin = digitalio.DigitalInOut(board.D25)
         reset_pin = None
         # Configure the backlight
-        backlight = digitalio.DigitalInOut(board.D22)
-        backlight.switch_to_output()
-        backlight.value = True
+        self.backlight = digitalio.DigitalInOut(board.D22)
+        self.backlight.switch_to_output()
+        self.backlight.value = True
         # Config for display baudrate (default max is 24mhz):
         BAUDRATE = 64000000
         # Create the ST7789 display:
@@ -93,6 +93,7 @@ class pidisplay:
         # Draw a black filled box to clear the image.
         self.draw.rectangle((0, 0, self.width, self.height), outline=0, fill=(0, 0, 0))
         self._display()
+        self.backlight.value = False
 
     def update(self, **kwargs):
         LT = kwargs.get('LT', 'Left: 0 °C')
