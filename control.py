@@ -129,17 +129,17 @@ class peltierstats:
             self.grad_win.refresh()
             return
         self.grad_win.addstr(1, 3, 'Left: ')
-        LT = f"{self.gradcomm.status[tc.LEFT]:0.1f}"
-        if self.gradcomm.status[tc.LEFTFLOW] == tc.COOL:
+        LT = f"{self.gradcomm.status.get(tc.LEFT, 0.0):0.1f}"
+        if self.gradcomm.status.get(tc.LEFTFLOW, tc.COOL) == tc.HEAT:
             self.grad_win.addstr(f"{LT}  °C", curses.color_pair(250) | curses.A_BOLD)
-        elif self.gradcomm.status[tc.LEFTFLOW] == tc.COOL:
+        elif self.gradcomm.status.get(tc.LEFTFLOW, tc.COOL) == tc.COOL:
             self.grad_win.addstr(f"{LT}  °C", curses.color_pair(252) | curses.A_BOLD)
         self.grad_win.addstr('  ')
         self.grad_win.addstr('Right: ')
-        RT = f"{self.gradcomm.status[tc.RIGHT]:0.1f} °C"
-        if self.gradcomm.status[tc.RIGHTFLOW] == tc.COOL:
+        RT = f"{self.gradcomm.status.get(tc.RIGHT, 0.0):0.1f} °C"
+        if self.gradcomm.status.get(tc.RIGHTFLOW, tc.HEAT) == tc.COOL:
             self.grad_win.addstr(f"{RT}  °C", curses.color_pair(250) | curses.A_BOLD)
-        elif self.gradcomm.status[tc.RIGHTFLOW] == tc.COOL:
+        elif self.gradcomm.status.get(tc.RIGHTFLOW, tc.HEAT) == tc.COOL:
             self.grad_win.addstr(f"{RT}  °C", curses.color_pair(252) | curses.A_BOLD)
         self.grad_win.refresh()
 
