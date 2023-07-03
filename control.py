@@ -171,23 +171,15 @@ class menu_idx:
     _idx = 0
     _range = 1
 
-    def _decrement(self):
+    def decrement(self):
         self._idx -= 1
         if self._idx < 0:
             self._idx = 0
 
-    @property
-    def decrement(self):
-        self._decrement()
-
-    def _increment(self):
+    def increment(self):
         self._idx += 1
         if self._idx > self._range:
             self._idx = self._range
-
-    @property
-    def increment(self):
-        self._increment()
 
     @property
     def index(self):
@@ -267,6 +259,8 @@ def main(stdscr):
             if _i == len(spinner):
                 _i = 0
             stdscr.addstr(3, 0, f"{spinner[_i][0]}", curses.color_pair(spinner[_i][1]))
+            if not ON_PI:
+                stdscr.addstr('  No Pi detected')
             stdscr.refresh()
             time.sleep(0.25)
             temp_win.border()
@@ -289,9 +283,9 @@ def main(stdscr):
             _i += 1
             _chr = stdscr.getch()
             if _chr == RIGHT_ARROW:
-                _idx.increment
+                _idx.increment()
             if _chr == LEFT_ARROW:
-                _idx.decrement
+                _idx.decrement()
             if _chr == ENTER_KEY:
                 _menu_map[_idx.index].toggle()
                 stdscr.clear()
