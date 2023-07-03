@@ -7,6 +7,7 @@ import threading
 import time
 import platform
 from io import StringIO
+from meas.util import enumerateDevices
 from meas.k2182A import K2182A
 from thermo.peltier import Gradient
 from thermo.peltier import _initdevice as init_peltier
@@ -82,7 +83,7 @@ class seebeckstats(curses_updater):
 
     def start(self):
         self.alive.set()
-        for _dev in _enumerateDevices('/dev/serial0'):
+        for _dev in enumerateDevices('/dev/serial0'):
             voltmeter = K2182A(_dev)
             if voltmeter.initialize(auto_sense_range=True):
                 break
@@ -134,7 +135,7 @@ class peltierstats(curses_updater):
 
     def start(self):
         self.alive.set()
-        for _dev in _enumerateDevices('ttyACM0'):
+        for _dev in enumerateDevices('ttyACM0'):
             peltier = init_peltier(_dev)
             if peltier is not None:
                 break
@@ -204,20 +205,20 @@ class menu_idx:
         if _val > 0:
             self._range = _val
 
-def _enumerateDevices(_first=None):
-    _filter = ''
-    if platform.system() == "Darwin":
-        _filter = 'usbmodem'
-    if platform.system() == "Linux":
-        _filter = 'ttyACM'
-    if _first is not None:
-        _devs = [_first]
-    else:
-        _devs = []
-    for _dev in os.listdir('/dev'):
-        if _filter.lower() in _dev.lower():
-            _devs.append(_dev)
-    return _devs
+# def _enumerateDevices(_first=None):
+#     _filter = ''
+#     if platform.system() == "Darwin":
+#         _filter = 'usbmodem'
+#     if platform.system() == "Linux":
+#         _filter = 'ttyACM'
+#     if _first is not None:
+#         _devs = [_first]
+#     else:
+#         _devs = []
+#     for _dev in os.listdir('/dev'):
+#         if _filter.lower() in _dev.lower():
+#             _devs.append(_dev)
+#     return _devs
 
 
 def main(stdscr):
