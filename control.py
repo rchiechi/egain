@@ -25,7 +25,7 @@ ENTER_KEY = 10
 SPACE_KEY = 32
 Q_KEY = 113
 X_KEY = 120
-ON_OFF_MAP = {False: 'OFF', True: 'ON'}
+ON_OFF_MAP = {False: 'ON', True: 'OFF'}
 
 class curses_updater:
 
