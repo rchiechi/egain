@@ -5,7 +5,6 @@ import curses
 import threading
 import time
 from io import StringIO
-from meas.util import enumerateDevices
 from meas.k2182A import K2182A
 from thermo.peltier import Gradient
 from thermo.util import enumerateDevices, init_thermo_device
