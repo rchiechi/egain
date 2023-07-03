@@ -36,7 +36,7 @@ from tkinter.font import Font
 from gui.datacanvas import dataCanvas
 from gui.stagecontrol import StageControls
 from gui.egain.tempcontrol import TempControl
-from gui.measurement import MeasurementControl
+from gui.egain.measurement import MeasurementControl
 from gui.tooltip import CreateTooltip
 from gui.util import parseusersettings
 from config.options import GLOBAL_OPTS, createOptions

@@ -2,47 +2,21 @@ import time
 from decimal import Decimal
 import tkinter.ttk as tk
 from tkinter import Tk
-# from tkinter import Toplevel
-from tkinter import filedialog
-from tkinter import Text, BooleanVar, IntVar, StringVar, Listbox, Label, Entry, messagebox
-from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
-from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
-from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
-from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused-import
-from tkinter import PhotoImage
+from tkinter import BooleanVar, StringVar, messagebox
+from tkinter import TOP, LEFT
+from tkinter import BOTH
 from tkinter.font import Font
 from meas.k6430 import K6430
 from meas.k2182A import K2182A
-from meas.visa_subs import enumerateDevices
-from meas.visa_subs import MODE_GPIB, MODE_SERIAL
+from meas.util import enumerateDevices
+from meas.visa_subs import MODE_SERIAL
 from gui.util import parseusersettings
 
-# from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
-
-
-# def measureClick(sweep, meas):
-#     smu = K6430(meas['GPIB'])
-#     try:
-#         smu.initialize()
-#     except ValueError:
-
 MEAS_MODE = MODE_SERIAL
-# DATA_FORMAT = {'V':[], 'I':[], 'R':[], 't':[], 's':[]}
-# DATA_TEMPLATE = {'V':[], 'I':[], 't':[]}
-# DATA_FORMAT = ('V', 'I', 't')
 
 class MeasurementControl(tk.Frame):
 
     error = False
-    # sweep = {'sweepLow': '-1.0',
-    #          'sweepHigh': '1.0',
-    #          'stepSize': '0.25',
-    #          'nsweeps': '5',
-    #          'reversed': '0'
-    #          }
-    # meas = {'ADDRESS': '24',
-    #         'NPLC': '5'
-    #         }
     _isbusy = False
     mode = MEAS_MODE
     smu = None
@@ -65,7 +39,7 @@ class MeasurementControl(tk.Frame):
                                                'stepSize': '0.25',
                                                'nsweeps': '5',
                                                'reversed': '0'
-                                    })
+                                               })
         self.meas = self.config.get('meas', {'ADDRESS': '24', 'NPLC': '5'})
         self.deviceString = StringVar()
         self.createWidgets()
@@ -148,7 +122,7 @@ class MeasurementControl(tk.Frame):
         devicePicker = tk.OptionMenu(measFrame,
                                      self.deviceString,
                                      'Choose SMU device',
-                                     *enumerateDevices())
+                                     *enumerateDevices('ttyACM0'))
         self.deviceString.trace('w', self._initdevice)
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
@@ -233,7 +207,6 @@ class MeasurementControl(tk.Frame):
         if not self.is_initialized:
             messagebox.showerror("Error", "SMU not initialized.")
             return
-        # self.measdone.set(False)
         self.busy.set(True)
         self._isbusy = True
         self.smu.initialize(reset=True, auto_sense_range=True, flowcontrol=False)
@@ -308,15 +281,6 @@ class MeasurementControl(tk.Frame):
                 print(f'Error convering {_d} to float.')
                 self.results[_keymap[i]].append(0.0)
             i += 1
-        # _l = 0
-        # for _key in self.results:
-        #     if _l < len(self.results[_key]):
-        #         _l = len(self.results[_key])
-        # for _key in self.results:
-        #     while len(self.results[_key]) < _l:
-        #         print(f'WARNING: padding {_key} with 0.0')
-        #         self.results[_key].append(0.0)
-        # print(self.results)
 
 class MeasurementReadV(MeasurementControl):
 
@@ -338,7 +302,7 @@ class MeasurementReadV(MeasurementControl):
         devicePicker = tk.OptionMenu(nplcFrame,
                                      self.deviceString,
                                      'Choose Voltmeter',
-                                     *enumerateDevices())
+                                     *enumerateDevices('ttyACM0'))
         self.deviceString.trace('w', self._initdevice)
         measNPLCLabel = tk.Label(nplcFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)

@@ -18,14 +18,12 @@ Functions written:
 
 """
 import os
-import platform
+import sys
 import time
 import threading
 from contextlib import contextmanager
 # import pyvisa as visa
 import serial
-from meas.util import enumerateDevices
-
 # rm = visa.ResourceManager()
 
 #############
@@ -34,6 +32,10 @@ DEBUG = True
 
 MODE_GPIB = 'GPIB'
 MODE_SERIAL = 'SERIAL'
+
+def initialize_gpib(address, board, query_id=True, read_termination="LF", **kwargs):
+    print("GPBIB not implemented.")
+    sys.exit()
 
 # def initialize_gpib(address, board, query_id=True, read_termination="LF", **kwargs):
 #     """ Initalize GPIB devices using PyVisa """

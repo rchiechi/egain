@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-import os
-import sys
 import time
 import threading
 import queue
 from multiprocessing.connection import Client, Listener
 import serial
 import json
-import platform
 import thermo.constants as tc
+from thermo.util import enumerateDevices, init_thermo_device
 
 
 class Gradient():
@@ -208,57 +206,12 @@ class Gradient():
         return self._initialized
 
 
-def _enumerateDevices():
-    _filter = ''
-    if platform.system() == "Darwin":
-        _filter = 'usbmodem'
-    if platform.system() == "Linux":
-        _filter = 'ttyACM'
-    _devs = []
-    for _dev in os.listdir('/dev'):
-        if _filter.lower() in _dev.lower():
-            _devs.append(_dev)
-    # _devs.append(DEFAULTUSBDEVICE)
-    return _devs
-
-def _initdevice(device):
-    print(f"\nInitializing {device}...", end='')
-    n = 0
-    try:
-        ser_port = os.path.join('/', 'dev', device)
-        peltier = serial.Serial(ser_port, 115200, timeout=1)
-        _json = ''
-        while not _json or n < 10:
-            time.sleep(1)
-            _json = str(peltier.readline(), encoding='utf8')
-            try:
-                _msg = json.loads(_json)
-                _val = _msg.get('message', '')
-                if _val == tc.INITIALIZED:
-                    print("\nDevice initalized")
-                    time.sleep(0.5)
-                    peltier.write(tc.SHOWSTATUS+tc.TERMINATOR)
-                    time.sleep(0.5)
-                    print("Done!")
-                    return peltier
-                else:
-                    print(_val)
-            except json.decoder.JSONDecodeError:
-                print(f"{n}...", end='')
-                sys.stdout.flush()
-            n += 1
-    except serial.serialutil.SerialException:
-        return None
-    print("\nEmpty reply from device.")
-    return None
-
-
 if __name__ == '__main__':
     print("Testing peltier")
     alive = threading.Event()
     alive.set()
-    for _dev in _enumerateDevices():
-        peltier = _initdevice(_dev)
+    for _dev in enumerateDevices():
+        peltier = init_thermo_device(_dev)
         if peltier is not None:
             break
     if peltier is not None:

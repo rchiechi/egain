@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 import curses
 import threading
 import time
-import platform
 from io import StringIO
 from meas.util import enumerateDevices
 from meas.k2182A import K2182A
