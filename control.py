@@ -8,7 +8,7 @@ from io import StringIO
 from meas.util import enumerateDevices
 from meas.k2182A import K2182A
 from thermo.peltier import Gradient
-from thermo.peltier import _initdevice as init_peltier
+from thermo.util import enumerateDevices, init_thermo_device
 from thermo.pi.listeners import thermo
 import thermo.constants as tc
 
@@ -134,7 +134,7 @@ class peltierstats(curses_updater):
     def start(self):
         self.alive.set()
         for _dev in enumerateDevices('ttyACM0'):
-            peltier = init_peltier(_dev)
+            peltier = init_thermo_device(_dev)
             if peltier is not None:
                 break
         if peltier is not None:
