@@ -24,24 +24,18 @@ import platform
 import time
 import math
 import csv
-# import datetime
-# import logging
-# import threading
 import tkinter.ttk as tk
-# from tkinter import Tk
-# from tkinter import Toplevel
 from tkinter import Toplevel, filedialog
 from tkinter import StringVar, BooleanVar, Label, Entry, messagebox
-from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
-from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
-from tkinter import END, BOTH, HORIZONTAL  # pylint: disable=unused-import
-from tkinter import DISABLED, NORMAL  # pylint: disable=unused-import
+from tkinter import X, Y
+from tkinter import TOP, BOTTOM, LEFT, RIGHT
+from tkinter import END, BOTH, HORIZONTAL
+from tkinter import DISABLED, NORMAL
 from tkinter import PhotoImage
 from tkinter.font import Font
-# from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
 from gui.datacanvas import dataCanvas
 from gui.stagecontrol import StageControls
-from gui.tempcontrol import TempControl
+from gui.egain.tempcontrol import TempControl
 from gui.measurement import MeasurementControl
 from gui.tooltip import CreateTooltip
 from gui.util import parseusersettings

@@ -1,18 +1,13 @@
 import os
 import json
-import platform
 import time
 import tkinter.ttk as tk
 from tkinter import Tk
-from tkinter import Text, IntVar, StringVar, Listbox, Label, Entry
-from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
-from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
-from tkinter import END, BOTH, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
-from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused-import
-from tkinter import PhotoImage
-from tkinter.font import Font
-# from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
+from tkinter import IntVar, StringVar
+from tkinter import N
+from tkinter import TOP, BOTTOM, LEFT, RIGHT
 import serial
+from meas.util import enumerateDevices
 
 TEMPS = {'UPPER':None, 'LOWER':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'
@@ -79,7 +74,7 @@ class TempControl(tk.Frame):
         devicePicker = tk.OptionMenu(self,
                                      self.device,
                                      DEFAULTUSBDEVICE,
-                                     *_enumerateDevices())
+                                     *enumerateDevices())
         self.device.trace_add('write', self._initdevice)
 
         setTemp.pack(side=LEFT)
@@ -198,18 +193,18 @@ class TempControl(tk.Frame):
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
 
-def _enumerateDevices():
-    _filter = ''
-    if platform.system() == "Darwin":
-        _filter = 'usbmodem'
-    if platform.system() == "Linux":
-        _filter = 'ttyACM'
-    _devs = []
-    for _dev in os.listdir('/dev'):
-        if _filter.lower() in _dev.lower():
-            _devs.append(_dev)
-    # _devs.append(DEFAULTUSBDEVICE)
-    return _devs
+# def _enumerateDevices():
+#     _filter = ''
+#     if platform.system() == "Darwin":
+#         _filter = 'usbmodem'
+#     if platform.system() == "Linux":
+#         _filter = 'ttyACM'
+#     _devs = []
+#     for _dev in os.listdir('/dev'):
+#         if _filter.lower() in _dev.lower():
+#             _devs.append(_dev)
+#     # _devs.append(DEFAULTUSBDEVICE)
+#     return _devs
 
 
 if __name__ == '__main__':
