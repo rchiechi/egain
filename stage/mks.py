@@ -314,7 +314,7 @@ class ESP302(threading.Thread):
 
 
 if __name__ == '__main__':
-    from backend import NetHost
+    from stage.backend import NetHost
     nethost = NetHost()
     stage = ESP302(nethost)
     stage.cleanup()
