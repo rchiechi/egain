@@ -35,8 +35,8 @@ if __name__ == '__main__':
             break
     if peltier is not None:
         try:
-            gradcomm = Gradient(alive, peltier)
-            print(gradcomm.serial_device)
+            gradcomm = Gradient(alive, peltier, port=tc.PELTIER_PORT)
+            gradcomm.start()
             while True:
                 time.sleep(1)
                 print(gradcomm.status, end='\r')
