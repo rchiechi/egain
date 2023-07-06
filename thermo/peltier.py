@@ -22,6 +22,7 @@ class Gradient(Netcontroller):
     def __update(self):
         self.writeserial(tc.POLL)
         self.readserial()
+        print("Read serial")
 
 
 if __name__ == '__main__':
@@ -35,7 +36,6 @@ if __name__ == '__main__':
     if peltier is not None:
         try:
             gradcomm = Gradient(alive, peltier)
-            gradcomm.start()
             print(gradcomm.serial_device)
             while True:
                 time.sleep(1)
