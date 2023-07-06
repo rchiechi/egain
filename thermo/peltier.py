@@ -72,10 +72,11 @@ class Gradient():
         """
         Stops the listening thread
         """
-        # with Client(self.addr, authkey=self.authkey) as client:
-        #     client.send(tc.COMMAND_STOP)
         self.alive.clear()
         self.command = tc.COMMAND_STOP
+        _addr = self.addr if self.addr[0] != '0.0.0.0' else '127.0.0.1'
+        with Client((_addr, self.addr[1]), authkey=self.authkey) as client:
+            client.send(tc.COMMAND_STOP)
         self._listener_thread.join()
         self._updater_thread.join()
 
@@ -134,6 +135,9 @@ class Gradient():
             if not self.cmdq.empty():
                 self.writeserial(*self.cmdq.get())
             time.sleep(0.1)
+        self.writeserial(tc.RIGHTOFF)
+        time.sleep(0.1)
+        self.writeserial(tc.LEFTOFF)
 
         print("Updater thread dying.")
         self.alive.clear()
