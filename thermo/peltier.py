@@ -14,10 +14,8 @@ class Gradient(Netcontroller):
     # command = tc.COMMAND_RUN
     # _lock = threading.Lock()
 
-    @property
-    def peltier(self):
-        return self._devices[0]
-
+    def _post_init(self):
+        self._serial_device = self.devices[0]
 #     def start(self):
 #         """
 #         Start listening

@@ -15,6 +15,7 @@ class Netcontroller():
     cmdq = queue.Queue()
     command = tc.COMMAND_RUN
     _lock = threading.Lock()
+    _serial_device = None
     _listener_thread = None
     _updater_thread = None
     listener = None
@@ -40,6 +41,10 @@ class Netcontroller():
     @property
     def devices(self):
         return self._devices
+
+    @property
+    def serial_device(self):
+        return self._serial_device
 
     @property
     def addr(self):
@@ -175,7 +180,7 @@ class Netcontroller():
             _json = {}
             while not _json:
                 with self.lock:
-                    _msg = str(self.device.readline(), encoding='utf8').strip()
+                    _msg = str(self.serial_device.readline(), encoding='utf8').strip()
                 try:
                     _json = json.loads(_msg)
                     if update:
@@ -196,11 +201,11 @@ class Netcontroller():
             val = bytes(str(val), encoding='utf-8')
         try:
             with self.lock:
-                self.device.write(cmd)
-                self.device.write(tc.TERMINATOR)
+                self.serial_device.write(cmd)
+                self.serial_device.write(tc.TERMINATOR)
                 if val is not None:
-                    self.device.write(val)
-                    self.device.write(tc.TERMINATOR)
+                    self.serial_device.write(val)
+                    self.serial_device.write(tc.TERMINATOR)
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
         self.last_serial = time.time()
