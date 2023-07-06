@@ -1,6 +1,5 @@
 import os
 import sys
-import platform
 import time
 import json
 import serial
@@ -8,17 +7,20 @@ import thermo.constants as tc
 
 def enumerateDevices(_first=None):
     _filter = ''
-    if platform.system() == "Darwin":
+    if sys.platform == "darwin":
         _filter = 'usbmodem'
-    if platform.system() == "Linux":
+    if sys.platform == "linux":
         _filter = 'ttyACM'
     if _first is not None:
         _devs = [_first]
     else:
         _devs = []
-    for _dev in os.listdir('/dev'):
-        if _filter.lower() in _dev.lower():
-            _devs.append(_dev)
+    try:
+        for _dev in os.listdir('/dev'):
+            if _filter.lower() in _dev.lower():
+                _devs.append(_dev)
+    except FileNotFoundError:
+        pass
     return _devs
 
 def init_thermo_device(device):
