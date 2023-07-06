@@ -16,7 +16,7 @@ import platform
 from PIL import Image, ImageDraw, ImageFont
 from adafruit_rgb_display import st7789
 import adafruit_max31856
-from .listeners import thermo
+from .listeners import Thermo
 from meas.k2182A import K2182A
 import thermo.constants as tc
 
@@ -211,7 +211,9 @@ if __name__ == '__main__':
             break
         voltmeter = None
     Lthermocouple, Rthermocouple = get_thermocouples()
-    thermothread = thermo(alive, {'left':Lthermocouple, 'right':Rthermocouple}, voltmeter, authkey=tc.AUTH_KEY)
+    thermothread = Thermo(alive,
+                          [{'left':Lthermocouple, 'right':Rthermocouple}, voltmeter],
+                          port=tc.THERMO_PORT)
     thermothread.start()
     curses.wrapper(main)
     print("\nKilling threads")
