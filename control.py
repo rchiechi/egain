@@ -8,7 +8,7 @@ from io import StringIO
 from meas.k2182A import K2182A
 from thermo.peltier import Gradient
 from thermo.util import enumerateDevices, init_thermo_device
-from thermo.pi.listeners import thermo
+from thermo.pi.listeners import Thermo
 import thermo.constants as tc
 
 try:
@@ -86,7 +86,9 @@ class seebeckstats(curses_updater):
                 break
             voltmeter = None
         Lthermocouple, Rthermocouple = get_thermocouples()
-        self.thermothread = thermo(self.alive, {'left':Lthermocouple, 'right':Rthermocouple}, voltmeter, authkey=tc.AUTH_KEY)
+        self.thermothread = Thermo(self.alive,
+                                   [{'left':Lthermocouple, 'right':Rthermocouple}, voltmeter],
+                                   port=tc.THERMO_PORT)
         self.thermothread.start()
         self.display.lock = self.thermothread.lock
         self._initialized = True
@@ -137,7 +139,7 @@ class peltierstats(curses_updater):
             if peltier is not None:
                 break
         if peltier is not None:
-            self.gradcomm = Gradient(self.alive, peltier)
+            self.gradcomm = Gradient(self.alive, peltier, port=tc.PELTIER_PORT)
             self.gradcomm.start()
             self._initialized = True
 
@@ -193,22 +195,6 @@ class menu_idx:
     def range(self, _val):
         if _val > 0:
             self._range = _val
-
-# def _enumerateDevices(_first=None):
-#     _filter = ''
-#     if platform.system() == "Darwin":
-#         _filter = 'usbmodem'
-#     if platform.system() == "Linux":
-#         _filter = 'ttyACM'
-#     if _first is not None:
-#         _devs = [_first]
-#     else:
-#         _devs = []
-#     for _dev in os.listdir('/dev'):
-#         if _filter.lower() in _dev.lower():
-#             _devs.append(_dev)
-#     return _devs
-
 
 def main(stdscr):
 
