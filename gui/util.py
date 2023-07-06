@@ -11,7 +11,7 @@ def ping(host):
         return False
     if not validateip(host):
         return False
-    _which = 'which' if sys.platform != 'win32' else 'where'
+    _which = 'which' if not sys.platform.startswith('win32') else 'where'
     if host is not None:
         _ping = subprocess.run([_which,'ping'], capture_output=True)
         p = subprocess.run([_ping.stdout.decode('utf-8').strip(), '-q', '-c1', '-W1', '-n', host], stdout=subprocess.PIPE)
