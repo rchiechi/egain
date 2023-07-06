@@ -36,9 +36,10 @@ if __name__ == '__main__':
         try:
             gradcomm = Gradient(alive, peltier)
             gradcomm.start()
+            print(gradcomm.serial_device)
             while True:
                 time.sleep(1)
-                # print(gradcomm.status, end='\r')
+                print(gradcomm.status, end='\r')
         except KeyboardInterrupt:
             pass
         gradcomm.stop()
