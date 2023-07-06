@@ -183,6 +183,7 @@ class Netcontroller():
                     _msg = str(self.serial_device.readline(), encoding='utf8').strip()
                 try:
                     _json = json.loads(_msg)
+                    print(_msg)
                     if update:
                         self.last_json = _json
                 except json.decoder.JSONDecodeError:
