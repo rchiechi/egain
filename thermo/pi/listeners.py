@@ -73,7 +73,7 @@ class Thermo(Netcontroller):
 #         self.alive.clear()
 #         self.message = tc.COMMAND_STOP
 
-    def __update(self):
+    def _update(self):
         if self.initialized:
             try:
                 with self.lock:

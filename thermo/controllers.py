@@ -150,10 +150,10 @@ class Netcontroller():
         start_time = [time.time(), time.time()]
         while self.alive.is_set() and self.command == tc.COMMAND_RUN:
             if time.time() - start_time[0] > 5:
-                self.__update()
+                self._update()
                 start_time[0] = time.time()
             elif time.time() - start_time[1] > 2:
-                self.__statcheck()
+                self._statcheck()
                 start_time[1] = time.time()
             if not self.cmdq.empty():
                 self.writeserial(*self.cmdq.get())
@@ -166,10 +166,10 @@ class Netcontroller():
     def _updater_exit(self):
         return None
 
-    def __statcheck(self):
+    def _statcheck(self):
         return None
 
-    def __update(self):
+    def _update(self):
         return None
 
     def readserial(self, update=True):

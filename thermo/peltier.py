@@ -15,14 +15,13 @@ class Gradient(Netcontroller):
         time.sleep(0.1)
         self.writeserial(tc.LEFTOFF)
 
-    def __statcheck(self):
+    def _statcheck(self):
         self.writeserial(tc.INIT)
         self._initialized = self.readserial(False).get(tc.INITIALIZED, False)
 
-    def __update(self):
+    def _update(self):
         self.writeserial(tc.POLL)
         self.readserial()
-        print("Read serial")
 
 
 if __name__ == '__main__':
