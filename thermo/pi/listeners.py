@@ -39,8 +39,8 @@ class thermo():
         """
         Stops the listening thread
         """
-        with Client(self.addr, authkey=self.authkey) as client:
-            client.send(COMMAND_STOP)
+        # with Client(self.addr, authkey=self.authkey) as client:
+        #     client.send(COMMAND_STOP)
         self.alive.clear()
         self.command = COMMAND_STOP
         self._listener_thread.join()
