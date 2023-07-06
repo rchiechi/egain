@@ -145,7 +145,7 @@ class peltierstats(curses_updater):
 
     def update(self):
         if not self.initialized:
-            self.win.addstr(1, 3, "Not initialized.")
+            self.win.addstr(1, 3, "Not initialized.            ")
             self.win.refresh()
             return
         LT = f"{self.gradcomm.status.get(tc.LEFT, 0.0):0.1f} °C"
