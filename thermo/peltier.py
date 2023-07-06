@@ -72,10 +72,10 @@ class Gradient():
         """
         Stops the listening thread
         """
-        self.alive.clear()
-        self.command = tc.COMMAND_STOP
         with Client(self.addr, authkey=self.authkey) as client:
             client.send(tc.COMMAND_STOP)
+        self.alive.clear()
+        self.command = tc.COMMAND_STOP
         self._listener_thread.join()
         self._updater_thread.join()
 

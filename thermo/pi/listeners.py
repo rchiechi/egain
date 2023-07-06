@@ -2,7 +2,7 @@
 import time
 import threading
 from multiprocessing.connection import Client, Listener
-from thermo.constants import THERMO_PORT, VOLTA_PORT, AUTH_KEY, COMMAND_READ, COMMAND_STAT, STAT_OK, STAT_ERROR
+from thermo.constants import THERMO_PORT, AUTH_KEY, COMMAND_READ, COMMAND_STAT, STAT_OK, STAT_ERROR
 
 COMMAND_RUN = 'RUN'
 COMMAND_STOP = 'STOP'
@@ -39,10 +39,10 @@ class thermo():
         """
         Stops the listening thread
         """
-        self.alive.clear()
-        self.command = COMMAND_STOP
         with Client(self.addr, authkey=self.authkey) as client:
             client.send(COMMAND_STOP)
+        self.alive.clear()
+        self.command = COMMAND_STOP
         self._listener_thread.join()
         self._updater_thread.join()
 
