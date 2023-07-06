@@ -56,6 +56,26 @@ class Gradient():
     def authkey(self, authkey):
         self._authkey = authkey
 
+    @property
+    def lock(self):
+        return self._lock
+
+    @property
+    def commthread(self):
+        return self._listener_thread
+
+    @property
+    def updatethread(self):
+        return self._updater_thread
+
+    @property
+    def status(self):
+        return self.last_json
+
+    @property
+    def initialized(self):
+        return self._initialized
+
     def start(self):
         """
         Start listening
@@ -72,13 +92,15 @@ class Gradient():
         """
         Stops the listening thread
         """
-        self.alive.clear()
-        self.command = tc.COMMAND_STOP
-        _addr = self.addr if self.addr[0] != '0.0.0.0' else '127.0.0.1'
-        with Client((_addr, self.addr[1]), authkey=self.authkey) as client:
-            client.send(tc.COMMAND_STOP)
-        self._listener_thread.join()
-        self._updater_thread.join()
+        self._initialized = False
+        if self.alive.is_set():
+            self.alive.clear()
+            self.command = tc.COMMAND_STOP
+            _addr = self.addr if self.addr[0] != '0.0.0.0' else '127.0.0.1'
+            with Client((_addr, self.addr[1]), authkey=self.authkey) as client:
+                client.send(tc.COMMAND_STOP)
+            self._listener_thread.join()
+            self._updater_thread.join()
 
     def _listener_main(self):
         """
@@ -188,26 +210,6 @@ class Gradient():
         except serial.serialutil.SerialException:
             print(f"Error sending command to {self.controller.name}.")
         self.last_serial = time.time()
-
-    @property
-    def lock(self):
-        return self._lock
-
-    @property
-    def commthread(self):
-        return self._listener_thread
-
-    @property
-    def updatethread(self):
-        return self._updater_thread
-
-    @property
-    def status(self):
-        return self.last_json
-
-    @property
-    def initialized(self):
-        return self._initialized
 
 
 if __name__ == '__main__':
