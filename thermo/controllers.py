@@ -92,7 +92,7 @@ class Netcontroller():
         self._listener_thread.start()
         self._updater_thread = threading.Thread(target=self._updater_main, daemon=True)
         self._updater_thread.start()
-        self.__update()
+        self._update()
 
     def stop(self):
         """
