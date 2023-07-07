@@ -207,5 +207,7 @@ class Netcontroller():
                     self.serial_device.write(val)
                     self.serial_device.write(tc.TERMINATOR)
         except serial.serialutil.SerialException:
-            print(f"Error sending command to {self.controller.name}.")
+            print(f"Error sending command to {self.serial_device.name}.")
+        except AttributeError:
+            print(f"Error sending {cmd}. Serial device not connected")
         self.last_serial = time.time()
