@@ -17,7 +17,7 @@ class Thermo(Netcontroller):
                           'voltage': 0}
         if self.lt is not None and self.rt is not None:
             self._initialized = True
-        self.__update()
+        self._update()
 
     @property
     def lefttemp(self):
