@@ -189,6 +189,8 @@ class Netcontroller():
                     print(f'JSON Error: "{_msg}"')
         except serial.serialutil.SerialException as msg:
             print(f"Serial error {msg}")
+        except AttributeError:
+            print(f"Error reading. Serial device not connected")
         self.last_serial = time.time()
         return _json
 
