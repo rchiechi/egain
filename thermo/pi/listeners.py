@@ -21,15 +21,15 @@ class Thermo(Netcontroller):
 
     @property
     def lefttemp(self):
-        return self.last_lt
+        return self.self.last_json['left']
 
     @property
     def righttemp(self):
-        return self.last_rt
+        return self.self.last_json['right']
 
     @property
     def voltage(self):
-        return self.last_v
+        return self.self.last_json['voltage']
 
     def _update(self):
         if self.initialized:
