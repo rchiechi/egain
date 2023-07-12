@@ -27,19 +27,18 @@ void setPeltier(int _side) {
       _setpower = 100;
     }
     if (flow[_side] == COOL) {
-      if (c >= setDegC[_side]) {
-        setpower(_side, _setpower);
-      } else {
-        setpower(_side, 0);
-      }
+      if (c < setDegC[_side]) {
+        _setpower = 0;
+      } 
     }
     if (flow[_side] == HEAT) {
-      if (c <= setDegC[_side]) {
+      if (c > setDegC[_side]) {
+        _setpower = 0;
         setpower(_side, _setpower);
-      } else {
-        setpower(_side, 0);
-      }
+      } 
     }
+    setpower(_side, _setpower);
+    power[_side] = _setpower;
   }
 }
 
