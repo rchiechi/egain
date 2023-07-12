@@ -151,12 +151,12 @@ class TempControl(Meas):
 
     def _getTemp(self, *args, **kwargs):
         try:
-            if float(self.lefttargettemp.get()) != self.last_status.get(tc.LEFTTARGET, 25.0):
+            if self.last_temps['left'] != self.last_status.get(tc.LEFTTARGET, 25.0):
                 self.lefttargettemp.set(self.last_status.get(tc.LEFTTARGET, 25.0))
         except ValueError:
             pass
         try:
-            if float(self.righttargettemp.get()) != self.last_status.get(tc.RIGHTTARGET, 25.0):
+            if self.last_temps['right'] != self.last_status.get(tc.RIGHTTARGET, 25.0):
                 self.righttargettemp.set(self.last_status.get(tc.RIGHTTARGET, 25.0))
         except ValueError:
             pass
