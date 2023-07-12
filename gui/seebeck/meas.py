@@ -1,3 +1,4 @@
+import time
 import tkinter.ttk as tk
 from tkinter import StringVar
 from multiprocessing.connection import Client
@@ -6,6 +7,7 @@ from gui.util import ping, parseusersettings, validateip
 
 TEMPS = {'LEFT':None, 'RIGHT':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'
+
 
 class Meas(tk.Frame):
 
@@ -17,12 +19,14 @@ class Meas(tk.Frame):
     _host = '127.0.0.1'
     _port = '6000'
     config_file = 'Meas.json'
+    UPDATE_DELAY = 10
 
     def __init__(self, root):
         self.master = root
         super().__init__(self.master)
         _config = parseusersettings(self.config_file)
         self.addr = StringVar(value=f"{_config.get('host', self._host)}:{_config.get('port', self._port)}")
+        self.last_update = time.time() - self.UPDATE_DELAY
         self.createWidgets()
         self._checkconnetion()
         self.readstatus()
@@ -78,6 +82,7 @@ class Meas(tk.Frame):
                 client.send(tc.COMMAND_SEND)
                 print(f"Sending: {cmd}, {val}")
                 client.send([cmd, val])
+                self.last_update = time.time()
         except (ConnectionResetError, ConnectionRefusedError):
             pass
 

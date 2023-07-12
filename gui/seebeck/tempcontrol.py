@@ -8,13 +8,10 @@ from tkinter import DISABLED, NORMAL
 import thermo.constants as tc
 from gui.seebeck.meas import Meas
 
-UPDATE_DELAY = 10
-
 class TempControl(Meas):
 
     _port = tc.PELTIER_PORT
     config_file = 'TempControl.json'
-    ok_to_update = True
 
     def createWidgets(self):
         self.leftTempString = StringVar()
@@ -100,7 +97,6 @@ class TempControl(Meas):
         self.tempFrame.pack(side=TOP)
         deviceFrame.pack(side=TOP)
 
-        self.last_update = time.time() - UPDATE_DELAY
         for _widget in self.widgets:
             self.widgets[_widget].configure(state=DISABLED)
         self._readTemps()
@@ -129,7 +125,7 @@ class TempControl(Meas):
         self.leftPeltierPowerString.set(f'{lpower}%')
         self.rightPeltierPowerString.set(f'{rpower}%')
         self._readTemps()
-        if time.time() - self.last_update < UPDATE_DELAY:
+        if time.time() - self.last_update < self.UPDATE_DELAY:
             return
         _state = self.last_status.get(tc.PELTIERON, [False, False])
         if _state[0] is True:
@@ -169,7 +165,6 @@ class TempControl(Meas):
             self.sendcommand(tc.SETRIGHTTEMP, float(self.righttargettemp.get()))
         except ValueError:
             pass
-        self.last_update = time.time()
 
     def _readTemps(self, **kwargs):
         self._lt = float(self.last_status.get(tc.LEFT, -999.9))
@@ -188,7 +183,6 @@ class TempControl(Meas):
         elif _state == 'Cool':
             self.widgets[widget].config(text='Heat')
             self.sendcommand(_sides[widget.upper()[0]]+tc.HEAT)
-        self.last_update = time.time()
 
     def _getflow(self, *args, **kwargs):
         self.widgets['leftheatcoolButton'].config(text=self.last_status.get(tc.LEFTFLOW, "?").capitalize())
