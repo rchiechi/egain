@@ -3,7 +3,7 @@
 */
 
 // Convenience function to invert a digital pin
-inline void digitalToggle(byte pin) {  
+inline void digitalToggle(byte pin) {
   digitalWrite(pin, !digitalRead(pin));
 }
 
@@ -18,25 +18,30 @@ void setPeltier(int _side) {
     double DegK = setDegC[_side] + 273.15;
     int k = c + 273.15;
     _setpower = (1 - (DegK / k)) * 100;
-    int deltaK = abs(DegK - k);
-    if (deltaK < 5) {
-      _setpower += 50;
-    } else if (deltaK < 10) {
-      _setpower += 75;
-    } else {
-      _setpower = 100;
-    }
+    int deltaK = 0;
     if (flow[_side] == COOL) {
       if (c < setDegC[_side]) {
         _setpower = 0;
-      } 
+      } else {
+        deltaK = k - DegK;
+      }
     }
     if (flow[_side] == HEAT) {
       if (c > setDegC[_side]) {
         _setpower = 0;
-        setpower(_side, _setpower);
-      } 
+      } else {
+        deltaK = DegK - k;
+      }
     }
+    if (deltaK < 2) {
+      _setpower = 0;
+    } else if (deltaK < 5) {
+      _setpower += 25;
+    } 
+    // else if (deltaK < 10) {
+    //   _setpower += 50;
+    // }
+
     setpower(_side, _setpower);
     power[_side] = _setpower;
   }
