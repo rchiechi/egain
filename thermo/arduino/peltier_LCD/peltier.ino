@@ -17,14 +17,13 @@ void setPeltier(int _side) {
   if (!isnan(c) && peltier_on[_side]) {
     double DegK = setDegC[_side] + 273.15;
     int k = c + 273.15;
-    _setpower = (1 - (DegK / k)) * 100;
     int deltaK = 0;
     if (flow[_side] == COOL) {
       if (c < setDegC[_side]) {
         _setpower = 0;
       } else {
         deltaK = k - DegK;
-        _setpower = (1 - (DegK / k)) * 100;
+        _setpower = (1 - (DegK / k)) * 2500;
       }
     }
     if (flow[_side] == HEAT) {
@@ -32,7 +31,7 @@ void setPeltier(int _side) {
         _setpower = 0;
       } else {
         deltaK = DegK - k;
-        _setpower = (1 - (k / DegK)) * 100;
+        _setpower = (1 - (k / DegK)) * 2500;
       }
     }
     // if (deltaK < 2) {
