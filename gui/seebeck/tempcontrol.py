@@ -161,14 +161,14 @@ class TempControl(Meas):
         if not self.initialized:
             return
         try:
-            print(f"Setting left peltier: {self.last_temps['left']}°C")
-            self.sendcommand(tc.SETLEFTTEMP, self.last_temps['left'])
+            print(f"Setting left peltier: {self.lefttargettemp.get()}°C")
+            self.sendcommand(tc.SETLEFTTEMP, float(self.lefttargettemp.get()))
         except ValueError:
             pass
 
         try:
-            print(f"Setting right peltier: {self.last_temps['right']}°C")
-            self.sendcommand(tc.SETRIGHTTEMP, self.last_temps['right'])
+            print(f"Setting right peltier: {self.righttargettemp.get()}°C")
+            self.sendcommand(tc.SETRIGHTTEMP, float(self.righttargettemp.get()))
         except ValueError:
             pass
         self.last_update = time.time()
