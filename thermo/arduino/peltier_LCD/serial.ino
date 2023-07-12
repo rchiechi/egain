@@ -24,12 +24,14 @@ void handle_request() {  // Handle incoming Serial requests
   }
   if (incomingCmd == "LEFTOFF") {
     peltier_on[LEFT] = false;
+    power[LEFT] = 0;
   }
   if (incomingCmd == "RIGHTON") {
     peltier_on[RIGHT] = true;
   }
   if (incomingCmd == "RIGHTOFF") {
     peltier_on[RIGHT] = false;
+    power[RIGHT] = 0;
   }
   if (incomingCmd == "SETLEFTTEMP") {
     setDegC[LEFT] = Serial.parseFloat();

@@ -24,6 +24,7 @@ void setPeltier(int _side) {
         _setpower = 0;
       } else {
         deltaK = k - DegK;
+        _setpower = (1 - (DegK / k)) * 100;
       }
     }
     if (flow[_side] == HEAT) {
@@ -31,6 +32,7 @@ void setPeltier(int _side) {
         _setpower = 0;
       } else {
         deltaK = DegK - k;
+        _setpower = (1 - (k / DegK)) * 100;
       }
     }
     if (deltaK < 2) {
@@ -41,7 +43,9 @@ void setPeltier(int _side) {
     // else if (deltaK < 10) {
     //   _setpower += 50;
     // }
-
+    if (_setpower > 100){
+      _setpower = 100;
+    }
     setpower(_side, _setpower);
     power[_side] = _setpower;
   }
