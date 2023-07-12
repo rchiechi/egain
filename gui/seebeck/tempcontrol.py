@@ -39,7 +39,7 @@ class TempControl(Meas):
         setrighttempEntry = tk.Entry(setFrame, textvariable=self.righttargettemp, width=4)
         self.lefttargettemp.set("25.0")
         self.righttargettemp.set("25.0")
-        for n in ('<Return>', '<Leave>'):
+        for n in ('<Return>', 'T'):
             setlefttempEntry.bind(n, self._setTemp)
             setrighttempEntry.bind(n, self._setTemp)
         # self.lefttargettemp.trace('w', self._setTemp)

@@ -44,7 +44,6 @@ class Netcontroller():
 
     @property
     def serial_device(self):
-        print(f'Serial device is {self._serial_device}')
         return self._serial_device
 
     @property

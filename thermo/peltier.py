@@ -9,7 +9,6 @@ class Gradient(Netcontroller):
 
     def _post_init(self):
         self._serial_device = self.devices[0]
-        print(f'Setting serial device to {self.serial_device}')
         self._update()
         _lt = self.last_json.get(tc.LEFT, None)
         _rt = self.last_json.get(tc.RIGHT, None)
