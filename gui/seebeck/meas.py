@@ -54,12 +54,15 @@ class Meas(tk.Frame):
             self.after(5000, self._checkconnetion)
             self.after(6000, self.readstatus)
             return
-        with Client((self.host, self.port), authkey=tc.AUTH_KEY) as client:
-            client.send(tc.COMMAND_READ)
-            msg = client.recv()
-            if not isinstance(msg, dict):
-                msg = {}
-                self.after(1000, self._checkconnetion)
+        try:
+            with Client((self.host, self.port), authkey=tc.AUTH_KEY) as client:
+                client.send(tc.COMMAND_READ)
+                msg = client.recv()
+                if not isinstance(msg, dict):
+                    msg = {}
+                    self.after(1000, self._checkconnetion)
+        except ConnectionResetError:
+            pass
         parseusersettings(self.config_file,
                           {'host':self.host, 'port':self.port, 'last_status':msg})
         self.after(1000, self.readstatus)

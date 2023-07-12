@@ -9,18 +9,18 @@ import thermo.constants as tc
 
 class Netcontroller():
 
-    last_json = {}
-    last_serial = 0
-    _initialized = False
-    cmdq = queue.Queue()
-    command = tc.COMMAND_RUN
     _lock = threading.Lock()
-    _serial_device = None
-    _listener_thread = None
-    _updater_thread = None
-    listener = None
 
     def __init__(self, alive=None, devices=None, **kwargs):
+        self.last_json = {}
+        self.last_serial = 0
+        self._initialized = False
+        self.cmdq = queue.Queue()
+        self.command = tc.COMMAND_RUN
+        self._serial_device = None
+        self._listener_thread = None
+        self._updater_thread = None
+        self.listener = None
         self._alive = alive
         self._devices = devices if isinstance(devices, list) else [devices]
         self._addr = (kwargs.get('address', '0.0.0.0'), kwargs.get('port', 6000))
@@ -187,6 +187,10 @@ class Netcontroller():
                         self.last_json = _json
                 except json.decoder.JSONDecodeError:
                     print(f'JSON Error: "{_msg}"')
+                    self.serial_device.timeout = 500
+                    _c = b'1'
+                    while _c:  # Purge serial bufffer
+                        _c = self.serial_device.read(1)
         except serial.serialutil.SerialException as msg:
             print(f"Serial error {msg}")
         except AttributeError:
