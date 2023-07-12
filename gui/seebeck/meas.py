@@ -61,7 +61,7 @@ class Meas(tk.Frame):
                 if not isinstance(msg, dict):
                     msg = {}
                     self.after(1000, self._checkconnetion)
-        except ConnectionResetError:
+        except (ConnectionResetError, ConnectionRefusedError):
             pass
         parseusersettings(self.config_file,
                           {'host':self.host, 'port':self.port, 'last_status':msg})
