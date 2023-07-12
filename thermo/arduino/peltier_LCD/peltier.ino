@@ -35,11 +35,11 @@ void setPeltier(int _side) {
         _setpower = (1 - (k / DegK)) * 100;
       }
     }
-    if (deltaK < 2) {
-      _setpower = 0;
-    } else if (deltaK < 5) {
-      _setpower += 25;
-    } 
+    // if (deltaK < 2) {
+    //   _setpower = 0;
+    // } else if (deltaK < 5) {
+    //   _setpower += 25;
+    // } 
     // else if (deltaK < 10) {
     //   _setpower += 50;
     // }

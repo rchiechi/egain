@@ -126,8 +126,8 @@ class TempControl(Meas):
             self.widgets[_widget].configure(state=NORMAL)
         lpower = self.last_status.get(tc.LEFTPOWER, 0)
         rpower = self.last_status.get(tc.RIGHTPOWER, 0)
-        self.leftPeltierPowerString.set(str(lpower))
-        self.rightPeltierPowerString.set(str(rpower))
+        self.leftPeltierPowerString.set(f'{lpower}%')
+        self.rightPeltierPowerString.set(f'{rpower}%')
         self._readTemps()
         if time.time() - self.last_update < UPDATE_DELAY:
             return
@@ -144,8 +144,6 @@ class TempControl(Meas):
         self._getflow()
 
     def _getTemp(self, *args, **kwargs):
-        # if time.time() - self.last_update < 3:
-        #     return
         try:
             if float(self.lefttargettemp.get()) != self.last_status.get(tc.LEFTTARGET, 25.0):
                 self.lefttargettemp.set(self.last_status.get(tc.LEFTTARGET, 25.0))
@@ -195,7 +193,6 @@ class TempControl(Meas):
     def _getflow(self, *args, **kwargs):
         self.widgets['leftheatcoolButton'].config(text=self.last_status.get(tc.LEFTFLOW, "?").capitalize())
         self.widgets['rightheatcoolButton'].config(text=self.last_status.get(tc.RIGHTFLOW, "?").capitalize())
-        self.last_update = time.time()
 
     @property
     def temps(self):

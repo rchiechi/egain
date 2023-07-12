@@ -62,7 +62,8 @@ class Meas(tk.Frame):
                     msg = {}
                     self.after(1000, self._checkconnetion)
         except (ConnectionResetError, ConnectionRefusedError):
-            pass
+            self.after(1000, self.readstatus)
+            return
         parseusersettings(self.config_file,
                           {'host':self.host, 'port':self.port, 'last_status':msg})
         self.after(1000, self.readstatus)
@@ -71,11 +72,14 @@ class Meas(tk.Frame):
     def sendcommand(self, cmd, val=None):
         if not self.initialized:
             return
-        with Client((self.host, self.port), authkey=tc.AUTH_KEY) as client:
-            print(f"Sending {tc.COMMAND_SEND}")
-            client.send(tc.COMMAND_SEND)
-            print(f"Sending: {cmd}, {val}")
-            client.send([cmd, val])
+        try:
+            with Client((self.host, self.port), authkey=tc.AUTH_KEY) as client:
+                print(f"Sending {tc.COMMAND_SEND}")
+                client.send(tc.COMMAND_SEND)
+                print(f"Sending: {cmd}, {val}")
+                client.send([cmd, val])
+        except (ConnectionResetError, ConnectionRefusedError):
+            pass
 
     @property
     def host(self):
