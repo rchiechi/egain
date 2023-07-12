@@ -12,6 +12,7 @@ class TempControl(Meas):
     _port = tc.PELTIER_PORT
     last_temps = {'left':25.0, 'right':25.0}
     config_file = 'TempControl.json'
+    ok_to_update = True
 
     def createWidgets(self):
         self.leftTempString = StringVar()
@@ -38,7 +39,7 @@ class TempControl(Meas):
         setrighttempEntry = tk.Entry(setFrame, textvariable=self.righttargettemp, width=4)
         self.lefttargettemp.set("25.0")
         self.righttargettemp.set("25.0")
-        for n in ('<Return>', '<Leave>', '<Enter>'):
+        for n in ('<Return>', '<Leave>'):
             setlefttempEntry.bind(n, self._setTemp)
             setrighttempEntry.bind(n, self._setTemp)
         # self.lefttargettemp.trace('w', self._setTemp)
@@ -133,9 +134,10 @@ class TempControl(Meas):
             self.right_peltier_on.set(1)
         else:
             self.right_peltier_on.set(0)
-        self._getTemp()
-        self._getflow()
-        self._readTemps()
+        if self.ok_to_update:
+            self._getTemp()
+            self._getflow()
+            self._readTemps()
 
     def _getTemp(self, *args, **kwargs):
         try:
@@ -152,6 +154,7 @@ class TempControl(Meas):
     def _setTemp(self, *args):
         if not self.initialized:
             return
+        self.ok_to_update = False
         try:
             _temp = float(self.lefttargettemp.get())
             if _temp != self.last_temps['left']:
@@ -169,6 +172,7 @@ class TempControl(Meas):
                 self.sendcommand(tc.SETRIGHTTEMP, _temp)
         except ValueError:
             pass
+        self.ok_to_update = True
 
     def _readTemps(self, **kwargs):
         self._lt = float(self.last_status.get(tc.LEFT, -999.9))
