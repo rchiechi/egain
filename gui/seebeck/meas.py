@@ -27,12 +27,19 @@ class Meas(tk.Frame):
         _config = parseusersettings(self.config_file)
         self.addr = StringVar(value=f"{_config.get('host', self._host)}:{_config.get('port', self._port)}")
         self.last_update = time.time() - self.UPDATE_DELAY
+        self._ok_to_update = True
         self.createWidgets()
         self._checkconnetion()
         self.readstatus()
 
     def createWidgets(self):
         return
+
+    def pause_update(self, *args):
+        self._ok_to_update = False
+
+    def unpause_update(self, *args):
+        self._ok_to_update = True
 
     def _checkconnetion(self):
         if not ping(self.host):

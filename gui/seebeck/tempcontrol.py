@@ -64,6 +64,15 @@ class TempControl(Meas):
         self.widgets['leftheatcoolButton'] = leftheatcoolButton
         self.widgets['rightheatcoolButton'] = rigthheatcoolButton
 
+        for _widget in (setlefttempEntry,
+                        setrighttempEntry,
+                        peltierLeftCheck,
+                        peltierRightCheck,
+                        leftheatcoolButton,
+                        rigthheatcoolButton):
+            _widget.bind('<Enter>', self.pause_update)
+            _widget.bind('<Leave>', self.unpause_update)
+
         leftPeltierPower = tk.Label(master=setFrame,
                                     textvariable=self.leftPeltierPowerString,
                                     width=4)
@@ -125,7 +134,7 @@ class TempControl(Meas):
         self.leftPeltierPowerString.set(f'{lpower}%')
         self.rightPeltierPowerString.set(f'{rpower}%')
         self._readTemps()
-        if time.time() - self.last_update < self.UPDATE_DELAY:
+        if time.time() - self.last_update < self.UPDATE_DELAY or not self._ok_to_update:
             return
         _state = self.last_status.get(tc.PELTIERON, [False, False])
         if _state[0] is True:
@@ -140,16 +149,18 @@ class TempControl(Meas):
         self._getflow()
 
     def _getTemp(self, *args, **kwargs):
-        try:
-            if float(self.lefttargettemp.get()) != self.last_status.get(tc.LEFTTARGET, 25.0):
-                self.lefttargettemp.set(self.last_status.get(tc.LEFTTARGET, 25.0))
-        except ValueError:
-            pass
-        try:
-            if float(self.righttargettemp.get()) != self.last_status.get(tc.RIGHTTARGET, 25.0):
-                self.righttargettemp.set(self.last_status.get(tc.RIGHTTARGET, 25.0))
-        except ValueError:
-            pass
+        self.lefttargettemp.set(f'{self.last_status.get(tc.LEFTTARGET, 25.0):0.2f}')
+        self.righttargettemp.set(f'{self.last_status.get(tc.RIGHTTARGET, 25.0):0.2f}')
+        # try:
+        #     if float(self.lefttargettemp.get()) != self.last_status.get(tc.LEFTTARGET, 25.0):
+        #         self.lefttargettemp.set(f'{self.last_status.get(tc.LEFTTARGET, 25.0):0.2f}')
+        # except ValueError:
+        #     pass
+        # try:
+        #     if float(self.righttargettemp.get()) != self.last_status.get(tc.RIGHTTARGET, 25.0):
+        #         self.righttargettemp.set(f'{self.last_status.get(tc.RIGHTTARGET, 25.0):0.2f}')
+        # except ValueError:
+        #     pass
 
     def _setTemp(self, *args):
         if not self.initialized:
