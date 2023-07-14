@@ -254,6 +254,10 @@ class KeithleyV(Instrument):
         self.visa.write(f":CONF:{self.sense}")
         self.visa.write("INIT:CONT ON")
         self.visa.write("TRIG:SOUR IMM")
+        # Switch to medium sampling rate
+        self.setNPLC(1)
+        # Switch on autozero
+        self.visa.write(":SYST:AZER ON")
         # Switch off analog filter
         self.visa.write(":SENS:VOLT:CHAN1:LPAS OFF")
         # Set digital filter window to 5%
