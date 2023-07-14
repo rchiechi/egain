@@ -56,7 +56,7 @@ class SeebeckMeas(Meas):
         self.left_temp_reading.set(f'{self._lt:0.2f}')
         self.right_temp_reading.set(f'{self._rt:0.2f}')
         self.voltage_reading.set(f'{self._v:0.4f}')
-        self.after(500, self.readtemps)
+        self.after(250, self.readtemps)
 
     @property
     def voltage(self):
