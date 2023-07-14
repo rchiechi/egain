@@ -218,7 +218,7 @@ class KeithleyV(Instrument):
     def sense(self):
         return self._sense
 
-    @sense.settr
+    @sense.setter
     def sense(self, _sense: str):
         self._sense = _sense
 
