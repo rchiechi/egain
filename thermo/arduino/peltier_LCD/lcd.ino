@@ -118,7 +118,7 @@ void show_summary() {
     } else {
       lcd.write(X_IDX);
     }
-    lcd.print(F("R: "));
+    lcd.print(F("L: "));
     lcd.print(lc, 1);
     lcd.write(0x7E);
     lcd.print(setDegC[LEFT], 1);
@@ -135,7 +135,7 @@ void show_summary() {
     } else {
       lcd.write(X_IDX);
     }
-    lcd.print(F("L: "));
+    lcd.print(F("R: "));
     lcd.print(rc, 1);
     lcd.write(0x7E);
     lcd.print(setDegC[RIGHT], 1);
