@@ -63,7 +63,7 @@ void setpower(uint8_t _side, uint8_t _power) {
     set_power = _power;
   }
   if (peltier_on[_side]) {
-    uint8_t peltier_level = map(power, 0, 100, 0, 255);
+    uint8_t peltier_level = map(set_power, 0, 100, 0, 255);
     analogWrite(peltier_addr[_side], peltier_level);  //Write this new value out to the port
   } else {
     analogWrite(peltier_addr[_side], 0);
