@@ -208,23 +208,33 @@ class KeithleyV(Instrument):
     """
 
     mode = DEFAULTMODE
-    data = [0.0, 0.0]
-    source_column = 0
-    data_column = 1
-    source = ""
-    sense = ""
-    ramp_step = 0
-    source_range = 0
+    _sense = DEFAULTMODE
+    _chan = 1
     sense_range = 0
     auto_range = True
     output = False
+
+    @property
+    def sense(self):
+        return self._sense
+
+    @sense.settr
+    def sense(self, _sense: str):
+        self._sense = _sense
+
+    @property
+    def chan(self):
+        return self._chan
+
+    @chan.setter
+    def chan(self, _chan: int):
+        self._chan = _chan
 
     def description(self):
         """ Print a description string to data file"""
 
         description_string = (
             f"{super().description()}, "
-            f"source={self.source}, "
             f"sense={self.sense} "
             "\n"
         )
@@ -241,10 +251,10 @@ class KeithleyV(Instrument):
             return False
 
         if self.mode == VOLT:
-            self.sense = VOLT
+            self._sense = VOLT
 
         elif self.mode == TEMP:
-            self.sense = TEMP
+            self._sense = TEMP
 
         else:
             raise ValueError(f"This mode does exist! Please input {VOLT} or {CURR} only.")
@@ -259,20 +269,20 @@ class KeithleyV(Instrument):
         # Switch on autozero
         self.visa.write(":SYST:AZER ON")
         # Switch off analog filter
-        self.visa.write(":SENS:VOLT:CHAN1:LPAS OFF")
+        self.visa.write(f"SENSE:{self.sense}:CHAN{self.chan}:LPAS OFF")
         # Set digital filter window to 5%
-        self.visa.write(":SENS:VOLT:CHAN1:DFIL:WIND 5")
+        self.visa.write(f"SENSE:{self.sense}:CHAN{self.chan}:DFIL:WIND 5")
         # Set filter counter to 10
-        self.visa.write(":SENS:VOLT:CHAN1:DFIL:COUN 10")
+        self.visa.write(f"SENSE:{self.sense}:CHAN{self.chan}:DFIL:COUN 10")
         # Switch moving filter on
-        self.visa.write(":SENS:VOLT:CHAN1:DFIL:TCON MOV")
+        self.visa.write(f"SENSE:{self.sense}:CHAN{self.chan}:DFIL:TCON MOV")
         # Switch digital filter on
-        self.visa.write(":SENS:VOLT:CHAN1:DFIL:STAT ON")
+        self.visa.write(f"SENSE:{self.sense}:CHAN{self.chan}:DFIL:STAT ON")
 
         return True
 
     def setNPLC(self, nplc):
-        self.visa.write(f':SENSE[1]:{self.sense}:NPLC {nplc}')
+        self.visa.write(f':SENSE:{self.sense}:CHAN{self.chan}:NPLC {nplc}')
 
     def fetch_data(self):
         return self.visa.query('FETC?').strip()

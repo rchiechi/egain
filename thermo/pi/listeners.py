@@ -17,6 +17,7 @@ class Thermo(Netcontroller):
                           'voltage': 0}
         if self.lt is not None and self.rt is not None:
             self._initialized = True
+        self.update_frequency = 1
         self._update()
 
     @property

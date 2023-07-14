@@ -12,6 +12,8 @@ class Netcontroller():
     _lock = threading.Lock()
 
     def __init__(self, alive=None, devices=None, **kwargs):
+        self._update_frequency = 5
+        self._statcheck_frequency = 5
         self.last_json = {}
         self.last_serial = 0
         self._initialized = False
@@ -29,6 +31,24 @@ class Netcontroller():
 
     def _post_init(self):
         return None
+
+    @property
+    def update_frequency(self):
+        return self._update_frequency
+
+    @update_frequency.setter
+    def update_frequency(self, _freq: float):
+        if _freq > 0:
+            self._update_frequency = _freq
+
+    @property
+    def statcheck_frequency(self):
+        return self._statcheck_frequency
+
+    @statcheck_frequency.setter
+    def statcheck_frequency(self, _freq: float):
+        if _freq > 0:
+            self._statcheck_frequency = _freq
 
     @property
     def alive(self):
@@ -146,13 +166,14 @@ class Netcontroller():
                         self.cmdq.put(_cmd)
 
     def _updater_main(self):
-        print("Starting 5 second updater")
+        print(f"Starting {self.update_frequency} second updater with ")
+        print(f"statcheck upates at {self.statcheck_frequency} seconds.")
         start_time = [time.time(), time.time()]
         while self.alive.is_set() and self.command == tc.COMMAND_RUN:
-            if time.time() - start_time[0] > 5:
+            if time.time() - start_time[0] > self.update_frequency:
                 self._update()
                 start_time[0] = time.time()
-            elif time.time() - start_time[1] > 2:
+            elif time.time() - start_time[1] > self.statcheck_frequency:
                 self._statcheck()
                 start_time[1] = time.time()
             if not self.cmdq.empty():
