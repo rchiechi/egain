@@ -28,7 +28,7 @@ uint8_t peltier_polarity[] = { LPETLIER_POLARITY, RPLETIER_POLARITY };
 uint8_t const peltier_addr[] = { LPELTIER, RPELTIER };
 uint8_t const peltier_relay[] = { LPELTIER_RELAY, RPELTIER_RELAY };
 bool initialized; // when true, device is initialized
-bool update; = true // when true, update LCD status
+bool update = true; // when true, update LCD status
 double currentL = 25.00;
 double currentR = 25.00;
 
