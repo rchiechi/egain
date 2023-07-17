@@ -13,7 +13,7 @@
 Adafruit_MAX31855 Thermocouples[] = { Adafruit_MAX31855(CLK, LCS, DO),
                                       Adafruit_MAX31855(CLK, RCS, DO) };
 //The LCD display object.
-Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
+Adafruit_RGBLCDShield lcd1 = Adafruit_RGBLCDShield();
 
 /*
     Set the values of these pins in the header file
@@ -28,7 +28,9 @@ uint8_t peltier_polarity[] = { LPETLIER_POLARITY, RPLETIER_POLARITY };
 uint8_t const peltier_addr[] = { LPELTIER, RPELTIER };
 uint8_t const peltier_relay[] = { LPELTIER_RELAY, RPELTIER_RELAY };
 bool initialized; // when true, device is initialized
-bool update; // when true, update LCD status
+bool update; = true // when true, update LCD status
+double currentL = 25.00;
+double currentR = 25.00;
 
 // Running averages for temperatures
 RunningAverage avgTC[] = {
@@ -128,7 +130,7 @@ void setup() {
    * when the device powers on, the first state is the splash screen
    * to let the user know that everything has been set to power-on defaults
    */
-  state = begin_splash_screen;
+  state = screen_1;
 }
 
 
@@ -154,7 +156,7 @@ void loop() {
     last_state_change_time = time;
   }
   // Read in which buttons were clicked
-  read_button_clicks();
+  //read_button_clicks();
   // Call current state function
   state();
   // Handle any buffered Serial requests
