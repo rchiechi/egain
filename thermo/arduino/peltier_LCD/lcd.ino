@@ -16,7 +16,7 @@
 void read_button_clicks() {
   static uint8_t last_buttons = 0;
 
-  uint8_t buttons = lcd1.readButtons();
+  uint8_t buttons = lcd.readButtons();
   clicked_buttons = (last_buttons ^ buttons) & (~buttons);
   last_buttons = buttons;
 }
@@ -501,6 +501,91 @@ void my_summary() {
   }
 }
 
+void show_summary() {
+  static double last_lc = 0;
+  static double last_rc = 0;
+
+  // Read the temperature as Celsius:
+  double lc = avgTC[LEFT].getAverage();
+  double rc = avgTC[RIGHT].getAverage();
+
+  if (update) {
+    lcd.setBacklight(ON);
+    lcd.setCursor(0, 0);
+    if (peltier_on[LEFT]) {
+      if (flow[LEFT] == HEAT) {
+        lcd.write(HEAT_IDX);
+      } else if (flow[LEFT] == COOL) {
+        lcd.write(COOL_IDX);
+      }
+    } else {
+      lcd.write(X_IDX);
+    }
+    lcd.print(F("R: "));
+    lcd.print(lc, 1);
+    lcd.write(0x7E);
+    lcd.print(setDegC[LEFT], 1);
+    lcd.print(F(" "));
+    lcd.write(DEGREE_ICON_IDX);
+    lcd.print(F("C "));
+    lcd.setCursor(0, 1);
+    if (peltier_on[RIGHT]) {
+      if (flow[RIGHT] == HEAT) {
+        lcd.write(HEAT_IDX);
+      } else if (flow[RIGHT] == COOL) {
+        lcd.write(COOL_IDX);
+      }
+    } else {
+      lcd.write(X_IDX);
+    }
+    lcd.print(F("L: "));
+    lcd.print(rc, 1);
+    lcd.write(0x7E);
+    lcd.print(setDegC[RIGHT], 1);
+    lcd.print(F(" "));
+    lcd.write(DEGREE_ICON_IDX);
+    lcd.print(F("C "));
+  }
+  update = false;
+
+  if (abs(last_lc - lc) > 0.5) {
+    last_lc = lc;
+    update = true;
+  }
+  if (abs(last_rc - rc) > 0.5) {
+    last_rc = rc;
+    update = true;
+  }
+  if (clicked_buttons & BUTTON_SELECT) {
+    state = summary_and_finish;
+    delay(300);
+    lcd.clear();
+  }
+  /*if (clicked_buttons) {
+    update = true;
+    if (clicked_buttons & BUTTON_SELECT) {
+      lcd.clear();
+      selected_menu_idx = 0;
+      state = show_set_menu;
+    } else {
+      state = show_summary;
+    }
+    if (clicked_buttons & BUTTON_UP) {
+      setDegC[LEFT] = setDegC[LEFT] + 0.5;
+    }
+    if (clicked_buttons & BUTTON_DOWN) {
+      setDegC[LEFT] = setDegC[LEFT] - 0.5;
+    }
+    if (clicked_buttons & BUTTON_RIGHT) {
+      setDegC[RIGHT] = setDegC[RIGHT] + 0.5;
+    }
+    if (clicked_buttons & BUTTON_LEFT) {
+      setDegC[RIGHT] = setDegC[RIGHT] - 0.5;
+    }
+  }*/
+}
+
+
 //! Initial state, draw the splash screen.
 /*void begin_splash_screen() {
   lcd.clear();
@@ -578,87 +663,3 @@ void show_set_menu() {
     state = show_set_menu;
   }
 }*/
-
-void show_summary() {
-  static double last_lc = 0;
-  static double last_rc = 0;
-
-  // Read the temperature as Celsius:
-  double lc = avgTC[LEFT].getAverage();
-  double rc = avgTC[RIGHT].getAverage();
-
-  if (update) {
-    //lcd.setBacklight(ON);
-    lcd.setCursor(0, 0);
-    if (peltier_on[LEFT]) {
-      if (flow[LEFT] == HEAT) {
-        lcd.write(HEAT_IDX);
-      } else if (flow[LEFT] == COOL) {
-        lcd.write(COOL_IDX);
-      }
-    } else {
-      lcd.write(X_IDX);
-    }
-    lcd.print(F("R: "));
-    lcd.print(lc, 1);
-    lcd.write(0x7E);
-    lcd.print(setDegC[LEFT], 1);
-    lcd.print(F(" "));
-    lcd.write(DEGREE_ICON_IDX);
-    lcd.print(F("C "));
-    lcd.setCursor(0, 1);
-    if (peltier_on[RIGHT]) {
-      if (flow[RIGHT] == HEAT) {
-        lcd.write(HEAT_IDX);
-      } else if (flow[RIGHT] == COOL) {
-        lcd.write(COOL_IDX);
-      }
-    } else {
-      lcd.write(X_IDX);
-    }
-    lcd.print(F("L: "));
-    lcd.print(rc, 1);
-    lcd.write(0x7E);
-    lcd.print(setDegC[RIGHT], 1);
-    lcd.print(F(" "));
-    lcd.write(DEGREE_ICON_IDX);
-    lcd.print(F("C "));
-  }
-  update = false;
-
-  if (abs(last_lc - lc) > 0.5) {
-    last_lc = lc;
-    update = true;
-  }
-  if (abs(last_rc - rc) > 0.5) {
-    last_rc = rc;
-    update = true;
-  }
-  if (clicked_buttons & BUTTON_SELECT) {
-    state = summary_and_finish;
-    delay(300);
-    lcd.clear();
-  }
-  /*if (clicked_buttons) {
-    update = true;
-    if (clicked_buttons & BUTTON_SELECT) {
-      lcd.clear();
-      selected_menu_idx = 0;
-      state = show_set_menu;
-    } else {
-      state = show_summary;
-    }
-    if (clicked_buttons & BUTTON_UP) {
-      setDegC[LEFT] = setDegC[LEFT] + 0.5;
-    }
-    if (clicked_buttons & BUTTON_DOWN) {
-      setDegC[LEFT] = setDegC[LEFT] - 0.5;
-    }
-    if (clicked_buttons & BUTTON_RIGHT) {
-      setDegC[RIGHT] = setDegC[RIGHT] + 0.5;
-    }
-    if (clicked_buttons & BUTTON_LEFT) {
-      setDegC[RIGHT] = setDegC[RIGHT] - 0.5;
-    }
-  }*/
-}

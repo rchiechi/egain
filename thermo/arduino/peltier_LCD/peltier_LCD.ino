@@ -14,8 +14,8 @@
 Adafruit_MAX31855 Thermocouples[] = { Adafruit_MAX31855(CLK, LCS, DO),
                                       Adafruit_MAX31855(CLK, RCS, DO) };
 //The LCD display object.
-LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
-Adafruit_RGBLCDShield lcd1 = Adafruit_RGBLCDShield();
+
+Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
 /*
     Set the values of these pins in the header file
@@ -125,7 +125,7 @@ void setup() {
   
   lcd.clear(); // Clear the screen
   lcd.setCursor(0, 0); // Set cursor to origin
-  //lcd.setBacklight(ON); // Switch on the LCD backlight (future: set backlight color)
+  lcd.setBacklight(ON); // Switch on the LCD backlight (future: set backlight color)
   lcd.print(F("LCD initialized"));
   update = true;
   /*
