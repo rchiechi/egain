@@ -3,6 +3,7 @@
  *  https://ali-atwa.medium.com/how-to-use-a-peltier-with-arduino-a35b0d4e52c2
  */
 
+#include <LiquidCrystal.h>
 #include <SPI.h>
 #include "Adafruit_MAX31855.h"
 #include "Adafruit_RGBLCDShield.h"
@@ -13,6 +14,7 @@
 Adafruit_MAX31855 Thermocouples[] = { Adafruit_MAX31855(CLK, LCS, DO),
                                       Adafruit_MAX31855(CLK, RCS, DO) };
 //The LCD display object.
+LiquidCrystal lcd(12, 11, 10, 9, 8, 7);
 Adafruit_RGBLCDShield lcd1 = Adafruit_RGBLCDShield();
 
 /*
@@ -31,6 +33,7 @@ bool initialized; // when true, device is initialized
 bool update = true; // when true, update LCD status
 double currentL = 25.00;
 double currentR = 25.00;
+double currentDegC[] = { 25.0, 25.0 };
 
 // Running averages for temperatures
 RunningAverage avgTC[] = {
@@ -122,7 +125,7 @@ void setup() {
   
   lcd.clear(); // Clear the screen
   lcd.setCursor(0, 0); // Set cursor to origin
-  lcd.setBacklight(ON); // Switch on the LCD backlight (future: set backlight color)
+  //lcd.setBacklight(ON); // Switch on the LCD backlight (future: set backlight color)
   lcd.print(F("LCD initialized"));
   update = true;
   /*
@@ -130,7 +133,7 @@ void setup() {
    * when the device powers on, the first state is the splash screen
    * to let the user know that everything has been set to power-on defaults
    */
-  state = screen_1;
+  state = start_screen;
 }
 
 
@@ -156,7 +159,7 @@ void loop() {
     last_state_change_time = time;
   }
   // Read in which buttons were clicked
-  //read_button_clicks();
+  read_button_clicks();
   // Call current state function
   state();
   // Handle any buffered Serial requests

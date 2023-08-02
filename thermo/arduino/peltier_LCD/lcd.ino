@@ -13,52 +13,66 @@
   \return the bitmask of clicked buttons
 */
 
-void screen_1() {
+void read_button_clicks() {
+  static uint8_t last_buttons = 0;
+
+  uint8_t buttons = lcd1.readButtons();
+  clicked_buttons = (last_buttons ^ buttons) & (~buttons);
+  last_buttons = buttons;
+}
+
+// start screen which prompts the user to press select to start
+void start_screen() {
   lcd.setCursor(0, 0);
   lcd.write(0x7E);
   lcd.print(F(" PRESS SELECT "));
   lcd.write(0x7F);
   lcd.setCursor(0, 1);
   lcd.print("    *SELECT*");
-  if (digitalRead(button5Pin) == LOW) {
-    state = screen_2;
+  // switches to the next screen
+  if (clicked_buttons & BUTTON_SELECT) {
+    state = left_or_right;
     delay(200);
     lcd.clear();
   }
 }
 
-int L2 = 0;
-int R2 = 0;
-
-void screen_2() {
+// user chooses to use either the left or right peltier
+void left_or_right() {
+  static int top_pointer = 0;
+  static int bottom_pointer = 0;
   lcd.setCursor(0, 0);
   lcd.print("    LEFT ");
-  if (L2 == 1) {
+  // points to the top option if user has selected it
+  if (top_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(10, 1);
     lcd.print(" ");
   }
   lcd.setCursor(0, 1);
   lcd.print("    RIGHT ");
-  if (R2 == 1) {
+  // points to the bottom option if user has selected it
+  if (bottom_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(9, 0);
     lcd.print(" ");
   }
-  if (digitalRead(button1Pin) == LOW) {
-    L2 = 1;
-    R2 = 0;
+  // sees what option user has selected to point at
+  if (clicked_buttons & BUTTON_UP) {
+    top_pointer = 1;
+    bottom_pointer = 0;
   }
-  if (digitalRead(button4Pin) == LOW) {
-    R2 = 1;
-    L2 = 0;
+  if (clicked_buttons & BUTTON_DOWN) {
+    bottom_pointer = 1;
+    top_pointer = 0;
   }
-  if(L2 == 1 && digitalRead(button5Pin) == LOW) {
+  // switches screen based on what the user has selected
+  if(top_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
     state = on_offL;
     delay(300);
     lcd.clear();
   }
-  if(R2 == 1 && digitalRead(button5Pin) == LOW) {
+  if(bottom_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
     state = on_offR;
     delay(300);
     lcd.clear();
@@ -66,353 +80,383 @@ void screen_2() {
 
 }
 
-int LLOF = 0;
-int RLOF = 0;
-
+// user decides to switch the left side on or off
 void on_offL() {
+  static int top_pointer = 0;
+  static int bottom_pointer = 0;
   lcd.setCursor(0, 0);
   lcd.print("     ON ");
-  if (LLOF == 1) {
+  // points to the top option if user has selected it
+  if (top_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(9, 1);
     lcd.print(" ");
   }
   lcd.setCursor(0, 1);
   lcd.print("     OFF ");
-  if (RLOF == 1) {
+  // points to the bottom option if user has selected it
+  if (bottom_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(8, 0);
     lcd.print(" ");
   }
-  if (digitalRead(button1Pin) == LOW) {
-    LLOF = 1;
-    RLOF = 0;
+  // sees what option user has selected to point at
+  if (clicked_buttons & BUTTON_UP) {
+    top_pointer = 1;
+    bottom_pointer = 0;
   }
-  if (digitalRead(button4Pin) == LOW) {
-    RLOF = 1;
-    LLOF = 0;
+  if (clicked_buttons & BUTTON_DOWN) {
+    bottom_pointer = 1;
+    top_pointer = 0;
   }
-  if(LLOF == 1 && digitalRead(button5Pin) == LOW) {
-    peltier_on[0] = true;
-    state = screen_3L;
+  // switches screen based on what the user has selected
+  if(top_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
+    peltier_on[LEFT] = true;
+    state = L_heat_or_cool;
     delay(300);
     lcd.clear(); 
   }
-  if(RLOF == 1 && digitalRead(button5Pin) == LOW) {
-    peltier_on[0] = false;
-    state = screen_5;
+  if(bottom_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
+    peltier_on[LEFT] = false;
+    state = home_and_summary;
     delay(300);
     lcd.clear();
   }
-   if (digitalRead(button2Pin) == LOW) {
-    state = screen_2;
+  // goes to previous screen if user selects the left button
+  if (clicked_buttons & BUTTON_LEFT) {
+    state = left_or_right;
     delay(300);
     lcd.clear(); 
   }
 
  }
 
-int LROF = 0;
-int RROF = 0;
 
+
+// user decides to switch the right side on or off
 void on_offR() {
+  static int top_pointer = 0;
+  static int bottom_pointer = 0;
   lcd.setCursor(0, 0);
   lcd.print("     ON ");
-  if (LROF == 1) {
+  // points to the top option if user has selected it
+  if (top_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(9, 1);
     lcd.print(" ");
   }
   lcd.setCursor(0, 1);
   lcd.print("     OFF ");
-  if (RROF == 1) {
+  // points to the bottom option if user has selected it
+  if (bottom_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(8, 0);
     lcd.print(" ");
   }
-  if (digitalRead(button1Pin) == LOW) {
-    LROF = 1;
-    RROF = 0;
+  // sees what option user has selected to point at
+  if (clicked_buttons & BUTTON_UP) {
+    top_pointer = 1;
+    bottom_pointer = 0;
   }
-  if (digitalRead(button4Pin) == LOW) {
-    RROF = 1;
-    LROF = 0;
+  if (clicked_buttons & BUTTON_DOWN) {
+    bottom_pointer = 1;
+    top_pointer = 0;
   }
-  if(LROF == 1 && digitalRead(button5Pin) == LOW) {
-    peltier_on[1] = true;
-    state = screen_3R;
+  // switches screen based on what the user has selected
+  if(top_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
+    peltier_on[RIGHT] = true;
+    state = R_heat_or_cool;
     delay(300);
     lcd.clear(); 
   }
-  if(RROF == 1 && digitalRead(button5Pin) == LOW) {
-    peltier_on[1] = false;
-    state = screen_5;
+  if(bottom_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
+    peltier_on[RIGHT] = false;
+    state = home_and_summary;
     delay(300);
     lcd.clear();
   }
-  if (digitalRead(button2Pin) == LOW) {
-    state = screen_2;
+  // goes to previous screen if user selects the left button
+  if (clicked_buttons & BUTTON_LEFT) {
+    state = left_or_right;
     delay(300);
     lcd.clear(); 
   }
 }
 
-int LL3 = 0;
-int RL3 = 0;
-
-void screen_3L() {
+// user decides to switch the left side to heat or cool
+void L_heat_or_cool() {
+  static int top_pointer = 0;
+  static int bottom_pointer = 0;
   lcd.setCursor(0, 0);
   lcd.print("     HEAT ");
-  if (LL3 == 1) {
+  // points to the top option if user has selected it
+  if (top_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(10, 1);
     lcd.print(" ");
   }
   lcd.setCursor(0, 1);
   lcd.print("     COOL ");
-  if (RL3 == 1) {
+  // points to the bottom option if user has selected it
+  if (bottom_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(10, 0);
     lcd.print(" ");
   }
-  if (digitalRead(button1Pin) == LOW) {
-    LL3 = 1;
-    RL3 = 0;
+  // sees what option user has selected to point at
+  if (clicked_buttons & BUTTON_UP) {
+    top_pointer = 1;
+    bottom_pointer = 0;
   }
-  if (digitalRead(button4Pin) == LOW) {
-    RL3 = 1;
-    LL3 = 0;
+  if (clicked_buttons & BUTTON_DOWN) {
+    bottom_pointer = 1;
+    top_pointer = 0;
   }
-  if(LL3 == 1 && digitalRead(button5Pin) == LOW) {
+  // switches screen based on what the user has selected
+  if(top_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
     flow[LEFT] = HEAT;
-    state = screen_4L;
+    state = set_LEFT_temp;
     delay(300);
     lcd.clear();
   }
-  if(RL3 == 1 && digitalRead(button5Pin) == LOW) {
+  if(bottom_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
     flow[LEFT] = COOL;
-    state = screen_4L;
+    state = set_LEFT_temp;
     delay(300);
     lcd.clear();
   }
-  if (digitalRead(button2Pin) == LOW) {
-    state = screen_2;
-    delay(300);
-    lcd.clear(); 
-  }
-  if (digitalRead(button2Pin) == LOW) {
+  // goes to previous screen if user selects the left button
+  if (clicked_buttons & BUTTON_LEFT) {
     state = on_offL;
     delay(300);
     lcd.clear(); 
   }
 }
 
-int LR3 = 0;
-int RR3 = 0;
-
-void screen_3R() { 
+// user decides to switch the right side to heat or cool
+void R_heat_or_cool() {
+  static int top_pointer = 0;
+  static int bottom_pointer = 0;
   lcd.setCursor(0, 0);
   lcd.print("     HEAT ");
-  if (LR3 == 1) {
+  // points to the top option if user has selected it
+  if (top_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(10, 1);
     lcd.print(" ");
   }
   lcd.setCursor(0, 1);
   lcd.print("     COOL ");
-  if (RR3 == 1) {
+  // points to the bottom option if user has selected it
+  if (bottom_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(10, 0);
     lcd.print(" ");
   }
-  if (digitalRead(button1Pin) == LOW) {
-    LR3 = 1;
-    RR3 = 0;
+  // sees what option user has selected to point at
+  if (clicked_buttons & BUTTON_UP) {
+    top_pointer = 1;
+    bottom_pointer = 0;
   }
-  if (digitalRead(button4Pin) == LOW) {
-    RR3 = 1;
-    LR3 = 0;
+  if (clicked_buttons & BUTTON_DOWN) {
+    bottom_pointer = 1;
+    top_pointer = 0;
   }
-  if(LR3 == 1 && digitalRead(button5Pin) == LOW) {
+  // switches screen based on what the user has selected
+  if(top_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
     flow[RIGHT] = HEAT;
-    state = screen_4R;
+    state = set_RIGHT_temp;
     delay(300);
     lcd.clear();
   }
-  if(RR3 == 1 && digitalRead(button5Pin) == LOW) {
+  if(bottom_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
     flow[RIGHT] = COOL;
-    state = screen_4R;
+    state = set_RIGHT_temp;
     delay(300);
     lcd.clear();
   }
-  if (digitalRead(button2Pin) == LOW) {
-    state = screen_2;
-    delay(300);
-    lcd.clear(); 
-  }
-  if (digitalRead(button2Pin) == LOW) {
+  // goes to previous screen if user selects the left button
+  if (clicked_buttons & BUTTON_LEFT) {
     state = on_offR;
     delay(300);
     lcd.clear(); 
   }
 }
 
-void screen_4L() {
+// user sets the left temperature
+void set_LEFT_temp() {
+  // sets up screen
   lcd.setCursor(0, 0);
   lcd.print("LEFT: ");
-  double lc = avgTC[LEFT].getAverage();
-  lcd.print(lc);
+  lcd.print(currentDegC[0]);
   lcd.setCursor(0, 1);
   lcd.print("  ");
   lcd.write(0x7E);
   lcd.print(setDegC[0]);
-  if (digitalRead(button2Pin) == LOW) {
-    state = screen_3L;
+  // goes to previous screen if user selects the left button
+  if (clicked_buttons & BUTTON_LEFT) {
+    state = L_heat_or_cool;
     delay(300);
     lcd.clear(); 
   }
-  if (digitalRead(button1Pin) == LOW) {
-    while (digitalRead(button1Pin) == LOW) {
+  // increases temperature
+  if (clicked_buttons & BUTTON_UP) {
+    /*while (digitalRead(button1Pin) == LOW) {
       int count = 0;
-    }
-    setDegC[0] += 0.5; //time when lift down and back up function needed
-    state = screen_4L;
+    }*/
+    setDegC[0] += 0.5; // time when lift down and back up function needed
+    state = set_LEFT_temp;
     lcd.clear(); 
   }
-  if (digitalRead(button4Pin) == LOW) {
-    while (digitalRead(button4Pin) == LOW) {
+  // decreases temperature
+  if (clicked_buttons & BUTTON_DOWN) {
+    /*while (digitalRead(button4Pin) == LOW) {
       
-    }
-    setDegC[0] -= 0.5; //time when lift down and back up function needed
-    state = screen_4L;
+    }*/
+    setDegC[0] -= 0.5; // time when lift down and back up function needed
+    state = set_LEFT_temp;
     lcd.clear(); 
   }
-  if (digitalRead(button5Pin) == LOW) {
-    state = screen_5;
+  // switches screen based on what the user has selected
+  if (clicked_buttons & BUTTON_SELECT) {
+    state = home_and_summary;
     delay(300);
     lcd.clear(); 
   }
 }
-
-void screen_4R() {
+// user sets the right temperature
+void set_RIGHT_temp() {
+  // sets up screen
   lcd.setCursor(0, 0);
   lcd.print("RIGHT:");
-  double rc = avgTC[RIGHT].getAverage();
-  lcd.print(rc);
+  lcd.print(currentDegC[1]);
   lcd.setCursor(0, 1);
   lcd.print("  ");
   lcd.write(0x7E);
   lcd.print(setDegC[1]);
-  if (digitalRead(button2Pin) == LOW) {
-    state = screen_3R;
+  // goes to previous screen if user selects the left button
+  if (clicked_buttons & BUTTON_LEFT) {
+    state = R_heat_or_cool;
     delay(300);
     lcd.clear(); 
   }
-  if (digitalRead(button1Pin) == LOW) {
-    while (digitalRead(button1Pin) == LOW) {
+  // increases temperature
+  if (clicked_buttons & BUTTON_UP) {
+    /*while (digitalRead(button1Pin) == LOW) {
       int count = 0;
-    }
-    setDegC[1] += 0.5; //time when lift down and back up function needed
-    state = screen_4R;
+    }*/
+    setDegC[1] += 0.5; // time when lift down and back up function needed
+    state = set_RIGHT_temp;
     lcd.clear(); 
   }
-  if (digitalRead(button4Pin) == LOW) {
-    while (digitalRead(button4Pin) == LOW) {
+  // decreases temperature
+  if (clicked_buttons & BUTTON_DOWN) {
+    /*while (digitalRead(button4Pin) == LOW) {
       int count = 0;
-    }
-    setDegC[1] -= 0.5; //time when lift down and back up function needed
-    state = screen_4R;
+    }*/
+    setDegC[1] -= 0.5; // time when lift down and back up function needed
+    state = set_RIGHT_temp;
     lcd.clear(); 
   }
-  if (digitalRead(button5Pin) == LOW) {
-    state = screen_5;
+  // switches screen based on what the user has selected
+  if (clicked_buttons & BUTTON_SELECT) {
+    state = home_and_summary;
     delay(300);
     lcd.clear(); 
   }
 }
 
-int L5 = 0;
-int R5 = 0;
-
-void screen_5() {
+// user has a choice to go to the home screen or summary screen
+void home_and_summary() {
+  static int top_pointer = 0;
+  static int bottom_pointer = 0;
   lcd.setCursor(0, 0);
   lcd.print("    HOME ");
-  if (L5 == 1) {
+  // points to the top option if user has selected it
+  if (top_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(12, 1);
     lcd.print(" ");
   }
   lcd.setCursor(0, 1);
   lcd.print("    SUMMARY ");
-  if (R5 == 1) {
+  // points to the bottom option if user has selected it
+  if (bottom_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(9, 0);
     lcd.print(" ");
   }
-  if (digitalRead(button1Pin) == LOW) {
-    L5 = 1;
-    R5 = 0;
+  // sees what option user has selected to point at
+  if (clicked_buttons & BUTTON_UP) {
+    top_pointer = 1;
+    bottom_pointer = 0;
   }
-  if (digitalRead(button4Pin) == LOW) {
-    R5 = 1;
-    L5 = 0;
+  if (clicked_buttons & BUTTON_DOWN) {
+    bottom_pointer = 1;
+    top_pointer = 0;
   }
-  if(L5 == 1 && digitalRead(button5Pin) == LOW) {
-    state = screen_2;
+  // switches screen based on what the user has selected
+  if(top_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
+    state = left_or_right;
     delay(300);
     lcd.clear(); 
   }
-  if(R5 == 1 && digitalRead(button5Pin) == LOW) {
-    state = summary;
+  if(bottom_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
+    state = show_summary;
     delay(300);
     lcd.clear();
   }
 }
 
-int L6 = 0;
-int R6 = 0;
-
-void screen_6() {
+// user has a choice to go to the summary screen or finish screen
+void summary_and_finish() {
+  static int top_pointer = 0;
+  static int bottom_pointer = 0;
   lcd.setCursor(0, 0);
   lcd.print("    SUMMARY ");
-  if (L6 == 1) {
+  // points to the top option if user has selected it
+  if (top_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(11, 1);
     lcd.print(" ");
   }
   lcd.setCursor(0, 1);
   lcd.print("    FINISH ");
-  if (R6 == 1) {
+  // points to the bottom option if user has selected it
+  if (bottom_pointer == 1) {
     lcd.write(0x7F);
     lcd.setCursor(12, 0);
     lcd.print(" ");
   }
-  if (digitalRead(button1Pin) == LOW) {
-    L6 = 1;
-    R6 = 0;
+  // sees what option user has selected to point at
+  if (clicked_buttons & BUTTON_UP) {
+    top_pointer = 1;
+    bottom_pointer = 0;
   }
-  if (digitalRead(button4Pin) == LOW) {
-    R6 = 1;
-    L6 = 0;
+  if (clicked_buttons & BUTTON_DOWN) {
+    bottom_pointer = 1;
+    top_pointer = 0;
   }
-  if(L6 == 1 && digitalRead(button5Pin) == LOW) {
-    state = summary;
+  // switches screen based on what the user has selected
+  if(top_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
+    state = show_summary;
     delay(300);
     lcd.clear();
   }
-  if(R6 == 1 && digitalRead(button5Pin) == LOW) {
-    state = screen_1;
+  if(bottom_pointer == 1 && (clicked_buttons & BUTTON_SELECT)) {
+    state = start_screen;
     delay(300);
     lcd.clear();
   }
 
 }
 
+// screen that displays the summary of temperatures for each peltier
 void my_summary() {
-  if (peltier_on[0] == true) {
+  if (peltier_on[LEFT] == true) {
     lcd.setCursor(0, 0);
     lcd.print("L:");
-    lcd.print(currentL);
+    lcd.print(currentDegC[0]);
     lcd.write(0x7E);
     lcd.print(setDegC[0]);
     lcd.print("(");
@@ -424,15 +468,15 @@ void my_summary() {
     }
     lcd.print(")");
   }
-  if (peltier_on[0] != true) {
+  if (peltier_on[LEFT] != true) {
     lcd.setCursor(0, 0);
     lcd.print("L:");
     lcd.print(" OFF");
   }
-  if (peltier_on[1] == true) {
+  if (peltier_on[RIGHT] == true) {
     lcd.setCursor(0, 1);
     lcd.print("R:");
-    lcd.print(currentR);
+    lcd.print(currentDegC[1]);
     lcd.write(0x7E);
     lcd.print(setDegC[1]);
     lcd.print("(");
@@ -444,30 +488,23 @@ void my_summary() {
     }
     lcd.print(")");
   }
-  if (peltier_on[1] != true) {
+  if (peltier_on[RIGHT] != true) {
     lcd.setCursor(0, 1);
     lcd.print("R:");
     lcd.print(" OFF");
   }
-  if (digitalRead(button5Pin) == LOW) {
-    state = screen_6;
+  // switches screen based on what the user has selected
+  if (clicked_buttons & BUTTON_SELECT) {
+    state = summary_and_finish;
     delay(300);
     lcd.clear();
   }
-}  
-
-void read_button_clicks() {
-  static uint8_t last_buttons = 0;
-
-  uint8_t buttons = lcd.readButtons();
-  clicked_buttons = (last_buttons ^ buttons) & (~buttons);
-  last_buttons = buttons;
 }
 
 //! Initial state, draw the splash screen.
-void begin_splash_screen() {
+/*void begin_splash_screen() {
   lcd.clear();
-  lcd.setBacklight(ON);
+  //lcd.setBacklight(ON);
   lcd.print(F("PELTIER CONTROLS"));
   state = animate_splash_screen;
 }
@@ -475,7 +512,7 @@ void begin_splash_screen() {
 //! Animate the splash screen.
 /*!
   Blink the text "PRESS SELECT" and wait for the user to press the select button.
-*/
+
 void animate_splash_screen() {
   static boolean blink = true;
   static unsigned long last_blink_time;
@@ -540,9 +577,9 @@ void show_set_menu() {
   } else {
     state = show_set_menu;
   }
-}
+}*/
 
-void summary() {
+void show_summary() {
   static double last_lc = 0;
   static double last_rc = 0;
 
@@ -551,7 +588,7 @@ void summary() {
   double rc = avgTC[RIGHT].getAverage();
 
   if (update) {
-    lcd.setBacklight(ON);
+    //lcd.setBacklight(ON);
     lcd.setCursor(0, 0);
     if (peltier_on[LEFT]) {
       if (flow[LEFT] == HEAT) {
@@ -597,8 +634,8 @@ void summary() {
     last_rc = rc;
     update = true;
   }
-  if (digitalRead(button5Pin) == LOW) {
-    state = screen_6;
+  if (clicked_buttons & BUTTON_SELECT) {
+    state = summary_and_finish;
     delay(300);
     lcd.clear();
   }
