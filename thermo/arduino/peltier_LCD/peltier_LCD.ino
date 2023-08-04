@@ -34,6 +34,8 @@ bool update = true; // when true, update LCD status
 double currentL = 25.00;
 double currentR = 25.00;
 double currentDegC[] = { 25.0, 25.0 };
+String left_options[] = {"TOGGLE", "FLOW", "TEMP", " "};
+String right_options[] = {"TOGGLE", "FLOW", "TEMP", " "};
 
 // Running averages for temperatures
 RunningAverage avgTC[] = {
