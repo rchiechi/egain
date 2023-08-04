@@ -13,6 +13,9 @@
   \return the bitmask of clicked buttons
 */
 
+/* **Functions don't have a command in the beginning to clear the screen because that can cause the 
+blinking of words on the screen. This means that lcd.clear() command is at the end of each function.** */
+
 void read_button_clicks() {
   static uint8_t last_buttons = 0;
 
