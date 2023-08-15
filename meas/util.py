@@ -15,7 +15,7 @@ def enumerateDevices(_first=None):
         _devs = []
     try:
         for _dev in os.listdir('/dev'):
-            if _filter.lower() in _dev.lower():
+            if _dev and _filter.lower() in _dev.lower():
                 _devs.append(os.path.join('/', 'dev', _dev))
     except FileNotFoundError:
         _devs = serial_ports()
