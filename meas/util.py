@@ -4,19 +4,22 @@ import glob
 import serial
 
 def enumerateDevices(_first=None):
-    _filter = ''
+    _filters = []
     if sys.platform.startswith("darwin"):
-        _filter = 'usbmodem'
+        _filters = ['usbmodem']
     if sys.platform.startswith("linux"):
-        _filter = 'ttyACM'
+        _filters = ['ttyUSB', 'ttyACM']
     if _first is not None:
         _devs = [_first]
     else:
         _devs = []
     try:
         for _dev in os.listdir('/dev'):
-            if _dev and _filter.lower() in _dev.lower():
-                _devs.append(os.path.join('/', 'dev', _dev))
+            for _filter in _filters:
+                if _filter.lower() in _dev.lower():
+                    _dev_path = os.path.join('/', 'dev', _dev)
+                    if _dev_path not in _devs:
+                        _devs.append(_dev_path)
     except FileNotFoundError:
         _devs = serial_ports()
     return _devs
