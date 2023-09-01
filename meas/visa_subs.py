@@ -287,6 +287,7 @@ class OPCThread(threading.Thread):
         self.lock = lock
         self.alive = threading.Event()
         self.alive.set()
+        self._aborted = False
 
     def run(self):
         starttime = time.time()
@@ -307,6 +308,12 @@ class OPCThread(threading.Thread):
     def kill(self):
         self.alive.clear()
 
+    def abort(self):
+        self._aborted = True
+        with self.lock:
+            print("Aborting measurment.")
+            self.smu.write(b':ABOR')
+
     @property
     def active(self):
         return self.alive.is_set()
@@ -314,6 +321,10 @@ class OPCThread(threading.Thread):
     @property
     def alive_event(self):
         return self.alive
+
+    @property
+    def aborted(self):
+        return self._aborted
 
 class READThread(threading.Thread):
 

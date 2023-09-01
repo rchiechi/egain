@@ -152,6 +152,7 @@ class Keithley(Instrument):
         else:
             self.visa.write(f":SENS:CURR:RANG {self.sense_range:.2e}")
         self.visa.write(':SOUR:DEL:AUTO ON')
+        # self.visa.write(':SOUR:CLE:AUTO ON')
         self.visa.write(f':SOUR:LIST:VOLT {",".join(v_list)}')
         _points = self.visa.query(':SOUR:LIST:VOLT:POIN?')
         if not _points:

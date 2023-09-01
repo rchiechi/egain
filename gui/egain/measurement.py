@@ -190,7 +190,8 @@ class MeasurementControl(tk.Frame):
     def stop_measurement(self):
         for _key in self.child_threads:
             if self.child_threads[_key] is not None:
-                self.child_threads[_key].kill()
+                self.child_threads[_key].abort()
+                messagebox.showinfo('Abort', 'Stop command sent.')
                 while self.child_threads[_key].is_alive():
                     time.sleep(0.1)
         if self.smu is not None:
@@ -247,7 +248,7 @@ class MeasurementControl(tk.Frame):
             if not self.child_threads['meas'].active:
                 self._process_data(self.smu.fetch_data().split(','))
                 self.sweeps_done += 1
-                if self.sweeps_done < int(self.sweep["nsweeps"]):
+                if self.sweeps_done < int(self.sweep["nsweeps"]) and not self.child_threads['meas'].aborted:
                     self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep))
                     self.measdone.set(True)
                     self.child_threads['meas'].start()
