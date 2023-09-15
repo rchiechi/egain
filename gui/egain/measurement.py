@@ -192,8 +192,11 @@ class MeasurementControl(tk.Frame):
             if self.child_threads[_key] is not None:
                 self.child_threads[_key].abort()
                 messagebox.showinfo('Abort', 'Stop command sent.')
-                while self.child_threads[_key].is_alive():
-                    time.sleep(0.1)
+                try:
+                    while self.child_threads[_key].is_alive():
+                        time.sleep(0.1)
+                except AttributeError:
+                    pass
         if self.smu is not None:
             self.smu.end_voltage_sweep()
             self._measureinbackground()
