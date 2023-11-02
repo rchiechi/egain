@@ -253,7 +253,7 @@ class StageControls(tk.Frame):
             self._handleunitchange()
             self.widgets['initButton'].after(100, self._updateposition)
             self.widgets['initButton'].after(100, self._checkformotion)
-            self.confg['IP_ADDRESS'] = self.xyzstage['address'].get()
+            self.config['IP_ADDRESS'] = self.xyzstage['address'].get()
             self.config['PORT'] = self.xyzstage['port'].get()
             self._saveconfig()
         except IOError:
