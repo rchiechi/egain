@@ -274,6 +274,8 @@ class MainFrame(tk.Frame):
         self.opts['save_path'] = filedialog.askdirectory(
             title="Path to save data",
             initialdir=self.opts['save_path'])
+        if not isinstance(self.opts['save_path'], str):
+            self.opts['save_path'] = os.path.expanduser('~')
         self.variables['outputdirstring'].set(self.opts['save_path'])
         self.checkOptions()
 
