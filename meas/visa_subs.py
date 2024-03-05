@@ -149,8 +149,11 @@ def _mutestderr():
 
 
 def visatoserial(visa_address):
-    _path = visa_address.split(':')[0].split('/')
-    return f"/{'/'.join(_path[1:])}"
+    if os.name == "nt":
+        return visa_address.strip()
+    else:
+        _path = visa_address.split(':')[0].split('/')
+        return f"/{'/'.join(_path[1:])}"
 
 
 class SerialVisa():
