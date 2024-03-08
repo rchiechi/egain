@@ -1,4 +1,4 @@
-appdirs==1.4.4
-matplotlib==3.7.1
-numpy==1.25.0
-SciPy==1.11.1
+appdirs>=1.4.4
+matplotlib>=3.7.1
+numpy>=1.25.0
+SciPy>=1.11.1
