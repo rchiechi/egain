@@ -26,7 +26,7 @@ import math
 import csv
 import tkinter.ttk as tk
 from tkinter import Toplevel, filedialog
-from tkinter import StringVar, BooleanVar, Label, Entry, messagebox
+from tkinter import StringVar, IntVar, BooleanVar, Label, Entry, messagebox, Checkbutton
 from tkinter import X, Y
 from tkinter import TOP, BOTTOM, LEFT, RIGHT
 from tkinter import END, BOTH, HORIZONTAL
@@ -135,6 +135,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntry.insert(0, self.opts['output_file_name'])
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
+        # EGaIn-specific widgets
         maketipButton = tk.Button(master=magFrame,
                                   text='Make Tip',
                                   command=self.maketipButtonClick,
@@ -180,6 +181,12 @@ class MainFrame(tk.Frame):
                                  width=4)
         junctionmag.pack(side=LEFT)
         CreateTooltip(junctionmag, "Magnification value on zoom lens")
+        # # #
+
+        self.variables['isafm'] = IntVar()
+        self.variables['isafm'].trace_add('write', self._checkafm)
+        afmoregainCheck = Checkbutton(magFrame, text='AFM', variable=self.variables['isafm'])
+        afmoregainCheck.pack(side=LEFT)
 
         outputFrame.pack(side=TOP, fill=X)
         magFrame.pack(side=TOP, fill=X)
@@ -321,6 +328,14 @@ class MainFrame(tk.Frame):
         if True in _initialized:
             self.initialized = True
         parseusersettings(self.config_file, self.opts)
+
+    def _checkafm(self):
+        if self.variables['isafm'].get() == 1:
+            for widget in ('maketipButton',):
+                self.widgets[widget]['state'] = DISABLED
+        else:
+            for widget in ('maketipButton',):
+                self.widgets[widget]['state'] = NORMAL
 
     def _updateData(self, *args):
         if self.variables['measdone'].get():
