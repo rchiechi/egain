@@ -148,41 +148,52 @@ class MainFrame(tk.Frame):
         referencesizeEntryLabel.pack(side=LEFT)
         reference_size = StringVar(value='5.0')
         self.variables['reference_size'] = reference_size
-        referencesizeEntry = Entry(master=magFrame,
-                                   width=5,
-                                   textvariable=reference_size,
-                                   font=Font(size=10))
-        referencesizeEntry.pack(side=LEFT)
-        CreateTooltip(referencesizeEntry, "Size of a reference object on screen")
+        self.widgets['referencesizeEntry'] = Entry(master=magFrame,
+                                                   width=5,
+                                                   textvariable=reference_size,
+                                                   font=Font(size=10))
+        self.widgets['referencesizeEntry'].pack(side=LEFT)
+        CreateTooltip(self.widgets['referencesizeEntry'], "Size of a reference object on screen")
         junctionsizeEntryLabel = Label(master=magFrame,
                                        text='Junction size (cm):')
         junctionsizeEntryLabel.pack(side=LEFT)
-
         junction_size = StringVar(value='1.0')
         self.variables['junction_size'] = junction_size
-        junctionsizeEntry = Entry(master=magFrame,
-                                  width=5,
-                                  textvariable=junction_size,
-                                  font=Font(size=10))
-        junctionsizeEntry.pack(side=LEFT)
-        CreateTooltip(junctionsizeEntry, "Size of the junction on screen")
+        self.widgets['junctionsizeEntry'] = Entry(master=magFrame,
+                                                  width=5,
+                                                  textvariable=junction_size,
+                                                  font=Font(size=10))
+        self.widgets['junctionsizeEntry'].pack(side=LEFT)
+        CreateTooltip(self.widgets['junctionsizeEntry'], "Size of the junction on screen")
 
         junctionmagEntryLabel = Label(master=magFrame,
                                       text='Magnification:')
         junctionmagEntryLabel.pack(side=LEFT)
         junction_mag = StringVar(value='2.5')
         self.variables['junction_mag'] = junction_mag
-        junctionmag = tk.Spinbox(magFrame,
-                                 font=Font(size=10),
-                                 from_=1,
-                                 to=20,
-                                 increment=0.5,
-                                 textvariable=junction_mag,
-                                 width=4)
-        junctionmag.pack(side=LEFT)
-        CreateTooltip(junctionmag, "Magnification value on zoom lens")
+        self.widgets['junctionmag'] = tk.Spinbox(magFrame,
+                                                 font=Font(size=10),
+                                                 from_=1,
+                                                 to=20,
+                                                 increment=0.5,
+                                                 textvariable=junction_mag,
+                                                 width=4)
+        self.widgets['junctionmag'].pack(side=LEFT)
+        CreateTooltip(self.widgets['junctionmag'], "Magnification value on zoom lens")
+        # AFM Widgets
+        tipsizeEntryLabel = Label(master=magFrame,
+                                  text='Tip diameter (nm):')
+        tipsizeEntryLabel.pack(side=LEFT)
+        tip_size = StringVar(value='15')
+        self.variables['tip_size'] = tip_size
+        self.widgets['tipsizeEntry'] = Entry(master=magFrame,
+                                             width=5,
+                                             textvariable=tip_size,
+                                             font=Font(size=10))
+        self.widgets['tipsizeEntry'].pack(side=LEFT)
+        self.widgets['tipsizeEntry']['state'] = DISABLED
+        CreateTooltip(self.widgets['tipsizeEntry'], "Diameter of the AFM tip in nm")
         # # #
-
         self.variables['isafm'] = IntVar()
         self.variables['isafm'].trace_add('write', self._checkafm)
         afmoregainCheck = Checkbutton(magFrame, text='AFM', variable=self.variables['isafm'])
@@ -192,7 +203,7 @@ class MainFrame(tk.Frame):
         magFrame.pack(side=TOP, fill=X)
 
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
-            junctionsizeEntry.bind(_ev, self.checkJunctionsize)
+            self.widgets['junctionsizeEntry'].bind(_ev, self.checkJunctionsize)
 
         saveButton = tk.Button(master=buttonFrame, text="Save To", command=self.SpawnSaveDialogClick)
         saveButton.pack(side=LEFT)
@@ -329,13 +340,21 @@ class MainFrame(tk.Frame):
             self.initialized = True
         parseusersettings(self.config_file, self.opts)
 
-    def _checkafm(self):
+    def _checkafm(self, *args):
         if self.variables['isafm'].get() == 1:
-            for widget in ('maketipButton',):
+            for widget in ('maketipButton',
+                           'junctionsizeEntry',
+                           'referencesizeEntry',
+                           'junctionmag'):
                 self.widgets[widget]['state'] = DISABLED
+            self.widgets['tipsizeEntry']['state'] = NORMAL
         else:
-            for widget in ('maketipButton',):
+            for widget in ('maketipButton',
+                           'junctionsizeEntry',
+                           'referencesizeEntry',
+                           'junctionmag'):
                 self.widgets[widget]['state'] = NORMAL
+            self.widgets['tipsizeEntry']['state'] = DISABLED
 
     def _updateData(self, *args):
         if self.variables['measdone'].get():
