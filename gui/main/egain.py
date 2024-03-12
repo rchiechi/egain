@@ -204,6 +204,7 @@ class MainFrame(tk.Frame):
 
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             self.widgets['junctionsizeEntry'].bind(_ev, self.checkJunctionsize)
+            self.widgets['tipsizeEntry'].bind(_ev, self.checkJunctionsize)
 
         saveButton = tk.Button(master=buttonFrame, text="Save To", command=self.SpawnSaveDialogClick)
         saveButton.pack(side=LEFT)
@@ -301,12 +302,15 @@ class MainFrame(tk.Frame):
 
     def checkJunctionsize(self, event):
         _junction_size = self.variables['junction_size'].get()
-        if not _junction_size:
+        _tip_size = self.variables['tip_size'].get()
+        if not _junction_size or not _tip_size:
             return
         try:
             float(_junction_size)
+            float(_tip_size)
         except ValueError:
             self.variables['junction_size'].set('1.0')
+            self.variables['tip_size'].set('15')
 
     def checkOptions(self, *args):
         _outdir = f"/{self.variables['outputdirstring'].get().strip('/')}/"
@@ -374,10 +378,16 @@ class MainFrame(tk.Frame):
         # DATA_FORMAT = {'V':[], 'I':[], 't':[]}
         self.checkOptions()
         _jsize = float(self.variables['junction_size'].get())
-        _rsize = float(self.variables['reference_size'].get())  # screen_cm
+        _rsize = float(self.variables['reference_size'].get()) / 2  # screen_cm in diameter / 2 = radius
+        _tsize = float(self.variables['tip_size'].get()) / 2  # tip diameter / 2 = radius
         # _jmag = float(self.variables['junction_mag'].get())
         _conversion = (REFERENCE_SIZE_M * 100) / _rsize  # (m cm/m) / screen_cm = cm / screen_cm
-        _area_in_cm = math.pi*(_conversion * _jsize)**2  # pi((cm / screen_cm) screen_cm) = cm
+        if self.variables['isafm'].get() == 0:
+            print("Computing area from onscreen measurement.")
+            _area_in_cm = math.pi*(_conversion * _jsize)**2  # pi((cm / screen_cm) screen_cm) = cm
+        else:  # calculate area from tip diameter
+            print("Computing area from AFM tip diameter.")
+            _area_in_cm = math.pi*(_tsize * 1e-07)**2
         results = self.widgets['measurementFrame'].data
         for _key in ('J', 'upper', 'lower'):
             results[_key] = []
