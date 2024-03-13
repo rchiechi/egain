@@ -341,9 +341,8 @@ class MainFrame(tk.Frame):
         # Save data to disk and then delete them
         # DATA_FORMAT = {'V':[], 'I':[], 't':[]}
         self.checkOptions()
-        _jsize = float(self.variables['junction_size'].get())
+        _jsize = float(self.variables['junction_size'].get()) / 2  # d/2 = r
         _rsize = float(self.variables['reference_size'].get())  # screen_cm
-        # _jmag = float(self.variables['junction_mag'].get())
         _conversion = (REFERENCE_SIZE_M * 100) / _rsize  # (m cm/m) / screen_cm = cm / screen_cm
         _area_in_cm = math.pi*(_conversion * _jsize)**2  # pi((cm / screen_cm) screen_cm) = cm
         results = self.widgets['measurementFrame'].data
