@@ -416,8 +416,8 @@ class MainFrame(tk.Frame):
             fh.write(f"Magnification:{self.variables['junction_mag'].get()}\n")
             fh.write(f'Junction conversion factor:{_conversion}\n')
             fh.write(f"Peltier enabled: {self.widgets['tempcontrols'].peltierstatus}\n")
-            fh.write(f"Upper temperature (C): {self.widgets['tempcontrols'].uppertemp}\n")
-            fh.write(f"Lower temperature (C): {self.widgets['tempcontrols'].lowertemp}\n")
+            fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
+            fh.write(f"Lower temperature (°C): {self.widgets['tempcontrols'].lowertemp}\n")
         if finalize:
             messagebox.showinfo("Saved", f"Data written to {_fn}_data.txt")
 
