@@ -24,6 +24,7 @@ import platform
 import time
 import math
 import csv
+from pathlib import Path
 import tkinter.ttk as tk
 from tkinter import Toplevel, filedialog
 from tkinter import StringVar, IntVar, BooleanVar, Label, Entry, messagebox, Checkbutton
@@ -122,11 +123,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntryLabel = Label(master=outputFrame,
                                          text='Output Filename Prefix:')
         outputfilenameEntryLabel.pack(side=LEFT)
-        if platform.system() == 'Windows':
-            _suffix = '\\'
-        else:
-            _suffix = '/'
-        outputdirstring = StringVar(value=self.opts['save_path']+_suffix)
+        outputdirstring = StringVar(value=self.opts['save_path']+'/')
         self.variables['outputdirstring'] = outputdirstring
         outputdirLabel = Label(master=outputFrame,
                                textvariable=outputdirstring)
@@ -297,6 +294,7 @@ class MainFrame(tk.Frame):
         self.opts['save_path'] = filedialog.askdirectory(
             title="Path to save data",
             initialdir=self.opts['save_path'])
+        print(self.opts['save_path'])
         self.variables['outputdirstring'].set(self.opts['save_path'])
         self.checkOptions()
 
@@ -317,8 +315,8 @@ class MainFrame(tk.Frame):
             self.variables['tip_size'].set('15')
 
     def checkOptions(self, *args):
-        _outdir = f"/{self.variables['outputdirstring'].get().strip('/')}/"
-        self.variables['outputdirstring'].set(_outdir)
+        _outdir = Path(f"{self.variables['outputdirstring'].get().strip('/')}")
+        self.variables['outputdirstring'].set(str(_outdir))
         if self.variables['statusVar'].get() in (MEASURING):
             self.widgets['measButton'].after(100, self.checkOptions)
             return
@@ -399,11 +397,11 @@ class MainFrame(tk.Frame):
             results['J'].append(_I/_area_in_cm)
             results['upper'].append(self.widgets['tempcontrols'].uppertemp)
             results['lower'].append(self.widgets['tempcontrols'].lowertemp)
-        _fn = os.path.join(self.opts['save_path'], self.opts['output_file_name'])
+        _fn = Path(self.opts['save_path'], self.opts['output_file_name'])
         if finalize:
-            if os.path.exists(_fn):
+            if _fn.exists():
                 if not tk.askyesno("Overwrite?", f'{_fn} exists, overwrite it?'):
-                    _fn = f'{_fn}_{str(self.counter).zfill(2)}'
+                    _fn = Path(f'{_fn}_{str(self.counter).zfill(2)}')
                     self.counter += 1
             write_data_to_file(f'{_fn}_data.txt', results)
             try:

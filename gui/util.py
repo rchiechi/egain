@@ -29,7 +29,7 @@ def validateip(addr):
         return False
 
 def parseusersettings(_file, payload={}):
-    config_file = os.path.join(user_config_dir('egain'), _file)
+    config_file = os.path.join(user_config_dir('egain'), os.path.basename(_file))
     if not os.path.exists(os.path.split(config_file)[0]):
         os.makedirs(os.path.split(config_file)[0])
     try:
