@@ -122,7 +122,11 @@ class MainFrame(tk.Frame):
         outputfilenameEntryLabel = Label(master=outputFrame,
                                          text='Output Filename Prefix:')
         outputfilenameEntryLabel.pack(side=LEFT)
-        outputdirstring = StringVar(value=self.opts['save_path']+'/')
+        if platform.system() == 'Windows':
+            _suffix = '\\'
+        else:
+            _suffix = '/'
+        outputdirstring = StringVar(value=self.opts['save_path']+_suffix)
         self.variables['outputdirstring'] = outputdirstring
         outputdirLabel = Label(master=outputFrame,
                                textvariable=outputdirstring)
