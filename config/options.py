@@ -8,8 +8,8 @@ GLOBAL_OPTS = 'global.pickle'
 def createOptions():
     _config = parseusersettings(GLOBAL_OPTS)
     opts = _config.get('opts', {})
-    save_path = Path(_config.get('save_path', os.path.expanduser('~')))
-    opts['save_path'] = save_path
+    opts['save_path'] = _config.get('save_path', os.path.expanduser('~'))
+    opts['isafm'] = _config.get('isafm', 0)
     dt = datetime.now()
     opts['output_file_name'] = Path(dt.strftime('%Y%m%d_%H%M_'))
     return opts

@@ -5,7 +5,7 @@ import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import IntVar, StringVar
 from tkinter import N
-from tkinter import TOP, BOTTOM, LEFT, RIGHT
+from tkinter import TOP, BOTTOM, LEFT, RIGHT, DISABLED, NORMAL
 import serial
 from meas.util import enumerateDevices
 
@@ -28,6 +28,13 @@ class TempControl(tk.Frame):
         self.targettemp = StringVar()
         self.peltier_on = IntVar()
         self.createWidgets()
+
+    def __setitem__(self, what, value):
+        if what == 'state':
+            if value == DISABLED:
+                self.is_initialized = False
+        else:
+            self.configure(**{what:value})
 
     @property
     def initialized(self):

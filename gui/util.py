@@ -40,8 +40,11 @@ def parseusersettings(_file, payload={}):
         else:
             with config_file.open('wb') as fh:
                 pickle.dump(payload, fh)
-    # except json.decoder.JSONDecodeError:
-    #     print("Error parsing user settings.")
+    except pickle.UnpicklingError:
+        print("Error parsing user settings.")
+    except pickle.PicklingError:
+        print("Error saving user settings.")
+        config_file.unlink(missing_ok=True)
     except IOError:
         print(f"{config_file} not found.")
     return {}

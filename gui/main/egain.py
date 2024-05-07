@@ -58,6 +58,8 @@ class MainFrame(tk.Frame):
     '''The main frame for collecting EGaIn data.'''
 
     widgets = {}
+    egain_widgets = []
+    afm_widgets = []
     variables = {}
     initialized = False
     counter = 0
@@ -101,9 +103,11 @@ class MainFrame(tk.Frame):
         stagecontrolFrame = tk.LabelFrame(controlsFrame, text='Stage Controls')
         stagecontroller = StageControls(stagecontrolFrame, busy=busy)
         self.widgets['stagecontroller'] = stagecontroller
+        self.egain_widgets.append('stagecontroller')
         tempcontrolFrame = tk.LabelFrame(controlsFrame, text='Temperature Controls')
         tempcontrols = TempControl(tempcontrolFrame)
         self.widgets['tempcontrols'] = tempcontrols
+        self.egain_widgets.append('tempcontrols')
         optionsFrame = tk.Frame(self)
         outputFrame = tk.Frame(optionsFrame)
         magFrame = tk.Frame(optionsFrame)
@@ -142,6 +146,7 @@ class MainFrame(tk.Frame):
                                   command=self.maketipButtonClick,
                                   state=DISABLED)
         self.widgets['maketipButton'] = maketipButton
+        self.egain_widgets.append('maketipButton')
         maketipButton.pack(side=LEFT)
 
         referencesizeEntryLabel = Label(master=magFrame,
@@ -153,6 +158,7 @@ class MainFrame(tk.Frame):
                                                    width=5,
                                                    textvariable=reference_size,
                                                    font=Font(size=10))
+        self.egain_widgets.append('referencesizeEntry')
         self.widgets['referencesizeEntry'].pack(side=LEFT)
         CreateTooltip(self.widgets['referencesizeEntry'], "Size of a reference object on screen")
         junctionsizeEntryLabel = Label(master=magFrame,
@@ -164,6 +170,7 @@ class MainFrame(tk.Frame):
                                                   width=5,
                                                   textvariable=junction_size,
                                                   font=Font(size=10))
+        self.egain_widgets.append('junctionsizeEntry')
         self.widgets['junctionsizeEntry'].pack(side=LEFT)
         CreateTooltip(self.widgets['junctionsizeEntry'], "Size of the junction on screen")
 
@@ -179,6 +186,7 @@ class MainFrame(tk.Frame):
                                                  increment=0.5,
                                                  textvariable=junction_mag,
                                                  width=4)
+        self.egain_widgets.append('junctionmag')
         self.widgets['junctionmag'].pack(side=LEFT)
         CreateTooltip(self.widgets['junctionmag'], "Magnification value on zoom lens")
         # AFM Widgets
@@ -191,11 +199,13 @@ class MainFrame(tk.Frame):
                                              width=5,
                                              textvariable=tip_size,
                                              font=Font(size=10))
+        self.egain_widgets.append('tipsizeEntry')
         self.widgets['tipsizeEntry'].pack(side=LEFT)
         self.widgets['tipsizeEntry']['state'] = DISABLED
         CreateTooltip(self.widgets['tipsizeEntry'], "Diameter of the AFM tip in nm")
         # # #
         self.variables['isafm'] = IntVar()
+        self.variables['isafm'].set(self.opts['isafm'])
         self.variables['isafm'].trace_add('write', self._checkafm)
         afmoregainCheck = Checkbutton(magFrame, text='AFM', variable=self.variables['isafm'])
         afmoregainCheck.pack(side=LEFT)
@@ -207,6 +217,7 @@ class MainFrame(tk.Frame):
             self.widgets['junctionsizeEntry'].bind(_ev, self.checkJunctionsize)
             self.widgets['tipsizeEntry'].bind(_ev, self.checkJunctionsize)
 
+        self.afm_widgets.append('tipsizeEntry')
         saveButton = tk.Button(master=buttonFrame, text="Save To", command=self.SpawnSaveDialogClick)
         saveButton.pack(side=LEFT)
         measButton = tk.Button(master=buttonFrame, text="Measure",
@@ -244,6 +255,8 @@ class MainFrame(tk.Frame):
 
         tk.Separator(self, orient=HORIZONTAL).pack(fill=X)
         buttonFrame.pack(side=BOTTOM, fill=X)
+
+        self._checkafm()
 
     def quitButtonClick(self):
         self.widgets['quitButton']['state'] = DISABLED
@@ -347,23 +360,15 @@ class MainFrame(tk.Frame):
             self.widgets['measButton'].after(100, self.checkOptions)
         if True in _initialized:
             self.initialized = True
+        self.opts['isafm'] = self.variables['isafm'].get()
         parseusersettings(self.config_file, self.opts)
 
     def _checkafm(self, *args):
-        if self.variables['isafm'].get() == 1:
-            for widget in ('maketipButton',
-                           'junctionsizeEntry',
-                           'referencesizeEntry',
-                           'junctionmag'):
-                self.widgets[widget]['state'] = DISABLED
-            self.widgets['tipsizeEntry']['state'] = NORMAL
-        else:
-            for widget in ('maketipButton',
-                           'junctionsizeEntry',
-                           'referencesizeEntry',
-                           'junctionmag'):
-                self.widgets[widget]['state'] = NORMAL
-            self.widgets['tipsizeEntry']['state'] = DISABLED
+        _widget_map = {True: NORMAL, False: DISABLED}
+        for widget in self.egain_widgets:
+            self.widgets[widget]['state'] = _widget_map[self.isegain]
+        for widget in self.afm_widgets:
+            self.widgets[widget]['state'] = _widget_map[self.isafm]
 
     def _updateData(self, *args):
         if self.variables['measdone'].get():
@@ -387,12 +392,12 @@ class MainFrame(tk.Frame):
         _tsize = float(self.variables['tip_size'].get()) / 2  # tip diameter / 2 = radius
         # _jmag = float(self.variables['junction_mag'].get())
         _conversion = (REFERENCE_SIZE_M * 100) / _rsize  # (m cm/m) / screen_cm = cm / screen_cm
-        if self.variables['isafm'].get() == 0:
-            print("Computing area from onscreen measurement.")
-            _area_in_cm = math.pi*(_conversion * _jsize)**2  # pi((cm / screen_cm) screen_cm) = cm
-        else:  # calculate area from tip diameter
+        if self.isafm:  # calculate area from tip diameter
             print("Computing area from AFM tip diameter.")
             _area_in_cm = math.pi*(_tsize * 1e-07)**2
+        else:
+            print("Computing area from onscreen measurement.")
+            _area_in_cm = math.pi*(_conversion * _jsize)**2  # pi((cm / screen_cm) screen_cm) = cm
         results = self.widgets['measurementFrame'].data
         for _key in ('J', 'upper', 'lower'):
             results[_key] = []
@@ -447,9 +452,17 @@ class MainFrame(tk.Frame):
             self.widgets['quitButton']['state'] = NORMAL
             self.widgets['measButton']['state'] = NORMAL
 
+    @property
+    def isafm(self):
+        return bool(self.variables['isafm'].get())
+
+    @property
+    def isegain(self):
+        return not self.isafm
 
 def write_data_to_file(fn, results):
-    with open(fn, 'w', newline='') as csvfile:
+    _fn = Path(fn)
+    with _fn.open('w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect='JV')
         writer.writerow(['V (V)', 'I (A)', 'J (A/cm2)', 'Time (s)', 'Upper Temp (°C)', 'Lower Temp (°C)'])
         for _idx, V in enumerate(results['V']):
