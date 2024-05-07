@@ -123,7 +123,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntryLabel = Label(master=outputFrame,
                                          text='Output Filename Prefix:')
         outputfilenameEntryLabel.pack(side=LEFT)
-        outputdirstring = StringVar(value=self.opts['save_path']+'/')
+        outputdirstring = StringVar(value=self.opts['save_path'])
         self.variables['outputdirstring'] = outputdirstring
         outputdirLabel = Label(master=outputFrame,
                                textvariable=outputdirstring)
@@ -291,9 +291,12 @@ class MainFrame(tk.Frame):
         messagebox.showinfo("Tip", "I think I made a tip..?")
 
     def SpawnSaveDialogClick(self):
-        self.opts['save_path'] = filedialog.askdirectory(
+        _path = filedialog.askdirectory(
             title="Path to save data",
             initialdir=self.opts['save_path'])
+        if not _path:
+            return
+        self.opts['save_path'] = Path(_path)
         print(self.opts['save_path'])
         self.variables['outputdirstring'].set(self.opts['save_path'])
         self.checkOptions()
