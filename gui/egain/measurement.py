@@ -46,6 +46,7 @@ class MeasurementControl(tk.Frame):
                                                })
         self.meas = self.config.get('meas', {'ADDRESS': '24', 'NPLC': '5', 'compliance': '105e-3'})
         self.deviceString = StringVar()
+        self.stop = False
         self.createWidgets()
 
     def _init_results(self):
@@ -83,6 +84,12 @@ class MeasurementControl(tk.Frame):
     def isbusy(self):
         return self._isbusy
 
+    @property
+    def stopping(self):
+        if self.isbusy and self.stop:
+            return True
+        return False
+
     def createWidgets(self):
         for _StringVar in self.sweep:
             setattr(self, _StringVar, StringVar(value=str(self.sweep[_StringVar])))
@@ -91,7 +98,14 @@ class MeasurementControl(tk.Frame):
         sweepLowEntry = tk.Entry(sweepFrame, textvariable=self.sweepLow, width=4)
         sweepHighEntry = tk.Entry(sweepFrame, textvariable=self.sweepHigh, width=4)
         sweepStepSizeEntry = tk.Entry(sweepFrame, textvariable=self.stepSize, width=4)
-        sweepSweepsEntry = tk.Entry(sweepFrame, textvariable=self.nsweeps, width=4)
+        # sweepSweepsEntry = tk.Entry(sweepFrame, textvariable=self.nsweeps, width=4)
+        sweepSweepsEntry = tk.Spinbox(sweepFrame,
+                                      font=Font(size=10),
+                                      from_=1,
+                                      to=20,
+                                      increment=1,
+                                      textvariable=self.nsweeps,
+                                      width=4)
 
         sweepFrame.pack(side=BOTTOM, fill=BOTH)
         reversedCheckbutton = tk.Checkbutton(sweepFrame, text='Reversed',
@@ -132,7 +146,7 @@ class MeasurementControl(tk.Frame):
         devicePicker = tk.OptionMenu(measFrame,
                                      self.deviceString,
                                      'Choose SMU device',
-                                     *enumerateDevices('/dev/ttyUSB0'))
+                                     *enumerateDevices('ttyACM0'))
         self.deviceString.trace('w', self._initdevice)
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
@@ -199,20 +213,21 @@ class MeasurementControl(tk.Frame):
         self._saveconfig()
 
     def stop_measurement(self):
+        if self.stop:
+            return
+        else:
+            self.stop = True
         for _key in self.child_threads:
             if self.child_threads[_key] is not None:
-                self.child_threads[_key].abort()
-                messagebox.showinfo('Abort', 'Stop command sent.')
-                try:
-                    while self.child_threads[_key].is_alive():
-                        time.sleep(0.1)
-                except AttributeError:
-                    pass
+                self.child_threads[_key].kill()
+                while self.child_threads[_key].is_alive():
+                    time.sleep(0.1)
         if self.smu is not None:
             self.smu.end_voltage_sweep()
             self._measureinbackground()
 
     def startMeasurementButtonClick(self):
+        self.stop = False
         if self.error:
             messagebox.showerror("Error", "Invalid settings.")
             return
@@ -265,7 +280,7 @@ class MeasurementControl(tk.Frame):
             if not self.child_threads['meas'].active:
                 self._process_data(self.smu.fetch_data().split(','))
                 self.sweeps_done += 1
-                if self.sweeps_done < int(self.sweep["nsweeps"]) and not self.child_threads['meas'].aborted:
+                if self.sweeps_done < int(self.sweep["nsweeps"]) and not self.stop:
                     self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep))
                     self.measdone.set(True)
                     self.child_threads['meas'].start()
