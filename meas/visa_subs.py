@@ -255,6 +255,7 @@ class OPCThread(threading.Thread):
             time.sleep(1)
 
     def kill(self):
+        logger.debug("OPCThread received kill.")
         self.alive.clear()
 
     @property

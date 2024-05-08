@@ -462,6 +462,10 @@ class MainFrame(tk.Frame):
         else:
             self.widgets['quitButton']['state'] = NORMAL
             self.widgets['measButton']['state'] = NORMAL
+        if self.widgets['measurementFrame'].stopping:
+            self.widgets['stopButton']['state'] = DISABLED
+        else:
+            self.widgets['stopButton']['state'] = NORMAL
 
     @property
     def isafm(self):
