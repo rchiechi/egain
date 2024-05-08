@@ -1,4 +1,5 @@
 import time
+import logging
 import threading
 import tkinter.ttk as tk
 from tkinter import Toplevel, Text, BooleanVar, StringVar, DoubleVar, Label, messagebox
@@ -11,6 +12,7 @@ from stage.backend import NetHost, IP_ADDRESS, PORT
 from stage.mks import ESP302
 from gui.util import parseusersettings
 
+logger = logging.getLogger(__package__+'.stagecontrol')
 
 class StageControls(tk.Frame):
 
@@ -320,7 +322,7 @@ class StageControls(tk.Frame):
             self.motionControls[_widget]['state'] = DISABLED
         self.widgets['gohomebutton']['state'] = DISABLED
         self.motionControls[_button].after('100', lambda: self._waitformotion(self.motionControls[_button]))
-        print(f"*******Moving {_button}:{self.axismap[_button][0]} ({self.axismap[_button][1]*self.relative_move})")
+        logger.debug(f"*******Moving {_button}:{self.axismap[_button][0]} ({self.axismap[_button][1]*self.relative_move})")
         self.xyzstage['stage'].relativeMove(self.axismap[_button][0], self.axismap[_button][1]*self.relative_move)
         time.sleep(0.25)
 
@@ -345,13 +347,13 @@ class StageControls(tk.Frame):
         for key in self.units:
             if self.units[key] == self.unitStr.get():
                 self.unit = key
-                print(f"Setting units to {self.units[key]}")
+                logger.debug(f"Setting units to {self.units[key]}")
                 self.relativemoveScaleChange(self.motionControls['scale'].get())
                 self.xyzstage['stage'].setUnits(key)
                 time.sleep(1)
                 for _unit in self.xyzstage['stage'].getUnits():
                     if _unit != self.unit:
-                        print("Warning units not set correctly.")
+                        logger.warning("Units not set correctly.")
         self._updateposition(block=True)
         self.checkErrors()
 
