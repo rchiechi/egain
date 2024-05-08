@@ -40,7 +40,7 @@ class MeasurementControl(tk.Frame):
                                                'nsweeps': '5',
                                                'reversed': '0'
                                                })
-        self.meas = self.config.get('meas', {'ADDRESS': '24', 'NPLC': '5'})
+        self.meas = self.config.get('meas', {'ADDRESS': '24', 'NPLC': '5', 'compliance': '105e-3'})
         self.deviceString = StringVar()
         self.createWidgets()
 
@@ -113,6 +113,12 @@ class MeasurementControl(tk.Frame):
         measFrame = tk.LabelFrame(self, text='Sourcemeter Settings')
 
         measFrame.pack(side=LEFT, fill=BOTH)
+
+        measComplianceEntry = tk.Entry(measFrame, textvariable=self.compliance, width=5)
+        measComplianceLabel = tk.Label(measFrame, text='Compliance:', font=self.labelFont)
+        measComplianceLabel.pack(side=LEFT)
+        measComplianceEntry.pack(side=LEFT)
+
         measNPLC = tk.Spinbox(measFrame,
                               from_=1,
                               to=10,
@@ -175,9 +181,11 @@ class MeasurementControl(tk.Frame):
         try:
             for _StringVar in self.meas:
                 _var = getattr(self, _StringVar).get()
-                int(_var)
+                try:
+                    int(_var)
+                except ValueError:
+                    float(_var)
                 self.meas[_StringVar] = _var
-                # self.meas[_StringVar] = int(getattr(self, _StringVar).get())
         except ValueError as msg:
             print(f'{_StringVar} invalid {str(msg)}.')
             getattr(self, _StringVar).set(self.meas[_StringVar])
@@ -213,7 +221,10 @@ class MeasurementControl(tk.Frame):
             return
         self.busy.set(True)
         self._isbusy = True
-        self.smu.initialize(reset=True, auto_sense_range=True, flowcontrol=False)
+        self.smu.initialize(reset=True,
+                            auto_sense_range=True,
+                            flowcontrol=False,
+                            compliance=float(self.compliance.get()))
         self.smu.setNPLC(self.meas['NPLC'])
         self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep))
         self.child_threads['meas'].start()

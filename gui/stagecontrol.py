@@ -64,6 +64,14 @@ class StageControls(tk.Frame):
         self.alive = threading.Event()
         self.alive.set()
 
+    def __setitem__(self, what, value):
+        if what == 'state':
+            for key in self.motionControls:
+                self.motionControls[key]['state'] = value
+            self.widgets['initButton']['state'] = value
+        else:
+            self.configure(**{what:value})
+
     @property
     def initialized(self):
         return self.xyzstage['initialized']

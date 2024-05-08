@@ -2,7 +2,8 @@ import os
 import sys
 import subprocess
 import socket
-import json
+import pickle
+from pathlib import Path
 from appdirs import user_config_dir
 
 
@@ -29,18 +30,21 @@ def validateip(addr):
         return False
 
 def parseusersettings(_file, payload={}):
-    config_file = os.path.join(user_config_dir('egain'), _file)
+    config_file = Path(user_config_dir('egain', 'rcclab'), os.path.basename(_file))
     if not os.path.exists(os.path.split(config_file)[0]):
         os.makedirs(os.path.split(config_file)[0])
     try:
         if not payload:
-            with open(config_file) as fh:
-                return json.load(fh)
+            with config_file.open('rb') as fh:
+                return pickle.load(fh)
         else:
-            with open(config_file, 'wt') as fh:
-                json.dump(payload, fh)
-    except json.decoder.JSONDecodeError:
+            with config_file.open('wb') as fh:
+                pickle.dump(payload, fh)
+    except pickle.UnpicklingError:
         print("Error parsing user settings.")
+    except pickle.PicklingError:
+        print("Error saving user settings.")
+        config_file.unlink(missing_ok=True)
     except IOError:
         print(f"{config_file} not found.")
     return {}
