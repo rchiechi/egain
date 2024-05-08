@@ -1,11 +1,13 @@
 import os
 import sys
+import logging
 import subprocess
 import socket
 import pickle
 from pathlib import Path
 from appdirs import user_config_dir
 
+logger = logging.getLogger(__package__+'.util')
 
 def ping(host):
     if host is None:
@@ -41,10 +43,11 @@ def parseusersettings(_file, payload={}):
             with config_file.open('wb') as fh:
                 pickle.dump(payload, fh)
     except pickle.UnpicklingError:
-        print("Error parsing user settings.")
+        logger.warning("Error parsing user settings.")
+        config_file.unlink(missing_ok=True)
     except pickle.PicklingError:
-        print("Error saving user settings.")
+        logger.warning("Error saving user settings.")
         config_file.unlink(missing_ok=True)
     except IOError:
-        print(f"{config_file} not found.")
+        logger.debug(f"{config_file} not found.")
     return {}

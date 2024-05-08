@@ -1,21 +1,13 @@
-import os
 import time
-import platform
-import logging
 import threading
 import tkinter.ttk as tk
-from tkinter import Tk
-# from tkinter import Toplevel
-from tkinter import filedialog
-from tkinter import Toplevel, Text, IntVar, BooleanVar, StringVar, DoubleVar, Listbox, Label, Entry, messagebox
-from tkinter import N, S, E, W, X, Y  # pylint: disable=unused-import
-from tkinter import TOP, BOTTOM, LEFT, RIGHT  # pylint: disable=unused-import
-from tkinter import END, BOTH, NONE, VERTICAL, HORIZONTAL  # pylint: disable=unused-import
-from tkinter import EXTENDED, RAISED, DISABLED, NORMAL  # pylint: disable=unused-import
-from tkinter import PhotoImage
-from tkinter.font import Font
-from gui.colors import BLACK, YELLOW, WHITE, RED, TEAL, GREEN, BLUE, GREY  # pylint: disable=unused-import
-from stage.backend import NetHost, GenericBackEnd, IP_ADDRESS, PORT
+from tkinter import Toplevel, Text, BooleanVar, StringVar, DoubleVar, Label, messagebox
+from tkinter import TOP, BOTTOM, LEFT, RIGHT
+from tkinter import END, BOTH, NONE, VERTICAL, HORIZONTAL
+from tkinter import DISABLED, NORMAL
+from tkinter import X, Y
+from gui.colors import BLACK, WHITE
+from stage.backend import NetHost, IP_ADDRESS, PORT
 from stage.mks import ESP302
 from gui.util import parseusersettings
 
@@ -92,13 +84,18 @@ class StageControls(tk.Frame):
         #                                              command=lambda: self.motionButtonClick(_button),
         #                                              state=DISABLED)
         # NOTE: The code above binds all buttons to lambda: self.motionButtonClick("back") for some reason
-        self.motionControls['up'] = tk.Button(master=xyzFrame, text='up'.capitalize(), command=lambda: self.motionButtonClick('up'), state=DISABLED)
-        self.motionControls['down'] = tk.Button(master=xyzFrame, text='down'.capitalize(), command=lambda: self.motionButtonClick('down'), state=DISABLED)
-        self.motionControls['left'] = tk.Button(master=xyzFrame, text='left'.capitalize(), command=lambda: self.motionButtonClick('left'), state=DISABLED)
-        self.motionControls['right'] = tk.Button(master=xyzFrame, text='right'.capitalize(), command=lambda: self.motionButtonClick('right'), state=DISABLED)
-        self.motionControls['forward'] = tk.Button(master=xyzFrame, text='forward'.capitalize(), command=lambda: self.motionButtonClick('forward'), state=DISABLED)
-        self.motionControls['back'] = tk.Button(master=xyzFrame, text='back'.capitalize(), command=lambda: self.motionButtonClick('back'), state=DISABLED)
-
+        self.motionControls['up'] = tk.Button(master=xyzFrame, text='up'.capitalize(),
+                                              command=lambda: self.motionButtonClick('up'), state=DISABLED)
+        self.motionControls['down'] = tk.Button(master=xyzFrame, text='down'.capitalize(),
+                                                command=lambda: self.motionButtonClick('down'), state=DISABLED)
+        self.motionControls['left'] = tk.Button(master=xyzFrame, text='left'.capitalize(),
+                                                command=lambda: self.motionButtonClick('left'), state=DISABLED)
+        self.motionControls['right'] = tk.Button(master=xyzFrame, text='right'.capitalize(),
+                                                 command=lambda: self.motionButtonClick('right'), state=DISABLED)
+        self.motionControls['forward'] = tk.Button(master=xyzFrame, text='forward'.capitalize(),
+                                                   command=lambda: self.motionButtonClick('forward'), state=DISABLED)
+        self.motionControls['back'] = tk.Button(master=xyzFrame, text='back'.capitalize(),
+                                                command=lambda: self.motionButtonClick('back'), state=DISABLED)
 
         relativemoveFrame = tk.Frame(xyzFrame)  # Create frame to hold information about movement
         self.motionControls['scale'] = tk.Scale(master=relativemoveFrame,  # Create slider to set movement distance

@@ -19,7 +19,7 @@ class Instrument:
     DATA_FORMAT = ('V', 'I', 't')
     visa = None
 
-    def __init__(self, address, flowcontrol=False):
+    def __init__(self, address, **kwargs):
         self.name = "Instrument Name"
         self.address = address
         if isinstance(address, int):
@@ -27,7 +27,9 @@ class Instrument:
             self.backend = MODE_GPIB
         else:
             # self.visa = serial.Serial(address, 9600, timeout=0.5)
-            self.visa = visa_subs.initialize_serial(address, flowcontrol=flowcontrol)
+            self.visa = visa_subs.initialize_serial(address,
+                                                    flowcontrol=kwargs.get('flowcontrol', False),
+                                                    quiet=kwargs.get('quiet', False))
             self.backend = MODE_SERIAL
 
     @property
