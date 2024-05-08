@@ -25,6 +25,7 @@ import time
 import math
 import csv
 from pathlib import Path
+import logging
 import tkinter.ttk as tk
 from tkinter import Toplevel, filedialog
 from tkinter import StringVar, IntVar, BooleanVar, Label, Entry, messagebox, Checkbutton
@@ -54,6 +55,8 @@ INITIALIZED = 'Initialized'
 STRFTIME = '%Y-%m-%dT%H:%M:%SZ'
 csv.register_dialect('JV', delimiter='\t', quoting=csv.QUOTE_MINIMAL)
 
+logger = logging.getLogger(__package__+'.main')
+
 class MainFrame(tk.Frame):
     '''The main frame for collecting EGaIn data.'''
 
@@ -65,9 +68,10 @@ class MainFrame(tk.Frame):
     counter = 0
     config_file = GLOBAL_OPTS
 
-    def __init__(self, root):
+    def __init__(self, root, cli_opts):
         self.root = root
         super().__init__(self.root)
+        self.cli_opts = cli_opts
         self.opts = createOptions()
         self.bgimg = PhotoImage(file=os.path.join(absdir, 'RCCLabFluidic.png'))
         limg = Label(self.root, i=self.bgimg)
@@ -97,6 +101,7 @@ class MainFrame(tk.Frame):
         dataFrame = tk.Frame(self)
         controlsFrame = tk.Frame(self)
         measurementFrame = MeasurementControl(controlsFrame,
+                                              self.cli_opts,
                                               measdone=measdone,
                                               busy=busy)
         self.widgets['measurementFrame'] = measurementFrame
@@ -110,8 +115,9 @@ class MainFrame(tk.Frame):
         self.egain_widgets.append('tempcontrols')
         optionsFrame = tk.Frame(self)
         outputFrame = tk.Frame(optionsFrame)
-        magFrame = tk.Frame(optionsFrame)
-        # outputfilenameFrame = tk.Frame(optionsFrame)
+
+        magFrame = tk.LabelFrame(optionsFrame, text='EGaIn Tip Geometry')
+        afmFrame = tk.LabelFrame(optionsFrame, text='AFM Tip Geometry')
         buttonFrame = tk.Frame(self)
 
         dataplot = dataCanvas(dataFrame)
@@ -140,6 +146,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntry.insert(0, self.opts['output_file_name'])
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
+
         # EGaIn-specific widgets
         maketipButton = tk.Button(master=magFrame,
                                   text='Make Tip',
@@ -189,29 +196,32 @@ class MainFrame(tk.Frame):
         self.egain_widgets.append('junctionmag')
         self.widgets['junctionmag'].pack(side=LEFT)
         CreateTooltip(self.widgets['junctionmag'], "Magnification value on zoom lens")
+
         # AFM Widgets
-        tipsizeEntryLabel = Label(master=magFrame,
+        tipsizeEntryLabel = Label(master=afmFrame,
                                   text='Tip diameter (nm):')
         tipsizeEntryLabel.pack(side=LEFT)
         tip_size = StringVar(value='15')
         self.variables['tip_size'] = tip_size
-        self.widgets['tipsizeEntry'] = Entry(master=magFrame,
+        self.widgets['tipsizeEntry'] = Entry(master=afmFrame,
                                              width=5,
                                              textvariable=tip_size,
-                                             font=Font(size=10))
+                                             font=Font(size=8))
         self.egain_widgets.append('tipsizeEntry')
         self.widgets['tipsizeEntry'].pack(side=LEFT)
         self.widgets['tipsizeEntry']['state'] = DISABLED
         CreateTooltip(self.widgets['tipsizeEntry'], "Diameter of the AFM tip in nm")
-        # # #
         self.variables['isafm'] = IntVar()
         self.variables['isafm'].set(self.opts['isafm'])
         self.variables['isafm'].trace_add('write', self._checkafm)
-        afmoregainCheck = Checkbutton(magFrame, text='AFM', variable=self.variables['isafm'])
+        afmoregainCheck = Checkbutton(afmFrame, text='AFM', variable=self.variables['isafm'])
         afmoregainCheck.pack(side=LEFT)
+        # # #
 
         outputFrame.pack(side=TOP, fill=X)
+        tk.Separator(optionsFrame, orient=HORIZONTAL).pack(fill=X)
         magFrame.pack(side=TOP, fill=X)
+        afmFrame.pack(side=TOP, fill=X)
 
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             self.widgets['junctionsizeEntry'].bind(_ev, self.checkJunctionsize)
@@ -289,12 +299,12 @@ class MainFrame(tk.Frame):
                 ohms = float(_meas)
             except ValueError:
                 ohms = 1000000.0
-            print(f"Measured {ohms:0.1f}Ω")
+            logger.info(f"Measured {ohms:0.1f}Ω")
             if ohms > 100:
-                print("Resistance > 100Ω --> tip formed?")
+                logger.info("Resistance > 100Ω --> tip formed?")
                 break
             _t += 1
-            print(_t)
+            logger.debug(_t)
             if _t > 120:
                 break
             time.sleep(0.1)
@@ -310,7 +320,7 @@ class MainFrame(tk.Frame):
         if not _path:
             return
         self.opts['save_path'] = Path(_path)
-        print(self.opts['save_path'])
+        logger.debug(f"Saving to {self.opts['save_path']}")
         self.variables['outputdirstring'].set(self.opts['save_path'])
         self.checkOptions()
 
@@ -376,11 +386,8 @@ class MainFrame(tk.Frame):
             if len(results['V']) == len(results['I']):
                 self.widgets['dataplot'].displayData(results)
             self._writedata(False)
-            # self.widgets['dataplot'].displayData({'x':[1,2,3], 'y':[4,5,6]})
-        # if not self.variables['busy'].get():
         if not self.widgets['measurementFrame'].isbusy:
             self._writedata(True)
-            # print(">>>>>>>>>>>> _updateData Measurement is not busy")
 
     def _writedata(self, finalize=False):
         # TEMPERATURE DATA!!!
@@ -390,13 +397,12 @@ class MainFrame(tk.Frame):
         _jsize = float(self.variables['junction_size'].get())
         _rsize = float(self.variables['reference_size'].get()) / 2  # screen_cm in diameter / 2 = radius
         _tsize = float(self.variables['tip_size'].get()) / 2  # tip diameter / 2 = radius
-        # _jmag = float(self.variables['junction_mag'].get())
         _conversion = (REFERENCE_SIZE_M * 100) / _rsize  # (m cm/m) / screen_cm = cm / screen_cm
         if self.isafm:  # calculate area from tip diameter
-            print("Computing area from AFM tip diameter.")
+            logger.debug("Computing area from AFM tip diameter.")
             _area_in_cm = math.pi*(_tsize * 1e-07)**2
         else:
-            print("Computing area from onscreen measurement.")
+            logger.debug("Computing area from onscreen measurement.")
             _area_in_cm = math.pi*(_conversion * _jsize)**2  # pi((cm / screen_cm) screen_cm) = cm
         results = self.widgets['measurementFrame'].data
         for _key in ('J', 'upper', 'lower'):
@@ -442,12 +448,9 @@ class MainFrame(tk.Frame):
                     f"{MEASURING} sweep {self.widgets['measurementFrame'].sweeps_done+1}")
         else:
             self.variables['statusVar'].set(READY)
-        # if self.variables['busy'].get():
         if self.widgets['measurementFrame'].isbusy or self.variables['busy'].get():
             self.widgets['quitButton']['state'] = DISABLED
             self.widgets['measButton']['state'] = DISABLED
-            # self.widgets['measurementFrame'].after(100, self._checkbusy)
-            # print(f">>>> _checkbusy Measurement Frame is busy {self.widgets['measurementFrame'].isbusy}, {self.variables['busy'].get()}")
         else:
             self.widgets['quitButton']['state'] = NORMAL
             self.widgets['measButton']['state'] = NORMAL
@@ -474,7 +477,7 @@ def write_data_to_file(fn, results):
                                  results['upper'][_idx],
                                  results['lower'][_idx]])
             except IndexError:
-                print("WARNING: Mismatch in lengths of data rows.")
+                logger.warning("Mismatch in lengths of data rows.")
 
 
 def maketip(smu, stage):

@@ -1,9 +1,10 @@
 import time
+import logging
 from decimal import Decimal
 import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import BooleanVar, StringVar, messagebox
-from tkinter import TOP, LEFT
+from tkinter import TOP, LEFT, BOTTOM
 from tkinter import BOTH
 from tkinter.font import Font
 from meas.k6430 import K6430
@@ -13,6 +14,8 @@ from meas.visa_subs import MODE_SERIAL
 from gui.util import parseusersettings
 
 MEAS_MODE = MODE_SERIAL
+
+logger = logging.getLogger(__package__+'.meas')
 
 class MeasurementControl(tk.Frame):
 
@@ -25,9 +28,10 @@ class MeasurementControl(tk.Frame):
     sweeps_done = 0
     config_file = 'MeasurementControl.json'
 
-    def __init__(self, root, **kwargs):
+    def __init__(self, root, cli_opts, **kwargs):
         self.master = root
         self._init_results()
+        self.cli_opts = cli_opts
         self.measdone = kwargs.get('measdone', BooleanVar(value=False))
         self.busy = kwargs.get('busy', BooleanVar(value=False))
         self.measdone.set(False)
@@ -89,7 +93,7 @@ class MeasurementControl(tk.Frame):
         sweepStepSizeEntry = tk.Entry(sweepFrame, textvariable=self.stepSize, width=4)
         sweepSweepsEntry = tk.Entry(sweepFrame, textvariable=self.nsweeps, width=4)
 
-        sweepFrame.pack(side=LEFT, fill=BOTH)
+        sweepFrame.pack(side=BOTTOM, fill=BOTH)
         reversedCheckbutton = tk.Checkbutton(sweepFrame, text='Reversed',
                                              variable=self.reversed,
                                              command=self._validateMeas)
@@ -112,9 +116,9 @@ class MeasurementControl(tk.Frame):
             getattr(self, _StringVar).trace_add('write', self._validateMeas)
         measFrame = tk.LabelFrame(self, text='Sourcemeter Settings')
 
-        measFrame.pack(side=LEFT, fill=BOTH)
+        measFrame.pack(side=BOTTOM, fill=BOTH)
 
-        measComplianceEntry = tk.Entry(measFrame, textvariable=self.compliance, width=5)
+        measComplianceEntry = tk.Entry(measFrame, textvariable=self.compliance, width=10)
         measComplianceLabel = tk.Label(measFrame, text='Compliance:', font=self.labelFont)
         measComplianceLabel.pack(side=LEFT)
         measComplianceEntry.pack(side=LEFT)
@@ -150,7 +154,7 @@ class MeasurementControl(tk.Frame):
         self.busy.set(True)
         self._isbusy = True
         if not self.is_initialized:
-            _smu = K6430(self.deviceString.get())
+            _smu = K6430(self.deviceString.get(), quiet=self.cli_opts.quiet)
             if _smu.initialize(auto_sense_range=True):
                 self.smu = _smu
                 self.config['device_string'] = self.deviceString.get()
@@ -169,8 +173,7 @@ class MeasurementControl(tk.Frame):
                     self.sweep[_StringVar] = _var
         except ValueError as msg:
             getattr(self, _StringVar).set(self.sweep[_StringVar])
-            print(f'{_StringVar} invalid.')
-            print(msg)
+            logger.warning(f'{_StringVar} invalid ({msg}).')
             self.error = True
             return
         self.error = False
@@ -187,7 +190,7 @@ class MeasurementControl(tk.Frame):
                     float(_var)
                 self.meas[_StringVar] = _var
         except ValueError as msg:
-            print(f'{_StringVar} invalid {str(msg)}.')
+            logger.warning(f'{_StringVar} invalid {str(msg)}.')
             getattr(self, _StringVar).set(self.meas[_StringVar])
             self.error = True
             return
@@ -263,7 +266,7 @@ class MeasurementControl(tk.Frame):
                     self.measdone.set(True)
                     self.child_threads['meas'].start()
                 else:
-                    print(f'Completed {self.sweep["nsweeps"]} sweeps.')
+                    logger.info(f'Completed {self.sweep["nsweeps"]} sweeps.')
                     self.child_threads['meas'] = None
                     self.sweeps_done = 0
             self.after(100, self._measureinbackground)
@@ -272,7 +275,7 @@ class MeasurementControl(tk.Frame):
         self._isbusy = False
         self.measdone.set(True)
         self.busy.set(False)
-        print('All sweeps completed.')
+        logger.info('All sweeps completed.')
 
     def _process_data(self, data_):
         # b'VOLT,CURR,TIME ---> self.visa.write(":FORM:ELEM VOLT,CURR,TIME")
@@ -280,16 +283,16 @@ class MeasurementControl(tk.Frame):
         _keymap = {}
         for i, j in enumerate(K6430.DATA_FORMAT):
             _keymap[i] = j
-        print(_keymap)
+        logger.debug(_keymap)
         i = 0
         for _d in data_:
             if i == len(_keymap):
                 i = 0
-            print(f'{i}:{_keymap[i]} = {_d}')
+            logger.debug(f'{i}:{_keymap[i]} = {_d}')
             try:
                 self.results[_keymap[i]].append(float(_d))
             except ValueError:
-                print(f'Error convering {_d} to float.')
+                logger.warning(f'Error convering {_d} to float.')
                 self.results[_keymap[i]].append(0.0)
             i += 1
 
@@ -358,7 +361,7 @@ class MeasurementReadV(MeasurementControl):
         try:
             self.measvoltage = float(_voltage)
         except ValueError:
-            print(f"Error converting {_voltage} to float.")
+            logger.warning(f"Error converting {_voltage} to float.")
             self.measvoltage = 0.0
         self._updateVoltage()
 
