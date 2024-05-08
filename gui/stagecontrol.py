@@ -127,6 +127,8 @@ class StageControls(tk.Frame):
                                        self.unitStr,
                                        self.unitStr.get(),
                                        *list(self.units.values()))
+        unitOptionMenu['state'] = DISABLED
+        self.widgets['unitOptionMenu'] = unitOptionMenu
         # Relative move frame */
         # */ Stage frame
         stageFrame = tk.Frame(master=self)  # Create frame to hold status and position information
@@ -255,7 +257,7 @@ class StageControls(tk.Frame):
             self.relativemoveScaleChange(self.motionControls['scale'].get())
             for _widget in self.motionControls:
                 self.motionControls[_widget]['state'] = NORMAL
-            for _widget in ['gohomebutton']:
+            for _widget in 'gohomebutton', 'unitOptionMenu':
                 self.widgets[_widget]['state'] = NORMAL
             self._handleunitchange()
             self.widgets['initButton'].after(100, self._updateposition)
