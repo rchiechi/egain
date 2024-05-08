@@ -5,16 +5,16 @@ cm.init()
 
 class ColorFormatter(logging.Formatter):
     #  https://stackoverflow.com/questions/14844970/modifying-logging-message-format-based-on-message-logging-level-in-python3
-    err_fmt = f"{cm.Fore.WHITE}{cm.Back.BLACK}%(asctime)s "\
+    err_fmt = f"{cm.Back.BLACK}"\
               f"{cm.Style.BRIGHT}{cm.Fore.CYAN}%(name)s{cm.Fore.WHITE} [{cm.Fore.RED}ERROR{cm.Fore.WHITE}] %(message)s{cm.Style.RESET_ALL}"
 
-    dbg_fmt = f"{cm.Fore.WHITE}{cm.Back.BLACK}%(asctime)s "\
+    dbg_fmt = f"{cm.Back.BLACK}"\
               f"{cm.Style.BRIGHT}{cm.Fore.CYAN}%(name)s{cm.Fore.WHITE} [{cm.Fore.BLUE}DEBUG{cm.Fore.WHITE}] {cm.Style.NORMAL}%(message)s{cm.Style.RESET_ALL}"
 
-    info_fmt = f"{cm.Fore.WHITE}{cm.Back.BLACK}%(asctime)s "\
+    info_fmt = f"{cm.Back.BLACK}"\
                f"{cm.Style.BRIGHT}{cm.Fore.CYAN}%(name)s{cm.Fore.WHITE} [{cm.Fore.GREEN}INFO{cm.Fore.WHITE}] %(message)s{cm.Style.RESET_ALL}"
 
-    wrn_fmt = f"{cm.Fore.WHITE}{cm.Back.BLACK}%(asctime)s "\
+    wrn_fmt = f"{cm.Back.BLACK}"\
               f"{cm.Style.BRIGHT}{cm.Fore.CYAN}%(name)s{cm.Fore.WHITE} [{cm.Fore.YELLOW}WARNING{cm.Fore.WHITE}] %(message)s{cm.Style.RESET_ALL}"
     # %(asctime)s - %(name)s - [%(levelname)s] %(message)s'
 

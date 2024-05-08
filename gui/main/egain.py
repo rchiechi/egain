@@ -146,7 +146,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntry.insert(0, self.opts['output_file_name'])
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
-
+        self.widgets['outputfilenameEntry'] = outputfilenameEntry
         # EGaIn-specific widgets
         maketipButton = tk.Button(master=magFrame,
                                   text='Make Tip',
@@ -326,6 +326,11 @@ class MainFrame(tk.Frame):
 
     def checkOutputfilename(self, event):
         self.opts['output_file_name'] = event.widget.get()
+        if os.path.exists(os.path.join(self.variables['outputdirstring'].get(),
+                          f"{event.widget.get()}_data.txt")):
+            event.widget.config({"background": "Yellow"})
+        else:
+            event.widget.config({"background": "White"})
         self.checkOptions()
 
     def checkJunctionsize(self, event):
@@ -341,7 +346,7 @@ class MainFrame(tk.Frame):
             self.variables['tip_size'].set('15')
 
     def checkOptions(self, *args):
-        _outdir = Path(f"{self.variables['outputdirstring'].get().strip('/')}")
+        _outdir = Path(f"{self.variables['outputdirstring'].get()}")
         self.variables['outputdirstring'].set(str(_outdir))
         if self.variables['statusVar'].get() in (MEASURING):
             self.widgets['measButton'].after(100, self.checkOptions)
@@ -412,16 +417,15 @@ class MainFrame(tk.Frame):
             results['upper'].append(self.widgets['tempcontrols'].uppertemp)
             results['lower'].append(self.widgets['tempcontrols'].lowertemp)
         _fn = Path(self.opts['save_path'], self.opts['output_file_name'])
+        _tmp = Path(f'{_fn}_tmp.txt')
         if finalize:
-            if _fn.exists():
-                if not tk.askyesno("Overwrite?", f'{_fn} exists, overwrite it?'):
-                    _fn = Path(f'{_fn}_{str(self.counter).zfill(2)}')
-                    self.counter += 1
-            write_data_to_file(f'{_fn}_data.txt', results)
-            try:
-                os.remove(f'{_fn}_tmp.txt')
-            except FileNotFoundError:
-                pass
+            data_f = Path(f'{_fn}_data.txt')
+            if data_f.exists():
+                if not messagebox.askyesno("Overwrite?", f'{data_f} exists, overwrite it?'):
+                    _fn = increment_fn(_fn)
+                    data_f = Path(f'{_fn}_data.txt')
+            if write_data_to_file(data_f, results):
+                _tmp.unlink(missing_ok=True)
             del self.widgets['measurementFrame'].data
         else:
             write_data_to_file(f'{_fn}_tmp.txt', results)
@@ -435,7 +439,11 @@ class MainFrame(tk.Frame):
             fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
             fh.write(f"Lower temperature (°C): {self.widgets['tempcontrols'].lowertemp}\n")
         if finalize:
-            messagebox.showinfo("Saved", f"Data written to {_fn}_data.txt")
+            messagebox.showinfo("Saved", f"Data written to {data_f}")
+            self.opts['output_file_name'] = increment_fn(self.opts['output_file_name'])
+            self.widgets['outputfilenameEntry'].delete(0, END)
+            self.widgets['outputfilenameEntry'].insert(0, self.opts['output_file_name'])
+            self.checkOptions()
 
     def _checkbusy(self, *args):
         if not self.initialized:
@@ -463,6 +471,22 @@ class MainFrame(tk.Frame):
     def isegain(self):
         return not self.isafm
 
+def increment_fn(fn):
+    prts = str(fn).split('_')
+    for _i in range(len(prts)-1, -1, -1):
+        try:
+            prts[_i] = str(int(prts[_i])+1).zfill(2)
+            break
+        except ValueError:
+            continue
+    new_fn = '_'.join(prts)
+    if new_fn != fn:
+        return new_fn
+    elif fn[-4] == '.':
+        return f'{fn[:-4]}_01{fn[-4:]}'
+    else:
+        return f'{fn}_01'
+
 def write_data_to_file(fn, results):
     _fn = Path(fn)
     with _fn.open('w', newline='') as csvfile:
@@ -478,7 +502,7 @@ def write_data_to_file(fn, results):
                                  results['lower'][_idx]])
             except IndexError:
                 logger.warning("Mismatch in lengths of data rows.")
-
+    return _fn.exists()
 
 def maketip(smu, stage):
     popup = Toplevel()

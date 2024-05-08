@@ -12,7 +12,7 @@ def createOptions():
     opts['save_path'] = _config.get('save_path', os.path.expanduser('~'))
     opts['isafm'] = _config.get('isafm', 0)
     dt = datetime.now()
-    opts['output_file_name'] = Path(dt.strftime('%Y%m%d_%H%M_'))
+    opts['output_file_name'] = Path(dt.strftime('%Y%m%d_%H%M_01'))
     return opts
 
 def parsecliopts():
