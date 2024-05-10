@@ -169,7 +169,8 @@ class MeasurementControl(tk.Frame):
         self._isbusy = True
         if not self.is_initialized:
             _smu = K6430(self.deviceString.get(), quiet=self.cli_opts.quiet)
-            if _smu.initialize(auto_sense_range=True):
+            if _smu.initialize(auto_sense_range=True,
+                               compliance=float(self.compliance.get())):
                 self.smu = _smu
                 self.config['device_string'] = self.deviceString.get()
                 self._saveconfig()
@@ -187,7 +188,7 @@ class MeasurementControl(tk.Frame):
                     self.sweep[_StringVar] = _var
         except ValueError as msg:
             getattr(self, _StringVar).set(self.sweep[_StringVar])
-            logger.warning(f'{_StringVar} invalid ({msg}).')
+            logger.debug(f'{_StringVar} invalid ({msg}).')
             self.error = True
             return
         self.error = False
