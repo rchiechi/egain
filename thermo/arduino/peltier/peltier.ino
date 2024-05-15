@@ -169,12 +169,11 @@ void loop() {
     Serial.print(lowerTemp);
     Serial.print(",\"UPPER\":");
     Serial.print(upperTemp);
-    Serial.print(",");
-    Serial.print("\"TARGET\":");
+    Serial.print(",\"TARGET\":");
     Serial.print(lowerDegC);
-    Serial.print(",");
-    Serial.print("\"MODE\":");
-    Serial.print("\"getPeltierPolarity()\",");
+    Serial.print(",\"MODE\":\"");
+    Serial.print(getPeltierPolarity());
+    Serial.print("\",");
     checkPeltier();
     Serial.println("}");
   }

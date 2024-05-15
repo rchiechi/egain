@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import logging
 import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import IntVar, StringVar
@@ -11,6 +12,8 @@ from meas.util import enumerateDevices
 
 TEMPS = {'UPPER':None, 'LOWER':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'
+
+logger = logging.getLogger(__package__+'.peltier')
 
 class TempControl(tk.Frame):
 
@@ -84,7 +87,6 @@ class TempControl(tk.Frame):
                                     text='Off',
                                     command=self._setMode,
                                     state=DISABLED)
-        self.modeButton.after(100, self._getMode)
 
         devicePicker = tk.OptionMenu(self,
                                      self.device,
@@ -116,7 +118,7 @@ class TempControl(tk.Frame):
         self.writeserial(cmd)
 
     def _checkPeltier(self):
-        self.peltierCheck.after(1000, self._checkPeltier)
+        self.peltierCheck.after('1000', self._checkPeltier)
         _msg = self.readserial()
         power = _msg.get('Power', 0)
         self.peltierPowerString.set(str(power))
@@ -129,6 +131,9 @@ class TempControl(tk.Frame):
             self.peltier_on.set(1)
         else:
             self.peltier_on.set(0)
+        _mode = self.readserial().get("MODE", '?').title()
+        if self.modeButton["text"] != _mode:
+            self.modeButton["text"] = _mode.title()
 
     def _setMode(self):
         _mode = self.modeButton["text"].lower()
@@ -137,14 +142,8 @@ class TempControl(tk.Frame):
         elif _mode != 'cool':
             self.writeserial('COOL')
 
-    def _getMode(self):
-        self.modeButton.after(1000, self._getMode)
-        _mode = self.readserial().get("MODE", '?').title()
-        if self.modeButton["text"] != _mode:
-            self.modeButton["text"] = _mode.title()
-
     def _setTemp(self, *args):
-        print(f"Setting peltier to {self.targettemp.get()} °C")
+        logger.info(f"Setting peltier to {self.targettemp.get()} °C")
         self.writeserial('SETTEMP', self.targettemp.get())
 
     def _readTemps(self):
@@ -160,7 +159,7 @@ class TempControl(tk.Frame):
     def _initdevice(self, *args):
         if self.device.get() == DEFAULTUSBDEVICE:
             return
-        print("Initializing device.")
+        logger.info("Initializing device.")
         n = 0
         ser_port = os.path.join('/', 'dev', self.device.get())
         if not os.path.exists(ser_port):
@@ -175,7 +174,7 @@ class TempControl(tk.Frame):
                     _msg = json.loads(_json)
                     _val = _msg.get('message', '')
                     if _val == 'Done initializing':
-                        print("Device initalized")
+                        logger.info("Device initalized")
                         self.is_initialized = True
                         self.modeButton['state'] == NORMAL
                         return
@@ -184,7 +183,7 @@ class TempControl(tk.Frame):
                 n += 1
         except serial.serialutil.SerialException:
             return
-        print("Empty reply from device.")
+        logger.warning("Empty reply from device.")
 
     def readserial(self):
         if not self.is_initialized:
@@ -197,14 +196,14 @@ class TempControl(tk.Frame):
                 try:
                     msg = json.loads(_json)
                     if 'message' in msg:
-                        print(msg)
+                        logger.debug(msg)
                         self.is_initialized = False
                     return msg
                 except json.decoder.JSONDecodeError as err:
-                    print(f'JSON Error: {err}')
+                    logger.warning(f'JSON Error: {err}')
         except serial.serialutil.SerialException:
             pass
-        print(f"Error reading from {self.controller.name}.")
+        logger.error(f"Error reading from {self.controller.name}.")
         return {}
 
     def writeserial(self, cmd, val=None):
@@ -219,10 +218,10 @@ class TempControl(tk.Frame):
             # print(f"Wrote {cmd};", end="")
             if val is not None:
                 self.controller.write(bytes(val, encoding='utf8'))
-                print(f"{val}", end="")
+                logger.debug(f"{val}", end="")
             # print(f" to {self.controller.name}.")
         except serial.serialutil.SerialException:
-            print(f"Error sending command to {self.controller.name}.")
+            logger.error(f"Error sending command to {self.controller.name}.")
         self.last_serial = time.time()
 
 
