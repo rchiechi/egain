@@ -16,34 +16,12 @@
 
 #include <SPI.h>
 #include "Adafruit_MAX31855.h"
+#include "peltier.h"
 
-// Default connection is using software SPI, but comment and uncomment one of
-// the two examples below to switch between software SPI and hardware SPI:
 
-// Example creating a thermocouple instance with software SPI on any three
-// digital IO pins.
-#define LOWDO   3
-#define LOWCS   4
-#define LOWCLK  5
-#define HIDO   8
-#define HICS   9
-#define HICLK  10
 // initialize the Thermocouple
-Adafruit_MAX31855 lowerThermocouple(LOWCLK, LOWCS, LOWDO);
-Adafruit_MAX31855 upperThermocouple(HICLK, HICS, HIDO);
-
-#define PELTIER 6
-#define PELTIER_RELAY 13
-
-// Example creating a thermocouple instance with hardware SPI
-// on a given CS pin.
-//#define MAXCS   10
-//Adafruit_MAX31855 thermocouple(MAXCS);
-
-// Example creating a thermocouple instance with hardware SPI
-// on SPI1 using specified CS pin.
-//#define MAXCS   10
-//Adafruit_MAX31855 thermocouple(MAXCS, SPI1);
+Adafruit_MAX31855 lowerThermocouple(CLK, LOWCS, DO);
+Adafruit_MAX31855 upperThermocouple(CLK, HICS, DO);
 
 #define terminator ';'
 //int peltier_level = 0;
@@ -52,6 +30,9 @@ int lowerDegC = 25;
 int power = 0;
 bool peltier_on = false;
 bool initialized = false;
+double upperTemp = -999.9;
+double lowerTemp = -999.9;
+uint8_t peltier_state = HEAT;
 
 void setup() {
   Serial.begin(9600);
@@ -87,13 +68,11 @@ void checkPeltier() {
   }else{
     Serial.print("false");
   }
-  // int peltier_level = analogRead(PELTIER);
-  // int power = map(peltier_level, 0, 1024, 0, 100);
   Serial.print(", \"Power\":");
   Serial.print(power);
 }
 
-void setLower(){
+void setPower(){
   int setpower = 0;
   double c = lowerThermocouple.readCelsius();
   if (!isnan(c)){
@@ -133,47 +112,75 @@ void setPeltier(int setpower){
   }
 }
 
+void setPeltierPolarity(uint8_t new_state){
+  static uint8_t current_state;
+  if (current_state != new_state){
+    digitalWrite(PELTIER_POLARITY, new_state);
+  }
+  current_state = digitalRead(PELTIER_POLARITY);
+}
+  
+
+String getPeltierPolarity() {
+  uint8_t polarity = digitalRead(PELTIER_POLARITY);
+  if ( polarity == HEAT ){
+    return "HEAT";
+  }else if (polarity = COOL ){
+    return "COOL";
+  }else{
+    return "?";
+  }
+}
+
 void loop() {
 
+  double c = lowerThermocouple.readCelsius();
+  if (!isnan(c)){
+   lowerTemp = c;
+  }
+  c = upperThermocouple.readCelsius();
+  if (!isnan(c)){
+    upperTemp = c;
+  }
+
+  String incomingCmd = "null";
   if (Serial.available() > 0) {
       // read the incoming byte:
-      String incomingCmd = Serial.readStringUntil(terminator);
-      if (incomingCmd == "ON"){
-        peltier_on = true;
-        digitalWrite(13, HIGH); // sets the digital pin 13 on
-      }
-      if (incomingCmd == "OFF"){
-        peltier_on = false;
-        digitalWrite(13, LOW);  // sets the digital pin 13 off
-      }
-      if (incomingCmd == "SETTEMP"){
-        lowerDegC = Serial.parseFloat();
-      }
-    
+      incomingCmd = Serial.readStringUntil(terminator);
+  }
+  if (incomingCmd == "ON"){
+    peltier_on = true;
+    digitalWrite(PELTIER_RELAY, HIGH); // sets the digital pin PELTIER_RELAY on
+  }
+  if (incomingCmd == "OFF"){
+    peltier_on = false;
+    digitalWrite(PELTIER_RELAY, LOW);  // sets the digital pin PELTIER_RELAY off
+  }
+  if (incomingCmd == "HEAT"){
+    setPeltierPolarity(HEAT); // sets the polarity of the peltier
+  }
+  if (incomingCmd == "COOL"){
+    setPeltierPolarity(COOL); // sets the polarity of the peltier
+  }
+  if (incomingCmd == "SETTEMP"){
+    lowerDegC = Serial.parseFloat();
+  } 
   if (incomingCmd == "POLL"){
     Serial.print("{\"LOWER\":");
-    double c = lowerThermocouple.readCelsius();
-    if (!isnan(c)){
-      Serial.print(c);
-    } else{
-      Serial.print(-999.9);
-    }
+    Serial.print(lowerTemp);
     Serial.print(",\"UPPER\":");
-    c = upperThermocouple.readCelsius();
-    if (!isnan(c)){
-      Serial.print(c);
-    } else{
-      Serial.print(-999.9);
-    }
+    Serial.print(upperTemp);
     Serial.print(",");
     Serial.print("\"TARGET\":");
     Serial.print(lowerDegC);
     Serial.print(",");
+    Serial.print("\"MODE\":");
+    Serial.print("\"getPeltierPolarity()\",");
     checkPeltier();
     Serial.println("}");
   }
-  }
-  setLower();
+  
+  setPower();
   delay(250);
 
 }
