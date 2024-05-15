@@ -165,7 +165,6 @@ class TempControl(tk.Frame):
             return
         self.controller = SerialReader(serial.Serial(ser_port, 9600, timeout=0.5))
         self.controller.start()
-        self.controller.initdevice()
         time.sleep(1)
         if self.controller.initialized:
             logger.info("Device initalized")
@@ -225,6 +224,7 @@ class SerialReader(threading.Thread):
         self.cmds = []
 
     def run(self):
+        self._initdevice()
         while self.alive:
             if self.initialized:
                 self._serial_loop()
@@ -233,7 +233,7 @@ class SerialReader(threading.Thread):
     def sendcmd(self, cmd, val=None):
         self.cmds.append([cmd, val])
 
-    def initdevice(self):
+    def _initdevice(self):
         try:
             n = 0
             _json = ''
