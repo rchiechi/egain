@@ -74,25 +74,24 @@ void checkPeltier() {
 
 void setPower(){
   int setpower = 0;
-  double c = lowerThermocouple.readCelsius();
-  if (!isnan(c)){
-    double lowerDegK = lowerDegC + 273.15;
-    int k = c + 273.15;
-    setpower = (1 - (lowerDegK / k)) * 100;
-    int deltaK = abs(lowerDegK - k);
-    if (deltaK < 5){
-      setpower += 50;
-    }else if (deltaK < 10){
-      setpower += 75;
-    }else{
-      setpower = 100;
-    }
-    if (c >= lowerDegC){
-      setPeltier(setpower);
-    }
-    else {
-      setPeltier(0);
-    }
+  double lowerDegK = lowerDegC + 273.15;
+  int k = lowerTemp + 273.15;
+  setpower = (1 - (lowerDegK / k)) * 100;
+  int deltaK = abs(lowerDegK - k);
+  if (deltaK < 5){
+    setpower += 50;
+  }else if (deltaK < 10){
+    setpower += 75;
+  }else{
+    setpower = 100;
+  }
+  String mode = getPeltierPolarity();
+  if ( (lowerTemp >= lowerDegC) && (mode == 'COOL') ){
+    setPeltier(setpower);
+  }else if ( (lowerTemp <= lowerDegC) && (mode == 'HEAT') ){
+    setPeltier(setpower);
+  }else {
+    setPeltier(0);
   }
 }
 
