@@ -2,6 +2,7 @@ import os
 import json
 import time
 import logging
+import threading
 import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import IntVar, StringVar
@@ -108,21 +109,20 @@ class TempControl(tk.Frame):
         self._readTemps()
 
     def shutdown(self):
-        self.writeserial('OFF')
+        self.controller.kill()
 
     def _setPeltier(self):
         if self.peltier_on.get():
             cmd = 'ON'
         else:
             cmd = 'OFF'
-        self.writeserial(cmd)
+        self.controller.sendcmd(cmd)
 
     def _checkPeltier(self):
         self.peltierCheck.after('1000', self._checkPeltier)
-        _msg = self.readserial()
-        power = _msg.get('Power', 0)
+        power = self.controller.status.get('Power', 0)
         self.peltierPowerString.set(str(power))
-        _state = _msg.get('Peltier_on', None)
+        _state = self.controller.status.get('Peltier_on', None)
         if _state is None:
             self.peltierCheck.configure(state='disabled')
             return
@@ -131,24 +131,24 @@ class TempControl(tk.Frame):
             self.peltier_on.set(1)
         else:
             self.peltier_on.set(0)
-        _mode = self.readserial().get("MODE", '?').title()
+        _mode = self.controller.status.get("MODE", '?').title()
         if self.modeButton["text"] != _mode:
             self.modeButton["text"] = _mode.title()
 
     def _setMode(self):
         _mode = self.modeButton["text"].lower()
         if _mode != 'heat':
-            self.writeserial('HEAT')
+            self.controller.sendcmd('HEAT')
         elif _mode != 'cool':
-            self.writeserial('COOL')
+            self.controller.sendcmd('COOL')
 
     def _setTemp(self, *args):
         logger.info(f"Setting peltier to {self.targettemp.get()} °C")
-        self.writeserial('SETTEMP', self.targettemp.get())
+        self.controller.sendcmd('SETTEMP', self.targettemp.get())
 
     def _readTemps(self):
         self.tempFrame.after('500', self._readTemps)
-        _temps = self.readserial()
+        _temps = self.controller.status
         self.temps['upper'] = _temps.get('UPPER', -999.9)
         self.temps['lower'] = _temps.get('LOWER', -999.9)
         if self.temps['upper'] > -1000:
@@ -160,69 +160,147 @@ class TempControl(tk.Frame):
         if self.device.get() == DEFAULTUSBDEVICE:
             return
         logger.info("Initializing device.")
-        n = 0
         ser_port = os.path.join('/', 'dev', self.device.get())
         if not os.path.exists(ser_port):
             return
+        self.controller = SerialReader(serial.Serial(ser_port, 9600, timeout=0.5))
+        self.controller.start()
+        self.controller.initdevice()
+        time.sleep(1)
+        if self.controller.initialized:
+            logger.info("Device initalized")
+            self.is_initialized = True
+            self.modeButton['state'] = NORMAL
+            return
+        logger.warning("Device initialization failed.")
+
+#     def readserial(self):
+#         if not self.is_initialized:
+#             return {}
+#         try:
+#             _json = ''
+#             while not _json:
+#                 self.writeserial('POLL')
+#                 _json = str(self.controller.readline(), encoding='utf8').strip()
+#                 try:
+#                     msg = json.loads(_json)
+#                     if 'message' in msg:
+#                         logger.debug(msg)
+#                         self.is_initialized = False
+#                     return msg
+#                 except json.decoder.JSONDecodeError as err:
+#                     logger.warning(f'JSON Error: {err}')
+#         except serial.serialutil.SerialException:
+#             pass
+#         logger.error(f"Error reading from {self.controller.name}.")
+#         return {}
+# 
+#     def writeserial(self, cmd, val=None):
+#         if not self.is_initialized:
+#             return
+#         if not cmd:
+#             return
+#         try:
+#             self.controller.write(bytes(cmd, encoding='utf8')+b';')
+#             # print(f"Wrote {cmd};", end="")
+#             if val is not None:
+#                 self.controller.write(bytes(val, encoding='utf8'))
+#                 logger.debug(f"{val}", end="")
+#             # print(f" to {self.controller.name}.")
+#         except serial.serialutil.SerialException:
+#             logger.error(f"Error sending command to {self.controller.name}.")
+#         self.last_serial = time.time()
+
+class SerialReader(threading.Thread):
+
+    def __init__(self, controller):
+        super().__init__()
+        self.controller = controller
+        self.alive = threading.Event()
+        self.alive.set()
+        self.is_initialized = False
+        self.lock = threading.Lock()
+        self.last_update = time.time()
+        self.msg = {}
+        self.cmds = []
+
+    def run(self):
+        while self.alive:
+            if self.initialized:
+                self._serial_loop()
+                time.sleep(0.5)
+
+    def sendcmd(self, cmd, val=None):
+        self.cmds.append([cmd, val])
+
+    def initdevice(self):
         try:
-            self.controller = serial.Serial(ser_port, 9600, timeout=0.5)
-            time.sleep(1)
+            n = 0
             _json = ''
             while not _json or n < 10:
                 _json = str(self.controller.readline(), encoding='utf8')
                 try:
-                    _msg = json.loads(_json)
-                    _val = _msg.get('message', '')
+                    self.msg = json.loads(_json)
+                    _val = self.msg.get('message', '')
                     if _val == 'Done initializing':
                         logger.info("Device initalized")
                         self.is_initialized = True
-                        self.modeButton['state'] == NORMAL
+                        self.modeButton['state'] = NORMAL
                         return
                 except json.decoder.JSONDecodeError:
                     continue
                 n += 1
         except serial.serialutil.SerialException:
             return
-        logger.warning("Empty reply from device.")
 
-    def readserial(self):
-        if not self.is_initialized:
-            return {}
+    def _serial_loop(self):
         try:
             _json = ''
             while not _json:
-                self.writeserial('POLL')
-                _json = str(self.controller.readline(), encoding='utf8').strip()
+                while len(self.cmds):
+                    self._writeserial(*self.cmds.pop())
+                    time.sleep(0.1)
+                self._writeserial('POLL')
+                with self.lock:
+                    _json = str(self.controller.readline(), encoding='utf8').strip()
                 try:
-                    msg = json.loads(_json)
-                    if 'message' in msg:
-                        logger.debug(msg)
-                        self.is_initialized = False
-                    return msg
+                    self.msg = json.loads(_json)
+                    self.last_update = time.time()
                 except json.decoder.JSONDecodeError as err:
-                    logger.warning(f'JSON Error: {err}')
+                    logger.warning(f'SerialReader JSON Error: {err}')
         except serial.serialutil.SerialException:
-            pass
-        logger.error(f"Error reading from {self.controller.name}.")
-        return {}
+            logger.error(f"Error reading from {self.controller.name}.")
 
-    def writeserial(self, cmd, val=None):
-        if not self.is_initialized:
-            return
-        if not cmd:
-            return
-        if time.time() - self.last_serial < 0.5:
-            time.sleep(0.5)
+    def _writeserial(self, cmd, val=None):
         try:
-            self.controller.write(bytes(cmd, encoding='utf8')+b';')
-            # print(f"Wrote {cmd};", end="")
-            if val is not None:
-                self.controller.write(bytes(val, encoding='utf8'))
-                logger.debug(f"{val}", end="")
-            # print(f" to {self.controller.name}.")
+            with self.lock:
+                self.controller.write(bytes(cmd, encoding='utf8')+b';')
+                if val is not None:
+                    self.controller.write(bytes(val, encoding='utf8'))
+                    logger.debug(f"{val}", end="")
         except serial.serialutil.SerialException:
             logger.error(f"Error sending command to {self.controller.name}.")
-        self.last_serial = time.time()
+
+    def kill(self):
+        logger.debug("SerialReader thread dying")
+        self.alive.clear()
+        self._writeserial("OFF")
+
+    @property
+    def age(self):
+        return time.time() - self.last_serial
+
+    @property
+    def alive(self):
+        return self.alive.is_set()
+
+    @property
+    def initialized(self):
+        return self.is_initialized
+
+    @property
+    def status(self):
+        return self.msg
 
 
 if __name__ == '__main__':

@@ -179,6 +179,6 @@ void loop() {
   }
   
   setPower();
-  delay(250);
+  delay(100);
 
 }
