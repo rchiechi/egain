@@ -18,13 +18,13 @@ logger = logging.getLogger(__package__+'.peltier')
 
 class TempControl(tk.Frame):
 
-    controller = None
     is_initialized = False
     temps = {'upper':0, 'lower':0}
 
     def __init__(self, root):
         self.master = root
         super().__init__(self.master)
+        self.controller = SerialReader(None)
         self.upperTempString = StringVar()
         self.lowerTempString = StringVar()
         self.peltierPowerString = StringVar()
@@ -105,7 +105,7 @@ class TempControl(tk.Frame):
         setFrame.pack(side=TOP)
         modeFrame.pack(side=TOP, fill=X)
         self.tempFrame.pack(side=TOP)
-        # self.pack()
+        self.targettemp.set('25')
         self._readTemps()
 
     def shutdown(self):
@@ -165,50 +165,17 @@ class TempControl(tk.Frame):
             return
         self.controller = SerialReader(serial.Serial(ser_port, 9600, timeout=0.5))
         self.controller.start()
-        time.sleep(1)
-        if self.controller.initialized:
-            logger.info("Device initalized")
-            self.is_initialized = True
-            self.modeButton['state'] = NORMAL
-            return
-        logger.warning("Device initialization failed.")
+        n = 0
+        while not self.controller.initialized:
+            time.sleep(1)
+            n += 1
+            if n > 9:
+                logger.warning("Device initialization failed.")
+                return
+        logger.info("Device initalized")
+        self.is_initialized = True
+        self.modeButton['state'] = NORMAL
 
-#     def readserial(self):
-#         if not self.is_initialized:
-#             return {}
-#         try:
-#             _json = ''
-#             while not _json:
-#                 self.writeserial('POLL')
-#                 _json = str(self.controller.readline(), encoding='utf8').strip()
-#                 try:
-#                     msg = json.loads(_json)
-#                     if 'message' in msg:
-#                         logger.debug(msg)
-#                         self.is_initialized = False
-#                     return msg
-#                 except json.decoder.JSONDecodeError as err:
-#                     logger.warning(f'JSON Error: {err}')
-#         except serial.serialutil.SerialException:
-#             pass
-#         logger.error(f"Error reading from {self.controller.name}.")
-#         return {}
-# 
-#     def writeserial(self, cmd, val=None):
-#         if not self.is_initialized:
-#             return
-#         if not cmd:
-#             return
-#         try:
-#             self.controller.write(bytes(cmd, encoding='utf8')+b';')
-#             # print(f"Wrote {cmd};", end="")
-#             if val is not None:
-#                 self.controller.write(bytes(val, encoding='utf8'))
-#                 logger.debug(f"{val}", end="")
-#             # print(f" to {self.controller.name}.")
-#         except serial.serialutil.SerialException:
-#             logger.error(f"Error sending command to {self.controller.name}.")
-#         self.last_serial = time.time()
 
 class SerialReader(threading.Thread):
 
@@ -224,11 +191,12 @@ class SerialReader(threading.Thread):
         self.cmds = []
 
     def run(self):
+        if self.controller is None:
+            return
         self._initdevice()
-        while self.alive:
-            if self.initialized:
-                self._serial_loop()
-                time.sleep(0.5)
+        while self.isalive and self.initialized:
+            self._serial_loop()
+            time.sleep(0.5)
 
     def sendcmd(self, cmd, val=None):
         self.cmds.append([cmd, val])
@@ -243,9 +211,8 @@ class SerialReader(threading.Thread):
                     self.msg = json.loads(_json)
                     _val = self.msg.get('message', '')
                     if _val == 'Done initializing':
-                        logger.info("Device initalized")
+                        logger.debug("SerialReader initalized")
                         self.is_initialized = True
-                        self.modeButton['state'] = NORMAL
                         return
                 except json.decoder.JSONDecodeError:
                     continue
@@ -267,7 +234,7 @@ class SerialReader(threading.Thread):
                     self.msg = json.loads(_json)
                     self.last_update = time.time()
                 except json.decoder.JSONDecodeError as err:
-                    logger.warning(f'SerialReader JSON Error: {err}')
+                    logger.debug(f'SerialReader JSON Error: {err}')
         except serial.serialutil.SerialException:
             logger.error(f"Error reading from {self.controller.name}.")
 
@@ -277,21 +244,23 @@ class SerialReader(threading.Thread):
                 self.controller.write(bytes(cmd, encoding='utf8')+b';')
                 if val is not None:
                     self.controller.write(bytes(val, encoding='utf8'))
-                    logger.debug(f"{val}", end="")
         except serial.serialutil.SerialException:
             logger.error(f"Error sending command to {self.controller.name}.")
 
     def kill(self):
         logger.debug("SerialReader thread dying")
         self.alive.clear()
-        self._writeserial("OFF")
+        try:
+            self._writeserial("OFF")
+        except AttributeError:
+            pass
 
     @property
     def age(self):
         return time.time() - self.last_serial
 
     @property
-    def alive(self):
+    def isalive(self):
         return self.alive.is_set()
 
     @property
