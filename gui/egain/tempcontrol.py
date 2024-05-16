@@ -19,12 +19,12 @@ logger = logging.getLogger(__package__+'.peltier')
 class TempControl(tk.Frame):
 
     is_initialized = False
-    temps = {'upper':0, 'lower':0}
+    temps = {'upper':0, 'lower':0, 'target': 25}
 
     def __init__(self, root):
         self.master = root
         super().__init__(self.master)
-        self.controller = SerialReader(None)
+        self.controller = None
         self.upperTempString = StringVar()
         self.lowerTempString = StringVar()
         self.peltierPowerString = StringVar()
@@ -75,8 +75,9 @@ class TempControl(tk.Frame):
         self.peltierCheck = tk.Checkbutton(setFrame,
                                            text='Peliter On',
                                            variable=self.peltier_on,
+                                           state=DISABLED,
                                            command=self._setPeltier)
-        self.peltierCheck.after(100, self._checkPeltier)
+        # self.peltierCheck.after(100, self._checkPeltier)
 
         peltierPower = tk.Label(master=setFrame,
                                 textvariable=self.peltierPowerString,
@@ -106,10 +107,13 @@ class TempControl(tk.Frame):
         modeFrame.pack(side=TOP, fill=X)
         self.tempFrame.pack(side=TOP)
         self.targettemp.set('25')
-        self._readTemps()
+        # self._readTemps()
 
     def shutdown(self):
-        self.controller.kill()
+        try:
+            self.controller.kill()
+        except AttributeError:
+            pass
 
     def _setPeltier(self):
         if self.peltier_on.get():
@@ -119,14 +123,14 @@ class TempControl(tk.Frame):
         self.controller.sendcmd(cmd)
 
     def _checkPeltier(self):
-        self.peltierCheck.after('1000', self._checkPeltier)
+        self.peltierCheck.after(1000, self._checkPeltier)
         power = self.controller.status.get('Power', 0)
         self.peltierPowerString.set(str(power))
         _state = self.controller.status.get('Peltier_on', None)
-        if _state is None:
-            self.peltierCheck.configure(state='disabled')
-            return
-        self.peltierCheck.configure(state='normal')
+        # if _state is None:
+        #     self.peltierCheck.configure(state='disabled')
+        #     return
+        # self.peltierCheck.configure(state='normal')
         if _state:
             self.peltier_on.set(1)
         else:
@@ -143,18 +147,26 @@ class TempControl(tk.Frame):
             self.controller.sendcmd('COOL')
 
     def _setTemp(self, *args):
-        logger.info(f"Setting peltier to {self.targettemp.get()} °C")
-        self.controller.sendcmd('SETTEMP', self.targettemp.get())
+        try:
+            int(self.targettemp.get())
+        except ValueError:
+            self.targettemp.set('25')
+        # logger.info(f"Setting peltier to {self.targettemp.get()} °C")
+        # self.controller.sendcmd('SETTEMP', self.targettemp.get())
 
     def _readTemps(self):
-        self.tempFrame.after('500', self._readTemps)
+        self.tempFrame.after(500, self._readTemps)
         _temps = self.controller.status
         self.temps['upper'] = _temps.get('UPPER', -999.9)
         self.temps['lower'] = _temps.get('LOWER', -999.9)
+        self.temps['target'] = _temps.get('TARGET', 25)
         if self.temps['upper'] > -1000:
             self.upperTempString.set('Upper: %0.2f °C' % self.temps['upper'])
         if self.temps['lower'] > -1000:
             self.lowerTempString.set('Lower: %0.2f °C' % self.temps['lower'])
+        if self.temps['target'] != int(self.targettemp.get()):
+            logger.info(f"Setting peltier to {self.targettemp.get()} °C")
+            self.controller.sendcmd('SETTEMP', self.targettemp.get())
 
     def _initdevice(self, *args):
         if self.device.get() == DEFAULTUSBDEVICE:
@@ -175,6 +187,8 @@ class TempControl(tk.Frame):
         logger.info("Device initalized")
         self.is_initialized = True
         self.modeButton['state'] = NORMAL
+        self.peltierCheck['state'] = NORMAL
+        self._checkPeltier()
 
 
 class SerialReader(threading.Thread):
