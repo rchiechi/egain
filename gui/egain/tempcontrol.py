@@ -78,10 +78,9 @@ class TempControl(tk.Frame):
                                            state=DISABLED,
                                            command=self._setPeltier)
 
-        self.peltierPowerString.set("Power: 0")
         peltierPower = tk.Label(master=setFrame,
                                 textvariable=self.peltierPowerString,
-                                width=4)
+                                width=10)
         modeFrame = tk.LabelFrame(self,
                                   text='Peltier Mode',
                                   labelanchor=N)
@@ -107,7 +106,6 @@ class TempControl(tk.Frame):
         modeFrame.pack(side=TOP, fill=X)
         self.tempFrame.pack(side=TOP)
         self.targettemp.set('25')
-        # self._readTemps()
 
     def shutdown(self):
         try:
