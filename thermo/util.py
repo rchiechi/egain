@@ -13,10 +13,7 @@ def enumerateDevices(**kwargs):
         _filters = ['usbmodem']
     if sys.platform.startswith("linux"):
         _filters = ['ttyACM', 'ttyUSB']
-    if _first is not None:
-        _devs = {os.path.join('/', 'dev', _first)}
-    else:
-        _devs = set()
+    _devs = set()
     try:
         for _dev in os.listdir('/dev'):
             for _filter in _filters:
@@ -24,7 +21,17 @@ def enumerateDevices(**kwargs):
                     _devs.add(os.path.join('/', 'dev', _dev))
     except FileNotFoundError:
         _devs = serial_ports()
-    return _devs
+    if _first is None:
+        device_list = list(_devs)
+    else:
+        device_list = []
+        for _dev in _devs:
+            if _first in _dev:
+                device_list.append(_dev)
+        for _dev in _devs:
+            if _first not in _dev:
+                device_list.append(_dev)
+    return (device_list)
 
 def serial_ports(**kwargs):
     """
