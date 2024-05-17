@@ -26,7 +26,7 @@ Adafruit_MAX31855 upperThermocouple(CLK, HICS, DO);
 #define terminator ';'
 //int peltier_level = 0;
 //int peltier_level = map(power, 0, 99, 0, 255); //This is a value from 0 to 255 that actually controls the MOSFET
-int lowerDegC = 25;
+float lowerTarget = 25;
 int power = 0;
 bool peltier_on = false;
 bool initialized = false;
@@ -73,36 +73,36 @@ void checkPeltier() {
 }
 
 void setPower(){
-  double lowerDegK = lowerDegC + 273.15;
-  int k = lowerTemp + 273.15;
+  float lowerTargetK = lowerTarget + 273.15;
+  float lowerTempK = lowerTemp + 273.15;
   String mode = getPeltierPolarity();
   if (mode == "COOL"){
-    setCoolPower(lowerDegK, k);
+    setCoolPower(lowerTargetK, lowerTempK);
   }else if (mode == "HEAT"){
-    setHeatPower(lowerDegK, k);
+    setHeatPower(lowerTargetK, lowerTempK);
   }
 }
 
-void setHeatPower(double lowerDegK, int k){
+void setHeatPower(float lowerTargetK, float lowerTempK){
   int setpower = 0;
-  setpower = (1 - (k / lowerDegK)) * 100;
-  int deltaK = abs(lowerDegK - k);
+  float deltaK = abs(lowerTargetK - lowerTempK);
+  setpower = (1 - (lowerTempK / lowerTargetK)) * 100;
   if (5 > deltaK < 10){
     setpower += 10;
   }else{
     setpower = 100;
   }
-  if (lowerTemp < lowerDegC){
+  if (lowerTemp < lowerTarget){
     setPeltier(setpower);
   }else {
     setPeltier(0);
   }
 }
 
-void setCoolPower(double lowerDegK, int k){
+void setCoolPower(float lowerTargetK, float lowerTempK){
   int setpower = 0;
-  setpower = (1 - (lowerDegK / k)) * 100;
-  int deltaK = abs(lowerDegK - k);
+  float deltaK = abs(lowerTargetK - lowerTempK);
+  setpower = (1 - (lowerTargetK / lowerTempK)) * 100;
   if (2 < deltaK < 5){
     setpower += 10;
   }else if (deltaK < 10){
@@ -110,7 +110,7 @@ void setCoolPower(double lowerDegK, int k){
   }else{
     setpower = 100;
   }
-  if (lowerTemp > lowerDegC){
+  if (lowerTemp > lowerTarget){
     setPeltier(setpower);
   }else {
     setPeltier(0);
@@ -184,7 +184,7 @@ void loop() {
     setPeltierPolarity(COOL); // sets the polarity of the peltier
   }
   if (incomingCmd == "SETTEMP"){
-    lowerDegC = Serial.parseFloat();
+    lowerTarget = Serial.parseFloat();
   } 
   if (incomingCmd == "POLL"){
     loop_counter = 0;
@@ -193,7 +193,7 @@ void loop() {
     Serial.print(",\"UPPER\":");
     Serial.print(upperTemp);
     Serial.print(",\"TARGET\":");
-    Serial.print(lowerDegC);
+    Serial.print(lowerTarget);
     Serial.print(",\"MODE\":\"");
     Serial.print(getPeltierPolarity());
     Serial.print("\",");
