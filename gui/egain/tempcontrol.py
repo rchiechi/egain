@@ -124,7 +124,7 @@ class TempControl(tk.Frame):
     def _checkPeltier(self):
         self.peltierCheck.after(1000, self._checkPeltier)
         power = self.controller.status.get('Power', 0)
-        self.peltierPowerString.set(str(power))
+        self.peltierPowerString.set(f'Power: {power}')
         _state = self.controller.status.get('Peltier_on', None)
         if _state:
             self.peltier_on.set(1)
