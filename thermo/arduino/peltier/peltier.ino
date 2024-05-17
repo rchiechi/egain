@@ -100,8 +100,6 @@ void setHeatPower(float lowerTargetK, float lowerTempK){
 }
 
 void setCoolPower(float lowerTargetK, float lowerTempK){
-  setPeltier(100);
-  return;
   int setpower = 0;
   float deltaK = abs(lowerTargetK - lowerTempK);
   setpower = (1 - (lowerTargetK / lowerTempK)) * 200;
@@ -117,6 +115,7 @@ void setCoolPower(float lowerTargetK, float lowerTempK){
   }else {
     setPeltier(0);
   }
+  Serial.println("HELLO I AM IN THE COOLING");
 }
 
 void setPeltier(int setpower){
