@@ -220,6 +220,7 @@ class SerialReader(threading.Thread):
             _json = ''
             while not self.is_initialized or n < 10:
                 _json = str(self.controller.readline(), encoding='utf8')
+                logger.debug("SerialReader got init: %s", _json)
                 try:
                     self.msg = json.loads(_json)
                     _val = self.msg.get('message', '')
@@ -266,7 +267,8 @@ class SerialReader(threading.Thread):
         logger.debug("SerialReader thread dying")
         self.alive.clear()
         try:
-            self._writeserial("OFF")
+            if self.is_initialized:
+                self._writeserial("OFF")
         except AttributeError:
             pass
 
