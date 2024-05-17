@@ -69,6 +69,7 @@ void checkPeltier() {
     Serial.print("false");
   }
   Serial.print(", \"Power\":");
+  Serial.print(power);
 }
 
 void setPower(){
