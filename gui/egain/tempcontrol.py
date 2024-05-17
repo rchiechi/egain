@@ -144,7 +144,7 @@ class TempControl(tk.Frame):
             return False
         try:
             _temp = int(self.targettemp.get())
-            if -100 < _temp > 100:
+            if -100 < _temp < 100:
                 return True
         except ValueError:
             pass
@@ -253,7 +253,7 @@ class SerialReader(threading.Thread):
         try:
             with self.lock:
                 if cmd != "POLL":
-                    logger.debug("SerialReader sending %s", cmd)
+                    logger.debug("SerialReader sending %s: %s", cmd, val)
                 self.controller.write(bytes(cmd, encoding='utf8')+b';')
                 if val is not None:
                     self.controller.write(bytes(val, encoding='utf8'))
