@@ -84,6 +84,7 @@ void setPower(){
   }else{
     setpower = 100;
   }
+  String mode = getPeltierPolarity();
   if ( (lowerTemp >= lowerDegC) && (mode == "COOL") ){
     setPeltier(setpower);
   }else if ( (lowerTemp <= lowerDegC) && (mode == "HEAT") ){
