@@ -121,8 +121,6 @@ class TempControl(tk.Frame):
 
     def _checkPeltier(self):
         self.peltierCheck.after(1000, self._checkPeltier)
-        power = self.controller.status.get('Power', 0)
-        self.peltierPowerString.set(f'Power: {power}')
         _state = self.controller.status.get('Peltier_on', None)
         if _state:
             self.peltier_on.set(1)
@@ -152,7 +150,7 @@ class TempControl(tk.Frame):
         return True
 
     def _readTemps(self):
-        self.tempFrame.after(500, self._readTemps)
+        self.tempFrame.after(250, self._readTemps)
         _temps = self.controller.status
         self.temps['upper'] = _temps.get('UPPER', -999.9)
         self.temps['lower'] = _temps.get('LOWER', -999.9)
@@ -162,6 +160,8 @@ class TempControl(tk.Frame):
         if self._setTemp() and self.temps['target'] != int(self.targettemp.get()):
             logger.info(f"Setting peltier to {self.targettemp.get()} °C")
             self.controller.sendcmd('SETTEMP', self.targettemp.get())
+        power = self.controller.status.get('Power', 0)
+        self.peltierPowerString.set(f'Power: {power}')
 
     def _initdevice(self, *args):
         if self.device.get() == DEFAULTUSBDEVICE:
