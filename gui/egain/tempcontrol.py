@@ -211,8 +211,8 @@ class SerialReader(threading.Thread):
             time.sleep(0.25)
         logger.debug("SerialReader ended")
 
-    def sendcmd(self, cmd, val=None):
-        self.cmds.add([cmd, val])
+    def sendcmd(self, cmd, val=''):
+        self.cmds.add(f'{cmd}\r{val}')
 
     def _initdevice(self):
         try:
@@ -253,13 +253,14 @@ class SerialReader(threading.Thread):
         except serial.serialutil.SerialException:
             logger.error(f"Error reading from {self.controller.name}.")
 
-    def _writeserial(self, cmd, val=None):
+    def _writeserial(self, cmdstr):
+        cmd, val = cmdstr.split('\r')
         try:
             with self.lock:
                 if cmd != "POLL":
                     logger.debug("SerialReader sending %s: %s", cmd, val)
                 self.controller.write(bytes(cmd, encoding='utf8')+b';')
-                if val is not None:
+                if val:
                     self.controller.write(bytes(val, encoding='utf8'))
         except serial.serialutil.SerialException:
             logger.error(f"Error sending command to {self.controller.name}.")
