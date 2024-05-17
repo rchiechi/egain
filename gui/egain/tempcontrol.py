@@ -127,16 +127,12 @@ class TempControl(tk.Frame):
         power = self.controller.status.get('Power', 0)
         self.peltierPowerString.set(str(power))
         _state = self.controller.status.get('Peltier_on', None)
-        # if _state is None:
-        #     self.peltierCheck.configure(state='disabled')
-        #     return
-        # self.peltierCheck.configure(state='normal')
         if _state:
             self.peltier_on.set(1)
         else:
             self.peltier_on.set(0)
-        _mode = self.controller.status.get("MODE", '?').title()
-        if self.modeButton["text"] != _mode:
+        _mode = self.controller.status.get("MODE", '?').lower()
+        if self.modeButton["text"].lower() != _mode.lower():
             self.modeButton["text"] = _mode.title()
 
     def _setMode(self):
