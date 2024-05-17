@@ -205,8 +205,7 @@ class SerialReader(threading.Thread):
         self.cmds = []
 
     def run(self):
-        if self.controller is None:
-            return
+        logger.debug("SerialReader connecting")
         self._initdevice()
         while self.isalive and self.initialized:
             self._serial_loop()
@@ -232,7 +231,9 @@ class SerialReader(threading.Thread):
                     continue
                 n += 1
         except serial.serialutil.SerialException:
-            return
+            logger.error("SerialReader could not communicate with Serial device.")
+        except AttributeError:
+            logger.error("SerialReader was passed bad Serial device.")
 
     def _serial_loop(self):
         try:
