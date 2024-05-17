@@ -6,20 +6,22 @@ import json
 import serial
 import thermo.constants as tc
 
-def enumerateDevices(_first=None):
+def enumerateDevices(**kwargs):
+    _first = kwargs.get("first", None)
     _filter = ''
     if sys.platform.startswith("darwin"):
-        _filter = 'usbmodem'
+        _filters = ['usbmodem']
     if sys.platform.startswith("linux"):
-        _filter = 'ttyACM'
+        _filters = ['ttyACM', 'ttyUSB']
     if _first is not None:
-        _devs = [_first]
+        _devs = {os.path.join('/', 'dev', _first)}
     else:
-        _devs = []
+        _devs = set()
     try:
         for _dev in os.listdir('/dev'):
-            if _filter.lower() in _dev.lower():
-                _devs.append(os.path.join('/', 'dev', _dev))
+            for _filter in _filters:
+                if _filter.lower() in _dev.lower():
+                    _devs.add(os.path.join('/', 'dev', _dev))
     except FileNotFoundError:
         _devs = serial_ports()
     return _devs
@@ -40,12 +42,12 @@ def serial_ports(**kwargs):
     else:
         raise EnvironmentError("Unsupported platform")
 
-    ports = []
+    ports = set()
     for _port in _ports:
         try:
             s = serial.Serial(_port)
             s.close()
-            ports.append(_port)
+            ports.add(_port)
         except (OSError, serial.SerialException):
             pass
     return ports
