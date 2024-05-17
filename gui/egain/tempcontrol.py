@@ -198,7 +198,7 @@ class SerialReader(threading.Thread):
         self.lock = threading.Lock()
         self.last_update = time.time()
         self.msg = {}
-        self.cmds = []
+        self.cmds = set()
 
     def run(self):
         logger.debug("SerialReader connecting")
@@ -212,7 +212,7 @@ class SerialReader(threading.Thread):
         logger.debug("SerialReader ended")
 
     def sendcmd(self, cmd, val=None):
-        self.cmds.append([cmd, val])
+        self.cmds.add([cmd, val])
 
     def _initdevice(self):
         try:
