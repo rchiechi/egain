@@ -12,5 +12,5 @@
 #define PELTIER_RELAY 13
 
 // Constants
-#define COOL LOW   // Defined as pin polarities
-#define HEAT HIGH  // Defined as pin polarities
+#define COOL 0   // Defined as pin polarities
+#define HEAT 1  // Defined as pin polarities

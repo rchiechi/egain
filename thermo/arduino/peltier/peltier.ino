@@ -32,7 +32,7 @@ bool peltier_on = false;
 bool initialized = false;
 double upperTemp = -999.9;
 double lowerTemp = -999.9;
-int peltier_state = HEAT;
+uint8_t peltier_state = HEAT;
 
 void setup() {
   Serial.begin(9600);
@@ -112,7 +112,7 @@ void setPeltier(int setpower){
 }
 
 void setPeltierPolarity(int new_state){
-  static int current_state;
+  static uint8_t current_state;
   if (current_state != new_state){
     digitalWrite(PELTIER_POLARITY, new_state);
   }
@@ -121,20 +121,12 @@ void setPeltierPolarity(int new_state){
   
 
 String getPeltierPolarity() {
-  int polarity = digitalRead(PELTIER_POLARITY);
+  uint8_t polarity = digitalRead(PELTIER_POLARITY);
   if ( polarity == HEAT ){
-
     return "HEAT";
   }else if (polarity = COOL ){
-
     return "COOL";
   }else{
-    Serial.print(polarity);
-    Serial.print(" != ");
-    Serial.println(HEAT);
-    Serial.print(polarity);
-    Serial.print(" != ");
-    Serial.println(COOL);
     return "?";
   }
 }
