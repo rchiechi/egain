@@ -284,6 +284,7 @@ class SerialReader(threading.Thread):
 
     @property
     def status(self):
+        logger.debug(self.msg)
         return self.msg
 
 
