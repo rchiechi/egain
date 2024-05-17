@@ -170,7 +170,7 @@ class TempControl(tk.Frame):
         ser_port = os.path.join('/', 'dev', self.device.get())
         if not os.path.exists(ser_port):
             return
-        self.controller = SerialReader(serial.Serial(ser_port, 9600, timeout=0.5))
+        self.controller = SerialReader(serial.Serial(ser_port, 9600, timeout=0.5, write_timeout=1))
         self.controller.start()
         n = 0
         while not self.controller.initialized:
@@ -209,6 +209,7 @@ class SerialReader(threading.Thread):
                 time.sleep(0.1)
             self._pollserial()
             time.sleep(0.25)
+        logger.debug("SerialReader ended")
 
     def sendcmd(self, cmd, val=None):
         self.cmds.append([cmd, val])
