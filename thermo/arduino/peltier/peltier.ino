@@ -114,9 +114,13 @@ void setPeltier(int setpower){
 void setPeltierPolarity(uint8_t new_state){
   static uint8_t current_state;
   if (current_state != new_state){
+    Serial.print(current_state);
+    Serial.print("->");
+    Serial.println(new_state);
     digitalWrite(PELTIER_POLARITY, new_state);
   }
   current_state = digitalRead(PELTIER_POLARITY);
+  Serial.println("Unchanged")
 }
   
 
