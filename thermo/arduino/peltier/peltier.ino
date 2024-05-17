@@ -120,7 +120,7 @@ void setPeltierPolarity(uint8_t new_state){
     digitalWrite(PELTIER_POLARITY, new_state);
   }
   current_state = digitalRead(PELTIER_POLARITY);
-  Serial.println("Unchanged")
+  Serial.println("Unchanged");
 }
   
 
