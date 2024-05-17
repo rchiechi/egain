@@ -205,7 +205,7 @@ class SerialReader(threading.Thread):
         self._initdevice()
         while self.isalive and self.initialized:
             while len(self.cmds):
-                self._writeserial(*self.cmds.pop())
+                self._writeserial(self.cmds.pop())
                 time.sleep(0.1)
             self._pollserial()
             time.sleep(0.25)
