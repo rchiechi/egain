@@ -139,7 +139,7 @@ String getPeltierPolarity() {
 }
 
 void loop() {
-
+  static int loop_counter;
   double c = lowerThermocouple.readCelsius();
   if (!isnan(c)){
    lowerTemp = c;
@@ -172,6 +172,7 @@ void loop() {
     lowerDegC = Serial.parseFloat();
   } 
   if (incomingCmd == "POLL"){
+    loop_counter = 0;
     Serial.print("{\"LOWER\":");
     Serial.print(lowerTemp);
     Serial.print(",\"UPPER\":");
@@ -184,7 +185,11 @@ void loop() {
     checkPeltier();
     Serial.println("}");
   }
-  
+  if (++loop_counter > 600) {
+    // communication with instrument lost
+    peltier_on = false;
+    digitalWrite(PELTIER_RELAY, LOW);
+  }
   setPower();
   delay(100);
 
