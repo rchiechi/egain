@@ -217,7 +217,7 @@ class SerialReader(threading.Thread):
         try:
             n = 0
             _json = ''
-            while not _json or n < 10:
+            while not self.is_initialized or n < 10:
                 _json = str(self.controller.readline(), encoding='utf8')
                 try:
                     self.msg = json.loads(_json)
@@ -225,11 +225,9 @@ class SerialReader(threading.Thread):
                     if _val == 'Done initializing':
                         logger.debug("SerialReader initalized")
                         self.is_initialized = True
-                        return
+                        continue
                     self._pollserial()
-                    if self.status:
-                        self.is_initialized = True
-                        return
+                    self.is_initialized = self.status.get('INITIALIZED', False)
                 except json.decoder.JSONDecodeError:
                     continue
                 n += 1
