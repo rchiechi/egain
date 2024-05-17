@@ -52,6 +52,10 @@ void setup() {
     Serial.println("{\"message\":\"ERROR\"}");
     while (1) delay(10);
   }
+  Serial.print("HEAT");
+  Serial.println(HEAT);
+  Serial.print("COOL");
+  Serial.println(COOL);
   Serial.println("{\"message\":\"Done initializing\"}");
   initialized = true;
 
