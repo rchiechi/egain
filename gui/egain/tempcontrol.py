@@ -220,7 +220,7 @@ class SerialReader(threading.Thread):
             _json = ''
             while not self.is_initialized or n < 10:
                 _json = str(self.controller.readline(), encoding='utf8')
-                logger.debug("SerialReadergot init: %s",n, _json)
+                logger.debug("SerialReadergot init: %s", _json)
                 try:
                     self.msg = json.loads(_json)
                     _val = self.msg.get('message', '')
