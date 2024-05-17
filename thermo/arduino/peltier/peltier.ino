@@ -127,7 +127,7 @@ String getPeltierPolarity() {
   }else if (polarity = COOL ){
     return "COOL";
   }else{
-    return "?";
+    return String(polarity);
   }
 }
 
