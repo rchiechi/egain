@@ -111,7 +111,7 @@ void setCoolPower(float lowerTargetK, float lowerTempK){
     setpower = 100;
   }
   if (lowerTemp > lowerTarget){
-    setPeltier(setpower);
+    setPeltier(100);
   }else {
     setPeltier(0);
   }
