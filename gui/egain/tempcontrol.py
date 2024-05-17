@@ -256,6 +256,8 @@ class SerialReader(threading.Thread):
     def _writeserial(self, cmd, val=None):
         try:
             with self.lock:
+                if cmd != "POLL":
+                    logger.debug("SerialReader sending %s", cmd)
                 self.controller.write(bytes(cmd, encoding='utf8')+b';')
                 if val is not None:
                     self.controller.write(bytes(val, encoding='utf8'))
@@ -284,7 +286,6 @@ class SerialReader(threading.Thread):
 
     @property
     def status(self):
-        logger.debug(self.msg)
         return self.msg
 
 
