@@ -88,7 +88,7 @@ void setHeatPower(double lowerDegK, int k){
   setpower = (1 - (k / lowerDegK)) * 100;
   int deltaK = abs(lowerDegK - k);
   if (5 > deltaK < 10){
-    setpower += 50;
+    setpower += 10;
   }else{
     setpower = 100;
   }
@@ -104,9 +104,9 @@ void setCoolPower(double lowerDegK, int k){
   setpower = (1 - (lowerDegK / k)) * 100;
   int deltaK = abs(lowerDegK - k);
   if (1 < deltaK < 5){
-    setpower += 25;
+    setpower += 5;
   }else if (deltaK < 10){
-    setpower += 50;
+    setpower += 25;
   }else{
     setpower = 100;
   }
