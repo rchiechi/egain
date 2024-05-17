@@ -89,6 +89,8 @@ void setHeatPower(float lowerTargetK, float lowerTempK){
   setpower = (1 - (lowerTempK / lowerTargetK)) * 100;
   if ((deltaK > 5) && (deltaK < 10)){
     setpower += 10;
+  }else if (deltaK < 20){
+    setpower += 25;
   }else{
     setpower = 100;
   }
@@ -103,7 +105,6 @@ void setCoolPower(float lowerTargetK, float lowerTempK){
   int setpower = 0;
   float deltaK = abs(lowerTargetK - lowerTempK);
   setpower = (1 - (lowerTargetK / lowerTempK)) * 200;
-  Serial.print(setpower);
   if ((deltaK > 1) && (deltaK < 5)){
     setpower += 30;
   }else if (deltaK < 10){
@@ -116,11 +117,6 @@ void setCoolPower(float lowerTargetK, float lowerTempK){
   }else {
     setPeltier(0);
   }
-  Serial.print(" --> ");
-  Serial.print(setpower);
-  Serial.print(" detlak: ");
-  Serial.println(deltaK);
-  
 }
 
 void setPeltier(int setpower){
