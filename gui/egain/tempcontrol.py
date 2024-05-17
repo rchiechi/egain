@@ -227,7 +227,7 @@ class SerialReader(threading.Thread):
                         self.is_initialized = True
                         continue
                     self._pollserial()
-                    self.is_initialized = self.status.get('INITIALIZED', False)
+                    self.is_initialized = bool(self.status.get('INITIALIZED', 0))
                 except json.decoder.JSONDecodeError:
                     continue
                 n += 1
