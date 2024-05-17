@@ -111,7 +111,7 @@ void setPeltier(int setpower){
   }
 }
 
-void setPeltierPolarity(int new_state){
+void setPeltierPolarity(uint8_t new_state){
   static uint8_t current_state;
   if (current_state != new_state){
     digitalWrite(PELTIER_POLARITY, new_state);
@@ -122,9 +122,9 @@ void setPeltierPolarity(int new_state){
 
 String getPeltierPolarity() {
   uint8_t polarity = digitalRead(PELTIER_POLARITY);
-  if ( polarity == HEAT ){
+  if (polarity == HEAT){
     return "HEAT";
-  }else if (polarity = COOL ){
+  }else if (polarity == COOL ){
     return "COOL";
   }else{
     return "?";
