@@ -220,19 +220,19 @@ class SerialReader(threading.Thread):
             _json = ''
             while not self.is_initialized or n < 10:
                 _json = str(self.controller.readline(), encoding='utf8')
-                logger.debug("SerialReader got init: %s", _json)
+                logger.debug("SerialReadergot init: %s",n, _json)
                 try:
                     self.msg = json.loads(_json)
                     _val = self.msg.get('message', '')
                     if _val == 'Done initializing':
                         logger.debug("SerialReader initalized")
                         self.is_initialized = True
-                        continue
-                    self._pollserial()
-                    self.is_initialized = bool(self.status.get('INITIALIZED', 0))
-                    logger.debug("SerialReader got json: %s", self.status)
+                        break
                 except json.decoder.JSONDecodeError:
-                    continue
+                    pass
+                self._pollserial()
+                self.is_initialized = bool(self.status.get('INITIALIZED', 0))
+                logger.debug("SerialReader got json: %s", self.status)
                 n += 1
         except serial.serialutil.SerialException:
             logger.error("SerialReader could not communicate with Serial device.")
