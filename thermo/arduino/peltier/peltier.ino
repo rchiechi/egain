@@ -74,9 +74,14 @@ void checkPeltier() {
 
 void setPower(){
   int setpower = 0;
+  String mode = getPeltierPolarity();
   double lowerDegK = lowerDegC + 273.15;
   int k = lowerTemp + 273.15;
-  setpower = (1 - (lowerDegK / k)) * 100;
+  if (mode == "COOL"){
+    setpower = (1 - (lowerDegK / k)) * 100;
+  }else if (mode == "HEAT"){
+    setpower = (1 - (k / lowerDegK)) * 100;
+  }
   int deltaK = abs(lowerDegK - k);
   if (deltaK < 1){
     setpower += 5;
@@ -88,7 +93,6 @@ void setPower(){
     setpower = 100;
   }
 
-  String mode = getPeltierPolarity();
   if ( (lowerTemp >= lowerDegC) && (mode == "COOL") ){
     setPeltier(setpower);
   }else if ( (lowerTemp <= lowerDegC) && (mode == "HEAT") ){
