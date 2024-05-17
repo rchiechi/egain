@@ -129,6 +129,9 @@ class TempControl(tk.Frame):
         _mode = self.controller.status.get("MODE", '?').lower()
         if self.modeButton["text"].lower() != _mode.lower():
             self.modeButton["text"] = _mode.title()
+        if self._setTemp() and self.temps['target'] != int(self.targettemp.get()):
+            logger.info(f"Setting peltier to {self.targettemp.get()} °C")
+            self.controller.sendcmd('SETTEMP', self.targettemp.get())
 
     def _setMode(self):
         _mode = self.modeButton["text"].lower()
@@ -157,9 +160,6 @@ class TempControl(tk.Frame):
         self.temps['target'] = _temps.get('TARGET', 25)
         self.upperTempString.set('Upper: %0.2f °C' % self.temps['upper'])
         self.lowerTempString.set('Lower: %0.2f °C' % self.temps['lower'])
-        if self._setTemp() and self.temps['target'] != int(self.targettemp.get()):
-            logger.info(f"Setting peltier to {self.targettemp.get()} °C")
-            self.controller.sendcmd('SETTEMP', self.targettemp.get())
         power = self.controller.status.get('Power', 0)
         self.peltierPowerString.set(f'Power: {power}')
 
