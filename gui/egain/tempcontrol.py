@@ -218,7 +218,8 @@ class SerialReader(threading.Thread):
         try:
             n = 0
             _json = ''
-            while not self.is_initialized or n < 10:
+            while not self.is_initialized and n < 10:
+                logger.debug("SerialReader is_initialized: %s", self.is_initialized)
                 _json = str(self.controller.readline(), encoding='utf8')
                 logger.debug("SerialReadergot init: %s", _json)
                 try:
