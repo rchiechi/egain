@@ -143,9 +143,12 @@ class TempControl(tk.Frame):
         if not self.targettemp.get():
             return False
         try:
-            int(self.targettemp.get())
+            _temp = int(self.targettemp.get())
+            if -100 < _temp > 100:
+                return True
         except ValueError:
-            self.targettemp.set('25')
+            pass
+        self.targettemp.set('25')
         return True
 
     def _readTemps(self):
