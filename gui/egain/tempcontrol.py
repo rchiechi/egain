@@ -70,7 +70,7 @@ class TempControl(tk.Frame):
                              textvariable=self.lowerTempString)
 
         setTemp = tk.Entry(setFrame, textvariable=self.targettemp, width=4)
-        self.targettemp.trace('w', self._setTemp)
+        # self.targettemp.trace('w', self._setTemp)
 
         self.peltierCheck = tk.Checkbutton(setFrame,
                                            text='Enable',
@@ -154,6 +154,7 @@ class TempControl(tk.Frame):
         self.temps['target'] = _temps.get('TARGET', 25)
         self.upperTempString.set('Upper: %0.2f °C' % self.temps['upper'])
         self.lowerTempString.set('Lower: %0.2f °C' % self.temps['lower'])
+        self._setTemp()
         if self.temps['target'] != int(self.targettemp.get()):
             logger.info(f"Setting peltier to {self.targettemp.get()} °C")
             self.controller.sendcmd('SETTEMP', self.targettemp.get())
