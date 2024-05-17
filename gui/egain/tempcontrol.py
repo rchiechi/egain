@@ -153,10 +153,8 @@ class TempControl(tk.Frame):
         self.temps['upper'] = _temps.get('UPPER', -999.9)
         self.temps['lower'] = _temps.get('LOWER', -999.9)
         self.temps['target'] = _temps.get('TARGET', 25)
-        if self.temps['upper'] > -1000:
-            self.upperTempString.set('Upper: %0.2f °C' % self.temps['upper'])
-        if self.temps['lower'] > -1000:
-            self.lowerTempString.set('Lower: %0.2f °C' % self.temps['lower'])
+        self.upperTempString.set('Upper: %0.2f °C' % self.temps['upper'])
+        self.lowerTempString.set('Lower: %0.2f °C' % self.temps['lower'])
         if self.temps['target'] != int(self.targettemp.get()):
             logger.info(f"Setting peltier to {self.targettemp.get()} °C")
             self.controller.sendcmd('SETTEMP', self.targettemp.get())
@@ -181,6 +179,7 @@ class TempControl(tk.Frame):
         self.is_initialized = True
         self.modeButton['state'] = NORMAL
         self.peltierCheck['state'] = NORMAL
+        self._readTemps()
         self._checkPeltier()
 
 
