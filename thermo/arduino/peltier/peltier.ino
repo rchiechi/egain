@@ -89,12 +89,13 @@ void setPower(){
   String mode = getPeltierPolarity();
   if ( (lowerTemp >= lowerDegC) && (mode == 'COOL') ){
     setPeltier(setpower);
-    Serial.println(setpower);
+    Serial.println('COOL');
   }else if ( (lowerTemp <= lowerDegC) && (mode == 'HEAT') ){
     setPeltier(setpower);
-    Serial.println(setpower);
+    Serial.println('HEAT');
   }else {
     setPeltier(0);
+    Serial.println('?');
   }
 }
 
