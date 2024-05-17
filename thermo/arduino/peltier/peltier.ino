@@ -100,6 +100,8 @@ void setHeatPower(float lowerTargetK, float lowerTempK){
 }
 
 void setCoolPower(float lowerTargetK, float lowerTempK){
+  setPeltier(100);
+  return
   int setpower = 0;
   float deltaK = abs(lowerTargetK - lowerTempK);
   setpower = (1 - (lowerTargetK / lowerTempK)) * 200;
@@ -111,7 +113,7 @@ void setCoolPower(float lowerTargetK, float lowerTempK){
     setpower = 100;
   }
   if (lowerTemp > lowerTarget){
-    setPeltier(100);
+    setPeltier(setpower);
   }else {
     setPeltier(0);
   }
