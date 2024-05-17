@@ -105,6 +105,7 @@ void setCoolPower(float lowerTargetK, float lowerTempK){
   setpower = (1 - (lowerTargetK / lowerTempK)) * 200;
   if (1 < deltaK < 5){
     setpower += 30;
+    Serial.println(setpower);
   }else if (deltaK < 10){
     setpower += 50;
   }else{
@@ -115,7 +116,6 @@ void setCoolPower(float lowerTargetK, float lowerTempK){
   }else {
     setPeltier(0);
   }
-  Serial.println(deltaK);
 }
 
 void setPeltier(int setpower){
