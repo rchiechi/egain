@@ -229,6 +229,7 @@ class SerialReader(threading.Thread):
                         continue
                     self._pollserial()
                     self.is_initialized = bool(self.status.get('INITIALIZED', 0))
+                    logger.debug("SerialReader got json: %s", self.status)
                 except json.decoder.JSONDecodeError:
                     continue
                 n += 1
