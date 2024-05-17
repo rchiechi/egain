@@ -123,10 +123,18 @@ void setPeltierPolarity(int new_state){
 String getPeltierPolarity() {
   int polarity = digitalRead(PELTIER_POLARITY);
   if ( polarity == HEAT ){
+
     return "HEAT";
   }else if (polarity = COOL ){
+
     return "COOL";
   }else{
+    Serial.print(polarity)
+    Serial.print(" != ")
+    Serial.println(HEAT)
+    Serial.print(polarity)
+    Serial.print(" != ")
+    Serial.println(COOL)
     return "?";
   }
 }
