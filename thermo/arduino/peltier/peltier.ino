@@ -95,7 +95,6 @@ void setPower(){
 }
 
 void setPeltier(int setpower){
-  Serial.println(setpower);
   if(setpower > 100){
     power = 100;
   }else if(setpower < 0) {
