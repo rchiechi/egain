@@ -55,7 +55,8 @@ void setup() {
   Serial.println("{\"message\":\"Done initializing\"}");
   initialized = true;
 
-  pinMode(PELTIER_RELAY, OUTPUT);    // sets the digital pin 13 as output
+  pinMode(PELTIER_RELAY, OUTPUT);    // sets the digital pin PELTIER_RELAY as output
+  pinMode(PELTIER_POLARITY, OUTPUT);    // sets the digital pin PELTIER_POLARITY as output
   pinMode(PELTIER, OUTPUT); // sets the PWM pin as output
   
 }
@@ -114,14 +115,9 @@ void setPeltier(int setpower){
 void setPeltierPolarity(uint8_t new_state){
   static uint8_t current_state;
   if (current_state != new_state){
-    Serial.print(current_state);
-    Serial.print("->");
-    Serial.println(new_state);
     digitalWrite(PELTIER_POLARITY, new_state);
   }
   current_state = digitalRead(PELTIER_POLARITY);
-  Serial.print("->");
-  Serial.println(current_state);
 }
   
 
