@@ -79,7 +79,7 @@ class TempControl(tk.Frame):
 
         peltierPower = tk.Label(master=setFrame,
                                 textvariable=self.peltierPowerString,
-                                width=8)
+                                width=9)
         modeFrame = tk.LabelFrame(self,
                                   text='Peltier Mode',
                                   labelanchor=N)
