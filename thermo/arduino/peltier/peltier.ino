@@ -198,6 +198,9 @@ void loop() {
     Serial.print(getPeltierPolarity());
     Serial.print("\",");
     checkPeltier();
+    Serial.print("\"INITIALIZED\":");
+    Serial.print(initialized);
+    Serial.print("\",");
     Serial.println("}");
   }
   if (++loop_counter > 600) {
