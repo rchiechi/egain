@@ -253,8 +253,11 @@ class SerialReader(threading.Thread):
         except serial.serialutil.SerialException:
             logger.error(f"Error reading from {self.controller.name}.")
 
-    def _writeserial(self, cmdstr):
-        cmd, val = cmdstr.split('\r')
+    def _writeserial(self, cmd):
+        try:
+            cmd, val = cmd.split('\r')
+        except ValueError:
+            val = False
         try:
             with self.lock:
                 if cmd != "POLL":
