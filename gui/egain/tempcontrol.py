@@ -73,14 +73,14 @@ class TempControl(tk.Frame):
         self.targettemp.trace('w', self._setTemp)
 
         self.peltierCheck = tk.Checkbutton(setFrame,
-                                           text='Peliter On',
+                                           text='Enable',
                                            variable=self.peltier_on,
                                            state=DISABLED,
                                            command=self._setPeltier)
 
         peltierPower = tk.Label(master=setFrame,
                                 textvariable=self.peltierPowerString,
-                                width=10)
+                                width=8)
         modeFrame = tk.LabelFrame(self,
                                   text='Peltier Mode',
                                   labelanchor=N)
