@@ -115,7 +115,7 @@ void setCoolPower(float lowerTargetK, float lowerTempK){
   }else {
     setPeltier(0);
   }
-  Serial.println("HELLO I AM IN THE COOLING");
+  Serial.println(deltaK);
 }
 
 void setPeltier(int setpower){
