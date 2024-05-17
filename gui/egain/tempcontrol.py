@@ -78,6 +78,7 @@ class TempControl(tk.Frame):
                                            state=DISABLED,
                                            command=self._setPeltier)
 
+        self.peltierPowerString.set("Power: 0")
         peltierPower = tk.Label(master=setFrame,
                                 textvariable=self.peltierPowerString,
                                 width=4)
