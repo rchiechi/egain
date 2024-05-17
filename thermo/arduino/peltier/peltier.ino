@@ -129,12 +129,12 @@ String getPeltierPolarity() {
 
     return "COOL";
   }else{
-    Serial.print(polarity)
-    Serial.print(" != ")
-    Serial.println(HEAT)
-    Serial.print(polarity)
-    Serial.print(" != ")
-    Serial.println(COOL)
+    Serial.print(polarity);
+    Serial.print(" != ");
+    Serial.println(HEAT);
+    Serial.print(polarity);
+    Serial.print(" != ");
+    Serial.println(COOL);
     return "?";
   }
 }
