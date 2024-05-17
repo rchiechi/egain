@@ -200,7 +200,6 @@ void loop() {
     checkPeltier();
     Serial.print(",\"INITIALIZED\":");
     Serial.print(initialized);
-    Serial.print(",");
     Serial.println("}");
   }
   if (++loop_counter > 600) {
