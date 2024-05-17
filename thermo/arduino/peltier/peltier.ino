@@ -102,7 +102,7 @@ void setHeatPower(float lowerTargetK, float lowerTempK){
 void setCoolPower(float lowerTargetK, float lowerTempK){
   int setpower = 0;
   float deltaK = abs(lowerTargetK - lowerTempK);
-  setpower = (1 - (lowerTargetK / lowerTempK)) * 100;
+  setpower = (1 - (lowerTargetK / lowerTempK)) * 125;
   if (2 < deltaK < 5){
     setpower += 25;
   }else if (deltaK < 10){
