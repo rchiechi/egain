@@ -61,7 +61,6 @@ void setup() {
   
 }
 
-
 void checkPeltier() {
   Serial.print("\"Peltier_on\":");
   if (peltier_on){
@@ -70,7 +69,6 @@ void checkPeltier() {
     Serial.print("false");
   }
   Serial.print(", \"Power\":");
-  Serial.print(power);
 }
 
 void setPower(){
@@ -86,16 +84,12 @@ void setPower(){
   }else{
     setpower = 100;
   }
-  String mode = getPeltierPolarity();
-  if ( (lowerTemp >= lowerDegC) && (mode == 'COOL') ){
+  if ( (lowerTemp >= lowerDegC) && (mode == "COOL") ){
     setPeltier(setpower);
-    Serial.println('COOL');
-  }else if ( (lowerTemp <= lowerDegC) && (mode == 'HEAT') ){
+  }else if ( (lowerTemp <= lowerDegC) && (mode == "HEAT") ){
     setPeltier(setpower);
-    Serial.println('HEAT');
   }else {
     setPeltier(0);
-    Serial.println('?');
   }
 }
 
