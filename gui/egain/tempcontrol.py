@@ -204,8 +204,11 @@ class SerialReader(threading.Thread):
         logger.debug("SerialReader connecting")
         self._initdevice()
         while self.isalive and self.initialized:
-            self._serial_loop()
-            time.sleep(0.5)
+            while len(self.cmds):
+                self._writeserial(*self.cmds.pop())
+                time.sleep(0.1)
+            self._pollserial()
+            time.sleep(0.25)
 
     def sendcmd(self, cmd, val=None):
         self.cmds.append([cmd, val])
@@ -223,6 +226,10 @@ class SerialReader(threading.Thread):
                         logger.debug("SerialReader initalized")
                         self.is_initialized = True
                         return
+                    self._pollserial()
+                    if self.status:
+                        self.is_initialized = True
+                        return
                 except json.decoder.JSONDecodeError:
                     continue
                 n += 1
@@ -231,21 +238,16 @@ class SerialReader(threading.Thread):
         except AttributeError:
             logger.error("SerialReader was passed bad Serial device.")
 
-    def _serial_loop(self):
+    def _pollserial(self):
         try:
-            _json = ''
-            while not _json:
-                while len(self.cmds):
-                    self._writeserial(*self.cmds.pop())
-                    time.sleep(0.1)
-                self._writeserial('POLL')
-                with self.lock:
-                    _json = str(self.controller.readline(), encoding='utf8').strip()
-                try:
-                    self.msg = json.loads(_json)
-                    self.last_update = time.time()
-                except json.decoder.JSONDecodeError as err:
-                    logger.debug(f'SerialReader JSON Error: {err}')
+            self._writeserial('POLL')
+            with self.lock:
+                _json = str(self.controller.readline(), encoding='utf8').strip()
+            try:
+                self.msg = json.loads(_json)
+                self.last_update = time.time()
+            except json.decoder.JSONDecodeError as err:
+                logger.debug(f'SerialReader JSON Error: {err}')
         except serial.serialutil.SerialException:
             logger.error(f"Error reading from {self.controller.name}.")
 
