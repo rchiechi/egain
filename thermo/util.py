@@ -24,13 +24,14 @@ def enumerateDevices(_first=None):
         _devs = serial_ports()
     return _devs
 
-def serial_ports(_first=None):
+def serial_ports(**kwargs):
     """
     Enumerates all serial devices on the system.
 
     Returns:
     A list of serial device paths.
     """
+    _first = kwargs.get("first", None)
     _ports = [_first] if _first is not None else []
     if os.name == "nt":
         _ports += [f"COM{i}" for i in range(256)]

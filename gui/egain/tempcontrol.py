@@ -77,7 +77,6 @@ class TempControl(tk.Frame):
                                            variable=self.peltier_on,
                                            state=DISABLED,
                                            command=self._setPeltier)
-        # self.peltierCheck.after(100, self._checkPeltier)
 
         peltierPower = tk.Label(master=setFrame,
                                 textvariable=self.peltierPowerString,
@@ -93,7 +92,7 @@ class TempControl(tk.Frame):
         devicePicker = tk.OptionMenu(self,
                                      self.device,
                                      DEFAULTUSBDEVICE,
-                                     *enumerateDevices())
+                                     *enumerateDevices(first='ttyACM0'))
         self.device.trace_add('write', self._initdevice)
 
         setTemp.pack(side=LEFT)
@@ -147,8 +146,6 @@ class TempControl(tk.Frame):
             int(self.targettemp.get())
         except ValueError:
             self.targettemp.set('25')
-        # logger.info(f"Setting peltier to {self.targettemp.get()} °C")
-        # self.controller.sendcmd('SETTEMP', self.targettemp.get())
 
     def _readTemps(self):
         self.tempFrame.after(500, self._readTemps)

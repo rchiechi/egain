@@ -146,7 +146,7 @@ class MeasurementControl(tk.Frame):
         devicePicker = tk.OptionMenu(measFrame,
                                      self.deviceString,
                                      'Choose SMU device',
-                                     *enumerateDevices('ttyACM0'))
+                                     *enumerateDevices(first='ttyUSB0'))
         self.deviceString.trace('w', self._initdevice)
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
@@ -336,7 +336,7 @@ class MeasurementReadV(MeasurementControl):
         devicePicker = tk.OptionMenu(nplcFrame,
                                      self.deviceString,
                                      'Choose Voltmeter',
-                                     *enumerateDevices('ttyACM0'))
+                                     *enumerateDevices(first='ttyUSB0'))
         self.deviceString.trace('w', self._initdevice)
         measNPLCLabel = tk.Label(nplcFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)

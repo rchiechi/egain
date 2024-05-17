@@ -80,7 +80,7 @@ class seebeckstats(curses_updater):
 
     def start(self):
         self.alive.set()
-        for _dev in enumerateDevices('/dev/serial0'):
+        for _dev in enumerateDevices(first='ttyUSB0'):
             voltmeter = K2182A(_dev)
             if voltmeter.initialize(auto_sense_range=True):
                 break
@@ -134,7 +134,7 @@ class peltierstats(curses_updater):
 
     def start(self):
         self.alive.set()
-        for _dev in enumerateDevices('ttyACM0'):
+        for _dev in enumerateDevices(first='ttyACM0'):
             peltier = init_thermo_device(_dev)
             if peltier is not None:
                 break
