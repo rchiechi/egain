@@ -15,6 +15,7 @@
  ****************************************************/
 
 #include <SPI.h>
+#include <PID_v1.h>
 #include "Adafruit_MAX31855.h"
 #include "peltier.h"
 
@@ -26,8 +27,8 @@ Adafruit_MAX31855 upperThermocouple(CLK, HICS, DO);
 #define terminator ';'
 //int peltier_level = 0;
 //int peltier_level = map(power, 0, 99, 0, 255); //This is a value from 0 to 255 that actually controls the MOSFET
-float lowerTarget = 25;
-int PID_value = 0;
+double lowerTarget = 25;
+double PID_value = 0;
 bool peltier_on = false;
 bool initialized = false;
 double upperTemp = -999.9;
@@ -35,9 +36,12 @@ double lowerTemp = -999.9;
 uint8_t peltier_state = HEAT;
 
 //PID constants
-int kp = 9.1;
-int ki = 0.3;
-int kd = 1.8;
+double Kp = 9.1;
+double Ki = 0.3;
+double Kd = 1.8;
+
+PID heaterPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, DIRECT);
+PID coolerPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, REVERSE);
 
 void setup() {
   Serial.begin(9600);
@@ -78,6 +82,20 @@ void checkPeltier() {
   Serial.print(power);
 }
 
+void setPID(){
+  String mode = getPeltierPolarity();
+  if (mode == "COOL"){
+    coolerPID.Compute();
+  }else if (mode == "HEAT"){
+    heaterPID.Compute();
+  }
+  if(PID_value < 0)
+  {    PID_value = 0;    }
+  if(PID_value > 255)  
+  {    PID_value = 255;  }
+  analogWrite(PELTIER, PID_value);
+}
+
 // void setPower(){
 //   float lowerTargetK = lowerTarget + 273.15;
 //   float lowerTempK = lowerTemp + 273.15;
@@ -90,52 +108,52 @@ void checkPeltier() {
 //   setPID(float lowerTargetK, float lowerTempK);
 // }
 
-void setPID(){
-  static float previous_error, elapsedTime, timePrev;
-  static float Time = millis();
-  static int PID_p = 0;
-  static int PID_i = 0;
-  static int PID_d = 0;
-  
-  float lowerTargetK = lowerTarget + 273.15;
-  float lowerTempK = lowerTemp + 273.15;
-  
-  // calculate the error between the setpoint and the real value
-  float PID_error = lowerTargetK - lowerTempK;
-  
-  // keep PID_error positive when approaching set point
-  String mode = getPeltierPolarity();
-  if (mode == "COOL"){
-    PID_error = -1 * PID_error;
-  }
-  
-  //Calculate the P value
-  PID_p = kp * PID_error;
-
-  //Calculate the I value in a range on +-3
-  if(-3 < PID_error < 3)
-  {
-    PID_i = PID_i + (ki * PID_error);
-  }
-  
-  //For derivative we need real time to calculate speed change rate
-  timePrev = Time;                            // the previous time is stored before the actual time read
-  Time = millis();                            // actual time read
-  elapsedTime = (Time - timePrev) / 1000; 
-  //Now we can calculate the D value
-  PID_d = kd*((PID_error - previous_error)/elapsedTime);
-  //Final total PID value is the sum of P + I + D
-  PID_value = PID_p + PID_i + PID_d;
-  
-  //We define PWM range between 0 and 255
-  if(PID_value < 0)
-  {    PID_value = 0;    }
-  if(PID_value > 255)  
-  {    PID_value = 255;  }
-  //Now we can write the PWM signal to the mosfet
-  analogWrite(PELTIER, PID_value);
-  previous_error = PID_error;     //Remember to store the previous error for next loop.
-}
+// void setPID(){
+//   static float previous_error, elapsedTime, timePrev;
+//   static float Time = millis();
+//   static int PID_p = 0;
+//   static int PID_i = 0;
+//   static int PID_d = 0;
+//   
+//   float lowerTargetK = lowerTarget + 273.15;
+//   float lowerTempK = lowerTemp + 273.15;
+//   
+//   // calculate the error between the setpoint and the real value
+//   float PID_error = lowerTargetK - lowerTempK;
+//   
+//   // keep PID_error positive when approaching set point
+//   String mode = getPeltierPolarity();
+//   if (mode == "COOL"){
+//     PID_error = -1 * PID_error;
+//   }
+//   
+//   //Calculate the P value
+//   PID_p = kp * PID_error;
+// 
+//   //Calculate the I value in a range on +-3
+//   if(-3 < PID_error < 3)
+//   {
+//     PID_i = PID_i + (ki * PID_error);
+//   }
+//   
+//   //For derivative we need real time to calculate speed change rate
+//   timePrev = Time;                            // the previous time is stored before the actual time read
+//   Time = millis();                            // actual time read
+//   elapsedTime = (Time - timePrev) / 1000; 
+//   //Now we can calculate the D value
+//   PID_d = kd*((PID_error - previous_error)/elapsedTime);
+//   //Final total PID value is the sum of P + I + D
+//   PID_value = PID_p + PID_i + PID_d;
+//   
+//   //We define PWM range between 0 and 255
+//   if(PID_value < 0)
+//   {    PID_value = 0;    }
+//   if(PID_value > 255)  
+//   {    PID_value = 255;  }
+//   //Now we can write the PWM signal to the mosfet
+//   analogWrite(PELTIER, PID_value);
+//   previous_error = PID_error;     //Remember to store the previous error for next loop.
+// }
 
 // void setHeatPower(float lowerTargetK, float lowerTempK){
 //   int setpower = 0;
