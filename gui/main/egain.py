@@ -45,7 +45,9 @@ from config.options import GLOBAL_OPTS, createOptions
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 
-REFERENCE_SIZE_M = 450e-6  # Standard syringe barrel is 450 µm
+# REFERENCE_SIZE_M = 450e-6  # Standard syringe barrel is 450 µm
+REFERENCE_SIZE_M = 250e-6  # Standard syringe barrel is 250 µm
+
 # JUNCTION_CONVERSION_FACTOR = 0.1  # cm/cm
 MEASURING = 'Measuring'
 MOVING = 'Stage in motion'
