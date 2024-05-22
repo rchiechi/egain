@@ -67,7 +67,7 @@ void setup() {
 }
 
 void checkPeltier() {
-  int power = map(PID_value, 255, 0, 0, 100);
+  int power = map(PID_value, 0, 255, 0, 100);
   Serial.print("\"Peltier_on\":");
   if (peltier_on){
     Serial.print("true");
@@ -132,8 +132,8 @@ void setPID(){
   {    PID_value = 0;    }
   if(PID_value > 255)  
   {    PID_value = 255;  }
-  //Now we can write the PWM signal to the mosfet on digital pin D3
-  analogWrite(PELTIER, 255-PID_value);
+  //Now we can write the PWM signal to the mosfet
+  analogWrite(PELTIER, PID_value);
   previous_error = PID_error;     //Remember to store the previous error for next loop.
 }
 
