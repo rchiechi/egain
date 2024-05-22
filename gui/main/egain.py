@@ -150,13 +150,13 @@ class MainFrame(tk.Frame):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
         self.widgets['outputfilenameEntry'] = outputfilenameEntry
         # EGaIn-specific widgets
-        maketipButton = tk.Button(master=magFrame,
-                                  text='Make Tip',
-                                  command=self.maketipButtonClick,
-                                  state=DISABLED)
-        self.widgets['maketipButton'] = maketipButton
-        self.egain_widgets.append('maketipButton')
-        maketipButton.pack(side=LEFT)
+        makejunctionButton = tk.Button(master=magFrame,
+                                       text='Make Junction',
+                                       command=self.makejunctionButtonClick,
+                                       state=DISABLED)
+        self.widgets['makejunctionButton'] = makejunctionButton
+        self.egain_widgets.append('makejunctionButton')
+        makejunctionButton.pack(side=LEFT)
 
         referencesizeEntryLabel = Label(master=magFrame,
                                         text='Reference size (cm):')
@@ -282,6 +282,9 @@ class MainFrame(tk.Frame):
         time.sleep(1)
         self.root.quit()
 
+    def makejunctionButtonClick(self):
+        self.widgets['measurementFrame'].sourceWithCompliance()
+
     def maketipButtonClick(self):
         _t = 0
         _res = self.widgets['measurementFrame'].getResistanceReader()
@@ -372,7 +375,7 @@ class MainFrame(tk.Frame):
         else:
             self.variables['statusVar'].set('Not Initialized')
         if _initialized[0] is True and _initialized[1] is True:
-            self.widgets['maketipButton']['state'] = NORMAL
+            self.widgets['makejunctionButton']['state'] = NORMAL
         if False in _initialized and not self.variables['busy'].get():
             self.widgets['measButton'].after(100, self.checkOptions)
         if True in _initialized:

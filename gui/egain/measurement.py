@@ -258,6 +258,11 @@ class MeasurementControl(tk.Frame):
         self.after(500, self._readinbackground)
         return self.child_threads['read']
 
+    def sourceWithCompliance(self, **kwargs):
+        volts = kwargs.get('voltage', 0.1)
+        compliance = kwargs.get('compliance', 1e-6)
+        self.smu.source_with_compliance(volts, compliance)
+
     def _readinbackground(self):
         self.busy.set(True)
         self._isbusy = True

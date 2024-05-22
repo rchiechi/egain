@@ -119,8 +119,9 @@ class Keithley(Instrument):
                 self.auto_range = True
                 self.visa.write(f":SENS:{self.sense}:RANG {self.sense_range:.2e}")
 
-            compliance = kwargs.get('compliance', 105e-3)
-            self.visa.write(f":SENS:{self.sense}:PROT:LEV {compliance:.3e}")
+            # compliance = kwargs.get('compliance', 105e-3)
+            # self.visa.write(f":SENS:{self.sense}:PROT:LEV {compliance:.3e}")
+            self.set_compliance(kwargs.get('compliance', 105e-3))
 
             # Configure the auto zero (reference)
             self.visa.write(":SYST:AZER:STAT ON")
@@ -134,9 +135,12 @@ class Keithley(Instrument):
 
         else:
             self.__checkarmed()
-            compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
+            # compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
             self.read_data()
         return True
+
+    def set_compliance(self, compliance):
+        self.visa.write(f":SENS:{self.sense}:PROT:LEV {compliance:.3e}")
 
     def setNPLC(self, nplc):
         self.visa.write(f':SENSE:{self.sense}:NPLC {nplc}')
@@ -173,6 +177,18 @@ class Keithley(Instrument):
         self.visa.write(':SENS:RES:MODE AUTO')
         self.arm()
         return self.visa.get_reader()
+
+    def source_with_compliance(self, volts, compliance):
+        self.disarm()
+        self.visa.write(':SYST:TIME:RES')
+        self.visa.write(':FORM:ELEM RES')
+        self.visa.write(':SOUR:FUNC:MODE VOLT')
+        self.visa.write(":SENS:FUNC 'CURR:DC'")
+        self.visa.write(":SENS:CURR:RANG:AUTO ON")
+        self.set_compliance(compliance)
+        self.visa.write(f":SOUR:VOLT {volts}")
+        self.arm()
+        # return self.visa.get_reader()
 
     def end_voltage_sweep(self):
         self.disarm()
