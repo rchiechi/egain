@@ -28,7 +28,7 @@ Adafruit_MAX31855 upperThermocouple(CLK, HICS, DO);
 //int peltier_level = 0;
 //int peltier_level = map(power, 0, 99, 0, 255); //This is a value from 0 to 255 that actually controls the MOSFET
 double lowerTarget = 25;
-double PID_value = 0;
+double PID_value;
 bool peltier_on = false;
 bool initialized = false;
 double upperTemp = -999.9;
@@ -36,10 +36,11 @@ double lowerTemp = -999.9;
 uint8_t peltier_state = HEAT;
 
 //PID constants
-double Kp = 9.1;
-double Ki = 0.3;
-double Kd = 1.8;
+double Kp = 10;
+double Ki = 2;
+double Kd = 5;
 
+// PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 PID heaterPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, DIRECT);
 PID coolerPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, REVERSE);
 
@@ -93,12 +94,12 @@ void setPID(){
   }else {
     PID_value = -1;
   }
-  heaterPID.Compute();
   if(PID_value < 0)
   {    PID_value = 0;    }
   if(PID_value > 255)  
   {    PID_value = 255;  }
   analogWrite(PELTIER, PID_value);
+  Serial.print('{}')
 }
 
 // void setPower(){
