@@ -99,7 +99,7 @@ void setPID(){
   if(PID_value > 255)  
   {    PID_value = 255;  }
   analogWrite(PELTIER, PID_value);
-  Serial.print('{}')
+  Serial.print('{}');
 }
 
 // void setPower(){
