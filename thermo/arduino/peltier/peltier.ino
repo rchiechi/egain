@@ -36,9 +36,9 @@ double lowerTemp = 25;
 uint8_t peltier_state = HEAT;
 
 //PID constants
-double Kp = 10;
-double Ki = 2;
-double Kd = 5;
+double Kp = 4;
+double Ki = 0.5;
+double Kd = 1;
 
 // PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 PID peltierPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, DIRECT);
