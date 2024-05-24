@@ -89,117 +89,6 @@ void setPID(){
   analogWrite(PELTIER, PID_value);
 }
 
-// void setPower(){
-//   float lowerTargetK = lowerTarget + 273.15;
-//   float lowerTempK = lowerTemp + 273.15;
-//   // String mode = getPeltierPolarity();
-//   // if (mode == "COOL"){
-//   //   setCoolPower(lowerTargetK, lowerTempK);
-//   // }else if (mode == "HEAT"){
-//   //   setHeatPower(lowerTargetK, lowerTempK);
-//   // }
-//   setPID(float lowerTargetK, float lowerTempK);
-// }
-
-// void setPID(){
-//   static float previous_error, elapsedTime, timePrev;
-//   static float Time = millis();
-//   static int PID_p = 0;
-//   static int PID_i = 0;
-//   static int PID_d = 0;
-//   
-//   float lowerTargetK = lowerTarget + 273.15;
-//   float lowerTempK = lowerTemp + 273.15;
-//   
-//   // calculate the error between the setpoint and the real value
-//   float PID_error = lowerTargetK - lowerTempK;
-//   
-//   // keep PID_error positive when approaching set point
-//   String mode = getPeltierPolarity();
-//   if (mode == "COOL"){
-//     PID_error = -1 * PID_error;
-//   }
-//   
-//   //Calculate the P value
-//   PID_p = kp * PID_error;
-// 
-//   //Calculate the I value in a range on +-3
-//   if(-3 < PID_error < 3)
-//   {
-//     PID_i = PID_i + (ki * PID_error);
-//   }
-//   
-//   //For derivative we need real time to calculate speed change rate
-//   timePrev = Time;                            // the previous time is stored before the actual time read
-//   Time = millis();                            // actual time read
-//   elapsedTime = (Time - timePrev) / 1000; 
-//   //Now we can calculate the D value
-//   PID_d = kd*((PID_error - previous_error)/elapsedTime);
-//   //Final total PID value is the sum of P + I + D
-//   PID_value = PID_p + PID_i + PID_d;
-//   
-//   //We define PWM range between 0 and 255
-//   if(PID_value < 0)
-//   {    PID_value = 0;    }
-//   if(PID_value > 255)  
-//   {    PID_value = 255;  }
-//   //Now we can write the PWM signal to the mosfet
-//   analogWrite(PELTIER, PID_value);
-//   previous_error = PID_error;     //Remember to store the previous error for next loop.
-// }
-
-// void setHeatPower(float lowerTargetK, float lowerTempK){
-//   int setpower = 0;
-//   float deltaK = abs(lowerTargetK - lowerTempK);
-//   setpower = (1 - (lowerTempK / lowerTargetK)) * 100;
-//   if ((deltaK > 5) && (deltaK < 10)){
-//     setpower += 10;
-//   }else if (deltaK < 20){
-//     setpower += 25;
-//   }else{
-//     setpower = 100;
-//   }
-//   if (lowerTemp < lowerTarget){
-//     setPeltier(setpower);
-//   }else {
-//     setPeltier(0);
-//   }
-// }
-// 
-// void setCoolPower(float lowerTargetK, float lowerTempK){
-//   int setpower = 0;
-//   float deltaK = abs(lowerTargetK - lowerTempK);
-//   setpower = (1 - (lowerTargetK / lowerTempK)) * 200;
-//   if ((deltaK > 1) && (deltaK < 5)){
-//     setpower += 50;
-//   // }else if (deltaK < 10){
-//   //   setpower += 50;
-//   }else{
-//     setpower = 100;
-//   }
-//   if (lowerTemp > lowerTarget){
-//     setPeltier(setpower);
-//   }else {
-//     setPeltier(0);
-//   }
-// }
-// 
-// void setPeltier(int setpower){
-//   if(setpower > 100){
-//     power = 100;
-//   }else if(setpower < 0) {
-//     power = 0;
-//   }else {
-//     power = setpower;
-//   }
-//   if (peltier_on){
-//     int peltier_level = map(power, 0, 100, 0, 255);
-//     analogWrite(PELTIER, peltier_level); //Write this new value out to the port
-//   }else{
-//     analogWrite(PELTIER, 0);
-//   }
-// }
-
 void setPeltierPolarity(uint8_t new_state){
   static uint8_t current_state;
   if (current_state != new_state){
@@ -212,7 +101,6 @@ void setPeltierPolarity(uint8_t new_state){
     peltierPID.SetControllerDirection(REVERSE);
   }
 }
-  
 
 String getPeltierPolarity() {
   uint8_t polarity = digitalRead(PELTIER_POLARITY);
