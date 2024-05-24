@@ -85,8 +85,10 @@ void checkPeltier() {
 }
 
 void setPID(){
-  peltierPID.Compute();
-  analogWrite(PELTIER, PID_value);
+  if (peltier_on){
+    peltierPID.Compute();
+    analogWrite(PELTIER, PID_value);
+  }
 }
 
 void setPeltierPolarity(uint8_t new_state){
