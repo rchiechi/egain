@@ -31,8 +31,8 @@ double lowerTarget = 25;
 double PID_value;
 bool peltier_on = false;
 bool initialized = false;
-double upperTemp = -999.9;
-double lowerTemp = -999.9;
+double upperTemp = 25;
+double lowerTemp = 25;
 uint8_t peltier_state = HEAT;
 
 //PID constants
@@ -41,8 +41,9 @@ double Ki = 2;
 double Kd = 5;
 
 // PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
-PID heaterPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, DIRECT);
-PID coolerPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, REVERSE);
+// PID heaterPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, DIRECT);
+// PID coolerPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, REVERSE);
+PID peltierPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, DIRECT);
 
 void setup() {
   Serial.begin(9600);
@@ -85,22 +86,21 @@ void checkPeltier() {
   Serial.print(PID_value);
 }
 
-void setPID(){
-  String mode = getPeltierPolarity();
-  if (mode == "COOL"){
-    coolerPID.Compute();
-  }else if (mode == "HEAT"){
-    heaterPID.Compute();
-  }else {
-    PID_value = -1;
-  }
-  if(PID_value < 0)
-  {    PID_value = 0;    }
-  if(PID_value > 255)  
-  {    PID_value = 255;  }
-  analogWrite(PELTIER, PID_value);
-  Serial.print("{}");
-}
+// void setPID(){
+//   String mode = getPeltierPolarity();
+//   if (mode == "COOL"){
+//     coolerPID.Compute();
+//   }else if (mode == "HEAT"){
+//     heaterPID.Compute();
+//   }else {
+//     PID_value = -1;
+//   }
+//   if(PID_value < 0)
+//   {    PID_value = 0;    }
+//   if(PID_value > 255)  
+//   {    PID_value = 255;  }
+//   analogWrite(PELTIER, PID_value);
+// }
 
 // void setPower(){
 //   float lowerTargetK = lowerTarget + 273.15;
@@ -287,7 +287,8 @@ void loop() {
     peltier_on = false;
     digitalWrite(PELTIER_RELAY, LOW);
   }
-  setPID();
+  // setPID();
+  peltierPID.Compute();
   delay(100);
 
 }
