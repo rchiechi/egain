@@ -93,6 +93,7 @@ void setPID(){
   }else {
     PID_value = -1;
   }
+  heaterPID.Compute();
   if(PID_value < 0)
   {    PID_value = 0;    }
   if(PID_value > 255)  
