@@ -80,6 +80,8 @@ void checkPeltier() {
   }
   Serial.print(",\"Power\":");
   Serial.print(power);
+  Serial.print(",\"PID\":");
+  Serial.print(PID_value);
 }
 
 void setPID(){
@@ -88,6 +90,8 @@ void setPID(){
     coolerPID.Compute();
   }else if (mode == "HEAT"){
     heaterPID.Compute();
+  }else {
+    PID_value = -1;
   }
   if(PID_value < 0)
   {    PID_value = 0;    }
