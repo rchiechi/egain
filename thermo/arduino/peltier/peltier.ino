@@ -28,7 +28,7 @@ Adafruit_MAX31855 upperThermocouple(CLK, HICS, DO);
 //int peltier_level = 0;
 //int peltier_level = map(power, 0, 99, 0, 255); //This is a value from 0 to 255 that actually controls the MOSFET
 double lowerTarget = 25;
-double PID_value;
+double PID_value = 0;
 bool peltier_on = false;
 bool initialized = false;
 double upperTemp = -999.9;
