@@ -267,7 +267,7 @@ class OPCThread(threading.Thread):
 
     @property
     def active(self):
-        return self.alive.is_set()
+        return all([self.alive.is_set(), not self.aborted])
 
     @property
     def alive_event(self):

@@ -293,7 +293,7 @@ class MeasurementControl(tk.Frame):
                     logger.info(f'Completed {self.sweep["nsweeps"]} sweeps.')
                     self.child_threads['meas'] = None
                     self.sweeps_done = 0
-            elif self.stop:
+            elif self.stop and not self.child_threads['meas'].aborted:
                 self.child_threads['meas'].abort()
             self.after(100, self._measureinbackground)
             return
