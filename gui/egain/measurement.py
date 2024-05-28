@@ -293,6 +293,8 @@ class MeasurementControl(tk.Frame):
                     logger.info(f'Completed {self.sweep["nsweeps"]} sweeps.')
                     self.child_threads['meas'] = None
                     self.sweeps_done = 0
+            elif self.stop:
+                self.child_threads['meas'].abort()
             self.after(100, self._measureinbackground)
             return
         self.smu.end_voltage_sweep()
