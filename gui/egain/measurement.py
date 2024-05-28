@@ -84,6 +84,15 @@ class MeasurementControl(tk.Frame):
     def isbusy(self):
         return self._isbusy
 
+    @isbusy.setter
+    def isbusy(self, status):
+        if status:
+            self.busy.set(True)
+            self.busy = True
+        else:
+            self.busy.set(False)
+            self.busy = False
+
     @property
     def stopping(self):
         if self.isbusy and self.stop:
@@ -165,8 +174,7 @@ class MeasurementControl(tk.Frame):
         parseusersettings(self.config_file, self.config)
 
     def _initdevice(self, *args):
-        self.busy.set(True)
-        self._isbusy = True
+        self.isbusy = True
         if not self.is_initialized:
             _smu = K6430(self.deviceString.get(), quiet=self.cli_opts.quiet)
             if _smu.initialize(auto_sense_range=True,
@@ -176,8 +184,7 @@ class MeasurementControl(tk.Frame):
                 self._saveconfig()
         if self.smu is not None:
             self.is_initialized = True
-        self.busy.set(False)
-        self._isbusy = False
+        self.isbusy = False
 
     def _validateSweep(self, *args):
         try:
@@ -214,18 +221,7 @@ class MeasurementControl(tk.Frame):
         self._saveconfig()
 
     def stop_measurement(self):
-        if self.stop:
-            return
-        else:
-            self.stop = True
-        for _key in self.child_threads:
-            if self.child_threads[_key] is not None:
-                self.child_threads[_key].kill()
-                while self.child_threads[_key].is_alive():
-                    time.sleep(0.1)
-        if self.smu is not None:
-            self.smu.end_voltage_sweep()
-            self._measureinbackground()
+        self.stop = True
 
     def startMeasurementButtonClick(self):
         self.stop = False
@@ -238,8 +234,7 @@ class MeasurementControl(tk.Frame):
         if not self.is_initialized:
             messagebox.showerror("Error", "SMU not initialized.")
             return
-        self.busy.set(True)
-        self._isbusy = True
+        self.isbusy = True
         self.smu.initialize(reset=True,
                             auto_sense_range=True,
                             flowcontrol=False,
@@ -263,8 +258,7 @@ class MeasurementControl(tk.Frame):
         self.smu.source_with_compliance(volts, compliance)
 
     def _readinbackground(self):
-        self.busy.set(True)
-        self._isbusy = True
+        self.isbusy = True
         if self.child_threads['read'] is not None:
             if self.child_threads['read'].active:
                 self.after(100, self._readinbackground)
@@ -272,15 +266,13 @@ class MeasurementControl(tk.Frame):
             else:
                 self.child_threads['read'] = None
         self.smu.disarm()
-        self.busy.set(False)
-        self._isbusy = False
+        self.isbusy = False
 
     def _measureinbackground(self):
         if not self.is_initialized:
             return
         self.measdone.set(False)
-        self.busy.set(True)
-        self._isbusy = True
+        self.isbusy = True
         if self.child_threads['meas'] is not None:
             if not self.child_threads['meas'].active:
                 self._process_data(self.smu.fetch_data().split(','))
@@ -298,9 +290,8 @@ class MeasurementControl(tk.Frame):
             self.after(100, self._measureinbackground)
             return
         self.smu.end_voltage_sweep()
-        self._isbusy = False
         self.measdone.set(True)
-        self.busy.set(False)
+        self.isbusy = False
         logger.info('All sweeps completed.')
 
     def _process_data(self, data_):
@@ -368,16 +359,14 @@ class MeasurementReadV(MeasurementControl):
             self.results[key] = []
 
     def _initdevice(self, *args):
-        self.busy.set(True)
-        self._isbusy = True
+        self.isbusy = True
         if not self.is_initialized:
             _smu = K2182A(self.deviceString.get())
             if _smu.initialize(auto_sense_range=True):
                 self.smu = _smu
         if self.smu is not None:
             self.is_initialized = True
-        self.busy.set(False)
-        self._isbusy = False
+        self.isbusy = False
 
     def _readvoltage(self):
         self.after(500, self._readvoltage)
