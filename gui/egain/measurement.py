@@ -88,10 +88,10 @@ class MeasurementControl(tk.Frame):
     def isbusy(self, status):
         if status:
             self.busy.set(True)
-            self.busy = True
+            self._isbusy = True
         else:
             self.busy.set(False)
-            self.busy = False
+            self._isbusy = False
 
     @property
     def stopping(self):
