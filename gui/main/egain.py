@@ -155,7 +155,6 @@ class MainFrame(tk.Frame):
                                        command=self.makejunctionButtonClick,
                                        state=DISABLED)
         self.widgets['makejunctionButton'] = makejunctionButton
-        self.egain_widgets.append('makejunctionButton')
         makejunctionButton.pack(side=LEFT)
 
         referencesizeEntryLabel = Label(master=magFrame,
