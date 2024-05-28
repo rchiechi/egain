@@ -149,14 +149,14 @@ class MainFrame(tk.Frame):
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
             outputfilenameEntry.bind(_ev, self.checkOutputfilename)
         self.widgets['outputfilenameEntry'] = outputfilenameEntry
-        # EGaIn-specific widgets
+
         makejunctionButton = tk.Button(master=magFrame,
                                        text='Make Junction',
                                        command=self.makejunctionButtonClick,
                                        state=DISABLED)
         self.widgets['makejunctionButton'] = makejunctionButton
         makejunctionButton.pack(side=LEFT)
-
+        # EGaIn-specific widgets
         referencesizeEntryLabel = Label(master=magFrame,
                                         text='Reference size (cm):')
         referencesizeEntryLabel.pack(side=LEFT)
