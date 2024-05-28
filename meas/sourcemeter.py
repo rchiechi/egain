@@ -113,10 +113,10 @@ class Keithley(Instrument):
 
             self.visa.write(f":SOUR:FUNC:MODE {self.source}")
             # self.visa.write(f":SOUR:{self.source}:RANG {self.source_range:.2e}")
-            if kwargs.get('auto_sense_range', False):
+            if kwargs.get('auto_sense_range', True):
+                self.auto_range = True
                 self.visa.write(f":SENS:{self.sense}:RANG:AUTO ON")
             else:
-                self.auto_range = True
                 self.visa.write(f":SENS:{self.sense}:RANG {self.sense_range:.2e}")
 
             # compliance = kwargs.get('compliance', 105e-3)
@@ -148,7 +148,7 @@ class Keithley(Instrument):
     def clearbuffer(self):
         self.visa.write(':TRAC:CLE')
 
-    def start_voltage_sweep(self, v_list):
+    def start_voltage_sweep(self, v_list, **kwargs):
         self.visa.write(':SYST:TIME:RES')
         self.visa.write(':SOUR:FUNC:MODE VOLT')
         self.visa.write(":SENS:FUNC 'CURR:DC'")
@@ -157,6 +157,8 @@ class Keithley(Instrument):
             self.visa.write(":SENS:CURR:RANG:AUTO ON")
         else:
             self.visa.write(f":SENS:CURR:RANG {self.sense_range:.2e}")
+        if kwargs.get("NPLC", 0):
+            self.setNPLC(kwargs['NPLC'])
         self.visa.write(':SOUR:DEL:AUTO ON')
         # self.visa.write(':SOUR:CLE:AUTO ON')
         self.visa.write(f':SOUR:LIST:VOLT {",".join(v_list)}')

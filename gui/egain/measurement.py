@@ -244,8 +244,7 @@ class MeasurementControl(tk.Frame):
                             auto_sense_range=True,
                             flowcontrol=False,
                             compliance=float(self.compliance.get()))
-        self.smu.setNPLC(self.meas['NPLC'])
-        self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep))
+        self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep), NPLC=self.meas['NPLC'])
         self.child_threads['meas'].start()
         self._measureinbackground()
 
