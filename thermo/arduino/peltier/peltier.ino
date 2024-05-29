@@ -39,7 +39,7 @@ movingAvg lowerTempAvg(5);
 uint8_t peltier_state = HEAT;
 
 //PID constants
-double Kp = 5;
+double Kp = 10;
 double Ki = 0;
 double Kd = 0;
 
