@@ -34,13 +34,13 @@ bool peltier_on = false;
 bool initialized = false;
 double upperTemp = 25;
 double lowerTemp = 25;
-movingAvg upperTempAvg(5);
-movingAvg lowerTempAvg(5);
+movingAvg upperTempAvg(10);
+movingAvg lowerTempAvg(10);
 uint8_t peltier_state = HEAT;
 
 //PID constants
 double Kp = 10;
-double Ki = 0;
+double Ki = 0.5;
 double Kd = 0;
 
 // PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
