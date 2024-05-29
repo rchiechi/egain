@@ -16,6 +16,7 @@
 
 #include <SPI.h>
 #include <PID_v1.h>
+#include <movingAvg.h>          // https://github.com/JChristensen/movingAvg
 #include "Adafruit_MAX31855.h"
 #include "peltier.h"
 
@@ -33,6 +34,8 @@ bool peltier_on = false;
 bool initialized = false;
 double upperTemp = 25;
 double lowerTemp = 25;
+movingAvg upperTempAvg(5);
+movingAvg lowerTempAvg(5);
 uint8_t peltier_state = HEAT;
 
 //PID constants
@@ -68,6 +71,8 @@ void setup() {
   pinMode(PELTIER_POLARITY, OUTPUT);    // sets the digital pin PELTIER_POLARITY as output
   pinMode(PELTIER, OUTPUT); // sets the PWM pin as output
   peltierPID.SetMode(AUTOMATIC);
+  upperTempAvg.begin();
+  lowerTempAvg.begin();
 }
 
 void checkPeltier() {
@@ -119,11 +124,11 @@ void loop() {
   static int loop_counter;
   double c = lowerThermocouple.readCelsius();
   if (!isnan(c)){
-   lowerTemp = c;
+   lowerTemp = lowerTempAvg.reading(c);
   }
   c = upperThermocouple.readCelsius();
   if (!isnan(c)){
-    upperTemp = c;
+    upperTemp = upperTempAvg.reading(c);
   }
 
   String incomingCmd = "null";
@@ -170,6 +175,6 @@ void loop() {
     digitalWrite(PELTIER_RELAY, LOW);
   }
   setPID();
-  delay(100);
+  delay(25);
 
 }
