@@ -39,9 +39,9 @@ movingAvg lowerTempAvg(5);
 uint8_t peltier_state = HEAT;
 
 //PID constants
-double Kp = 4;
-double Ki = 0.5;
-double Kd = 1;
+double Kp = 5;
+double Ki = 0;
+double Kd = 0;
 
 // PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 PID peltierPID(&lowerTemp, &PID_value, &lowerTarget, Kp, Ki, Kd, DIRECT);
