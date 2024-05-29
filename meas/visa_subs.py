@@ -262,8 +262,9 @@ class OPCThread(threading.Thread):
     def abort(self):
         self._aborted = True
         with self.lock:
-            print("Aborting measurment.")
+            logger.warning("Aborting measurment.")
             self.smu.write(b':ABOR')
+            self.alive.clear()
 
     @property
     def active(self):

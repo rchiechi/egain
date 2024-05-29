@@ -1,4 +1,3 @@
-import time
 import logging
 from decimal import Decimal
 import tkinter.ttk as tk
@@ -32,9 +31,9 @@ class MeasurementControl(tk.Frame):
         self.master = root
         self._init_results()
         self.cli_opts = cli_opts
-        self.measdone = kwargs.get('measdone', BooleanVar(value=False))
+        self.sweepdone = kwargs.get('sweepdone', BooleanVar(value=False))
         self.busy = kwargs.get('busy', BooleanVar(value=False))
-        self.measdone.set(False)
+        self.sweepdone.set(False)
         super().__init__(self.master)
         self.labelFont = Font(size=8)
         self.config = parseusersettings(self.config_file)
@@ -78,7 +77,7 @@ class MeasurementControl(tk.Frame):
 
     @property
     def donemeasuring(self):
-        return self.measdone.get()
+        return self.sweepdone.get()
 
     @property
     def isbusy(self):
@@ -165,6 +164,7 @@ class MeasurementControl(tk.Frame):
         devicePicker.pack(side=LEFT)
         if 'device_string' in self.config:
             self.deviceString.set(self.config['device_string'])
+            self._initdevice()
 
     def shutdown(self):
         if self.smu is not None:
@@ -271,15 +271,15 @@ class MeasurementControl(tk.Frame):
     def _measureinbackground(self):
         if not self.is_initialized:
             return
-        self.measdone.set(False)
         self.isbusy = True
+        self.sweepdone.set(False)
         if self.child_threads['meas'] is not None:
             if not self.child_threads['meas'].active:
                 self._process_data(self.smu.fetch_data().split(','))
                 self.sweeps_done += 1
                 if self.sweeps_done < int(self.sweep["nsweeps"]) and not self.stop:
+                    logger.debug('Finishing sweep and starting next.')
                     self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep))
-                    self.measdone.set(True)
                     self.child_threads['meas'].start()
                 else:
                     logger.info(f'Completed {self.sweep["nsweeps"]} sweeps.')
@@ -287,11 +287,12 @@ class MeasurementControl(tk.Frame):
                     self.sweeps_done = 0
             elif self.stop and not self.child_threads['meas'].aborted:
                 self.child_threads['meas'].abort()
+                self.sweepdone.set(True)
             self.after(100, self._measureinbackground)
             return
         self.smu.end_voltage_sweep()
-        self.measdone.set(True)
         self.isbusy = False
+        self.sweepdone.set(True)
         logger.info('All sweeps completed.')
 
     def _process_data(self, data_):
@@ -312,6 +313,7 @@ class MeasurementControl(tk.Frame):
                 logger.warning(f'Error convering {_d} to float.')
                 self.results[_keymap[i]].append(0.0)
             i += 1
+        self.sweepdone.set(True)
 
 class MeasurementReadV(MeasurementControl):
 

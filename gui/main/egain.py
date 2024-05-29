@@ -95,8 +95,8 @@ class MainFrame(tk.Frame):
         self.master.lift()
 
     def __createWidgets(self):
-        measdone = BooleanVar(value=False)
-        self.variables['measdone'] = measdone
+        sweepdone = BooleanVar(value=False)
+        self.variables['sweepdone'] = sweepdone
         busy = BooleanVar(value=False)
         self.variables['busy'] = busy
 
@@ -104,7 +104,7 @@ class MainFrame(tk.Frame):
         controlsFrame = tk.Frame(self)
         measurementFrame = MeasurementControl(controlsFrame,
                                               self.cli_opts,
-                                              measdone=measdone,
+                                              sweepdone=sweepdone,
                                               busy=busy)
         self.widgets['measurementFrame'] = measurementFrame
         stagecontrolFrame = tk.LabelFrame(controlsFrame, text='Stage Controls')
@@ -244,8 +244,8 @@ class MainFrame(tk.Frame):
         quitButton = tk.Button(master=buttonFrame, text="Quit", command=self.quitButtonClick)
         self.widgets['quitButton'] = quitButton
 
-        measdone.trace_add('write', self._updateData)
-        measdone.trace_add(('read', 'write'), self._checkbusy)
+        sweepdone.trace_add('write', self._updateData)
+        sweepdone.trace_add(('read', 'write'), self._checkbusy)
         busy.trace_add(('read', 'write'), self._checkbusy)
 
         quitButton.pack(side=BOTTOM)
@@ -268,6 +268,7 @@ class MainFrame(tk.Frame):
         buttonFrame.pack(side=BOTTOM, fill=X)
 
         self._checkafm()
+        self.checkOptions()
 
     def quitButtonClick(self):
         self.widgets['quitButton']['state'] = DISABLED
@@ -359,7 +360,12 @@ class MainFrame(tk.Frame):
         _connected = []
         if self.widgets['measurementFrame'].initialized:
             _connected.append('SMU')
+            self.widgets['makejunctionButton']['state'] = NORMAL
+            self.widgets['measButton']['state'] = NORMAL
+            self.variables['statusVar'].set(" ".join(_connected)+" connected")
             _initialized[0] = True
+        else:
+            self.variables['statusVar'].set('Not Initialized')
         if self.widgets['stagecontroller'].initialized:
             _connected.append('Stage')
             _initialized[1] = True
@@ -368,14 +374,7 @@ class MainFrame(tk.Frame):
             _initialized[2] = True
         if len(_connected) > 1:
             _connected = _connected[:-1]+['and', _connected[-1]]
-        if _initialized[0] is True:
-            self.widgets['measButton']['state'] = NORMAL
-            self.variables['statusVar'].set(" ".join(_connected)+" connected")
-        else:
-            self.variables['statusVar'].set('Not Initialized')
-        if _initialized[0] is True and _initialized[1] is True:
-            self.widgets['makejunctionButton']['state'] = NORMAL
-        if False in _initialized and not self.variables['busy'].get():
+        if not all(_initialized) and not self.variables['busy'].get():
             self.widgets['measButton'].after(100, self.checkOptions)
         if True in _initialized:
             self.initialized = True
@@ -390,7 +389,7 @@ class MainFrame(tk.Frame):
             self.widgets[widget]['state'] = _widget_map[self.isafm]
 
     def _updateData(self, *args):
-        if self.variables['measdone'].get():
+        if self.variables['sweepdone'].get():
             results = self.widgets['measurementFrame'].data
             if len(results['V']) == len(results['I']):
                 self.widgets['dataplot'].displayData(results)
@@ -423,6 +422,7 @@ class MainFrame(tk.Frame):
         _fn = Path(self.opts['save_path'], self.opts['output_file_name'])
         _tmp = Path(f'{_fn}_tmp.txt')
         if finalize:
+            logger.debug("Finalizing data.")
             data_f = Path(f'{_fn}_data.txt')
             if data_f.exists():
                 if not messagebox.askyesno("Overwrite?", f'{data_f} exists, overwrite it?'):
