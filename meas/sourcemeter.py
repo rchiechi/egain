@@ -2,6 +2,7 @@
 forked from https://github.com/HuangJunye/GrapheneLab-Measurement-Code.git
 """
 
+import time
 import meas.visa_subs as visa_subs
 from meas.visa_subs import MODE_GPIB, MODE_SERIAL
 # from meas.notes import Music
@@ -137,6 +138,7 @@ class Keithley(Instrument):
             self.__checkarmed()
             # compliance = float(self.visa.query(":SENS:CURR:PROT:LEV?"))
             self.read_data()
+        self.disarm()
         return True
 
     def set_compliance(self, compliance):
@@ -149,6 +151,7 @@ class Keithley(Instrument):
         self.visa.write(':TRAC:CLE')
 
     def start_voltage_sweep(self, v_list, **kwargs):
+        self.disarm()
         self.visa.write(':SYST:TIME:RES')
         self.visa.write(':SOUR:FUNC:MODE VOLT')
         self.visa.write(":SENS:FUNC 'CURR:DC'")
@@ -172,6 +175,7 @@ class Keithley(Instrument):
         return self.visa.get_wait_for_meas()
 
     def measure_resistance(self):
+        self.disarm()
         self.visa.write(':SYST:TIME:RES')
         self.visa.write(':FORM:ELEM RES')
         self.visa.write(":SENS:FUNC 'RES'")
@@ -200,8 +204,11 @@ class Keithley(Instrument):
         self.__checkarmed()
 
     def disarm(self):
-        self.visa.write(':OUTP OFF')
-        self.__checkarmed()
+        for i in range(0, 10):
+            if not self.__checkarmed():
+                break
+            self.visa.write(':OUTP OFF')
+            time.sleep(1)
 
     def __checkarmed(self):
         try:

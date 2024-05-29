@@ -275,7 +275,8 @@ class MeasurementControl(tk.Frame):
         self.sweepdone.set(False)
         if self.child_threads['meas'] is not None:
             if not self.child_threads['meas'].active:
-                self._process_data(self.smu.fetch_data().split(','))
+                if not self.stop:
+                    self._process_data(self.smu.fetch_data().split(','))
                 self.sweeps_done += 1
                 if self.sweeps_done < int(self.sweep["nsweeps"]) and not self.stop:
                     logger.debug('Finishing sweep and starting next.')

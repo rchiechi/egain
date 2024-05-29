@@ -264,7 +264,7 @@ class OPCThread(threading.Thread):
         with self.lock:
             logger.warning("Aborting measurment.")
             self.smu.write(b':ABOR')
-            self.alive.clear()
+            self.smu.write(b':OUTP OFF')
 
     @property
     def active(self):
