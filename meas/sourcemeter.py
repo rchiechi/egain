@@ -194,7 +194,7 @@ class Keithley(Instrument):
         self.set_compliance(compliance)
         self.visa.write(f":SOUR:VOLT {volts}")
         self.arm()
-        # return self.visa.get_reader()
+        self.visa.write(":SYST:LOC")
 
     def end_voltage_sweep(self):
         self.disarm()
