@@ -3,7 +3,7 @@ from decimal import Decimal
 import tkinter.ttk as tk
 from tkinter import Tk
 from tkinter import BooleanVar, StringVar, messagebox
-from tkinter import TOP, LEFT, BOTTOM
+from tkinter import TOP, LEFT, RIGHT, BOTTOM
 from tkinter import BOTH
 from tkinter.font import Font
 from meas.k6430 import K6430
@@ -46,6 +46,7 @@ class MeasurementControl(tk.Frame):
         self.meas = self.config.get('meas', {'ADDRESS': '24', 'NPLC': '5', 'compliance': '105e-3'})
         self.deviceString = StringVar()
         self.stop = False
+        self.sweepcompletesound = StringVar()
         self.createWidgets()
 
     def _init_results(self):
@@ -142,8 +143,12 @@ class MeasurementControl(tk.Frame):
 
         measComplianceEntry = tk.Entry(measFrame, textvariable=self.compliance, width=10)
         measComplianceLabel = tk.Label(measFrame, text='Compliance:', font=self.labelFont)
+        measCompleteSoundCheckBox = tk.Checkbutton(measFrame,
+                                                   text='Completion Sound',
+                                                   variable=self.sweepcompletesound)
         measComplianceLabel.pack(side=LEFT)
         measComplianceEntry.pack(side=LEFT)
+        measCompleteSoundCheckBox.pack(side=RIGHT)
 
         measNPLC = tk.Spinbox(measFrame,
                               from_=1,
@@ -291,7 +296,7 @@ class MeasurementControl(tk.Frame):
                 self.sweepdone.set(True)
             self.after(100, self._measureinbackground)
             return
-        self.smu.end_voltage_sweep()
+        self.smu.end_voltage_sweep(self.sweepcompletesound.get() == '1')
         self.isbusy = False
         self.sweepdone.set(True)
         logger.info('All sweeps completed.')

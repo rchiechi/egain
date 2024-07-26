@@ -196,8 +196,10 @@ class Keithley(Instrument):
         self.arm()
         self.visa.write(":SYST:LOC")
 
-    def end_voltage_sweep(self):
+    def end_voltage_sweep(self, sound=False):
         self.disarm()
+        if sound:
+            self.visa.playzelda()
 
     def arm(self):
         self.visa.write(':OUTP ON')

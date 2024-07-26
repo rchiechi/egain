@@ -27,26 +27,28 @@ NOTE_FREQUENCIES = {'C2': '65.41', 'C#2': '69.30', 'Db2': '69.30', 'D2': '73.42'
                     'Db8': '4434.92', 'D8': '4698.63', 'D#8': '4978.03', 'Eb8': '4978.03',
                     'E8': '5274.04', 'F8': '5587.65', 'F#8': '5919.91', 'Gb8': '5919.91',
                     'G8': '6271.93', 'G#8': '6644.88', 'Ab8': '6644.88', 'A8': '7040.00',
-                    'A#8': '7458.62', 'Bb8': '7458.62', 'B8': '7902.13'}
+                    'A#8': '7458.62', 'Bb8': '7458.62', 'B8': '7902.13', 'R': '0.0'}
 
-simpsons = [('C4', 1.5), ('E4', 1.0), ('F#4', 1.0), ('A4', 0.5),
-            ('G4', 1.5), ('E4', 0.5), ('R', 0.5), ('C4', 0.5), ('R', 0.5), ('A4', 0.5),
-            ('F#4', 0.5), ('F#4', 0.5), ('F#4', 0.5), ('G4', 2.0), ('R', 0.5),
-            ('R', 0.5), ('F#4', 0.5), ('F#4', 0.5), ('F#4', 0.5), ('G4', 0.5), ('Bb4', 1.5),
-            ('C5', 0.5), ('C5', 0.5), ('C5', 0.5), ('C5', 0.5), ('R', 2.0)]
 
 class Music():
 
-    notes = NOTE_FREQUENCIES
+    chord = [('C4', 0.5), ('E4', 0.5), ('G4', 0.5), ('C5', 1.5)]
+
+    simpsons = [('C4', 1.5), ('E4', 1.0), ('F#4', 1.0), ('A4', 0.5),
+                ('G4', 1.5), ('E4', 0.5), ('R', 0.5), ('C4', 0.5), ('R', 0.5), ('A4', 0.5),
+                ('F#4', 0.5), ('F#4', 0.5), ('F#4', 0.5), ('G4', 2.0), ('R', 0.5),
+                ('R', 0.5), ('F#4', 0.5), ('F#4', 0.5), ('F#4', 0.5), ('G4', 0.5), ('Bb4', 1.5),
+                ('C5', 0.5), ('C5', 0.5), ('C5', 0.5), ('C5', 0.5), ('R', 2.0)]
+
+    zelda = [('G5', 0.25), ('F#5', 0.25), ('D#5', 0.25), ('A4', 0.25), ('G#4', 0.25), ('E5', 0.25),
+             ('G#5', 0.25), ('C6', 2.25)]
+
     bars = []
     bpm = 120
     # time_sig = [4,4]
 
-    def __init__(self, terminator):
-        self.terminator = terminator
-
-    def note(self, _note):
-        self.notes.get(_note, '')
+    # def __init__(self, terminator):
+    #     self.terminator = terminator
 
     @property
     def tempo(self):
@@ -54,11 +56,28 @@ class Music():
 
     @tempo.setter
     def tempo(self, _bpm):
-        if isinstance(_bpm, float):
+        if isinstance(_bpm, int) or isinstance(_bpm, float):
             self.bpm = _bpm
 
-    def getmelody(self, song):
-        _melody = []
-        for _beat in song:
-            _note = self.note(_beat)
-            _melody.append(f"{_note[0]},{_note[1]/(self.tempo/60)}")
+    def getmelody(self, song, byte=False):
+        melody = []
+        for _step in song:
+            if _step[0] == 'R':
+                note = ''
+            else:
+                note = NOTE_FREQUENCIES[_step[0]]
+            duration = _step[1]/(self.tempo/60)
+            if byte:
+                note = bytes(note, encoding='utf8')
+                duration = bytes(str(duration), encoding='utf8')
+            melody.append((note, duration))
+        return melody
+
+    # def getbytecmds(self, song):
+    #     _melody = self.getmelody(song)
+    #     cmd = []
+    #     for _step in _melody:
+    #         if _step[0]:
+    #             note = bytes(_step[0], encoding='utf8')
+    #         cmd.append( (b'SYST:BEEP:IMM '+note+self.terminator, rest) )
+    #     return cmd

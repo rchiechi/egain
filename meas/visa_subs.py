@@ -25,6 +25,7 @@ import threading
 from contextlib import contextmanager
 # import pyvisa as visa
 import serial
+from meas.notes import Music
 # rm = visa.ResourceManager()
 
 logger = logging.getLogger(__package__+'.visa')
@@ -183,16 +184,21 @@ class SerialVisa():
         self.smu.open()
 
     def playchord(self):
+        self.playtune(Music.chord)
+
+    def playzelda(self):
+        self.playtune(Music.zelda)
+
+    def playtune(self, song, tempo=120):
+        music = Music()
+        music.tempo = tempo
         with self.lock:
             self.smu.write(b':SYST:BEEP:STAT ON'+self.write_termination_b)
-            self.smu.write(b'SYST:BEEP:IMM 261.63,0.25'+self.write_termination_b)
-            time.sleep(0.25)
-            self.smu.write(b'SYST:BEEP:IMM 329.63,0.25'+self.write_termination_b)
-            time.sleep(0.25)
-            self.smu.write(b'SYST:BEEP:IMM 392.00,0.25'+self.write_termination_b)
-            time.sleep(0.25)
-            self.smu.write(b'SYST:BEEP:IMM 523.25,1'+self.write_termination_b)
-            time.sleep(0.5)
+            for _note in music.getmelody(song, True):
+                if _note[0]:
+                    self.smu.write(b'SYST:BEEP:IMM ' + _note[0] + b',' + _note[1] + self.write_termination_b)
+                time.sleep(float(_note[1]))
+                logger.debug(f'>> {_note}')
 
     def write(self, cmd):
         self.__delay()
