@@ -292,6 +292,7 @@ class READThread(threading.Thread):
         self.lock = lock
         self.alive = threading.Event()
         self.alive.set()
+        self._aborted = False
         self.read_termination = read_termination
         self.write_termination = write_termination
 
@@ -309,6 +310,14 @@ class READThread(threading.Thread):
     @property
     def alive_event(self):
         return self.alive
+
+    @property
+    def aborted(self):
+        return self._aborted
+
+    def abort(self):
+        self.alive.clear()
+        self._aborted = True
 
     def read(self):
         if self.alive.is_set():

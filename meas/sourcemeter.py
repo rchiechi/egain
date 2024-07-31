@@ -142,7 +142,7 @@ class Keithley(Instrument):
         return True
 
     def set_compliance(self, compliance):
-        self.visa.write(f":SENS:{self.sense}:PROT:LEV {compliance:.3e}")
+        self.visa.write(f":SENS:{self.sense}:PROT:LEV {float(compliance):.3e}")
 
     def setNPLC(self, nplc):
         self.visa.write(f':SENSE:{self.sense}:NPLC {nplc}')
@@ -162,6 +162,8 @@ class Keithley(Instrument):
             self.visa.write(f":SENS:CURR:RANG {self.sense_range:.2e}")
         if kwargs.get("NPLC", 0):
             self.setNPLC(kwargs['NPLC'])
+        if kwargs.get("compliance", 0):
+            self.set_compliance(kwargs['compliance'])
         self.visa.write(':SOUR:DEL:AUTO ON')
         # self.visa.write(':SOUR:CLE:AUTO ON')
         self.visa.write(f':SOUR:LIST:VOLT {",".join(v_list)}')
@@ -184,10 +186,23 @@ class Keithley(Instrument):
         self.arm()
         return self.visa.get_reader()
 
+    def measure_voltage(self, **kwargs):
+        self.disarm()
+        self.visa.write(':SYST:TIME:RES')
+        self.visa.write(":FORM:ELEM VOLT,CURR,TIME")
+        self.visa.write(":SENS:FUNC 'VOLT'")
+        self.visa.write(':SENS:VOLT:RANG:AUTO ON')
+        if kwargs.get("NPLC", 0):
+            self.setNPLC(kwargs['NPLC'])
+        if kwargs.get("compliance", 0):
+            self.set_compliance(kwargs['compliance'])
+        self.arm()
+        return self.visa.get_reader()
+
     def source_with_compliance(self, volts, compliance):
         self.disarm()
         self.visa.write(':SYST:TIME:RES')
-        self.visa.write(':FORM:ELEM RES')
+        self.visa.write(':FORM:ELEM CURR')
         self.visa.write(':SOUR:FUNC:MODE VOLT')
         self.visa.write(":SENS:FUNC 'CURR:DC'")
         self.visa.write(":SENS:CURR:RANG:AUTO ON")
@@ -217,6 +232,7 @@ class Keithley(Instrument):
             self.output = bool(int(self.visa.query(":OUTP:STAT?")))
         except ValueError:
             return True
+        return self.armed
 
     def fetch_data(self):
         # return self.visa.query('FETC?').strip()

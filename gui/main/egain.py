@@ -439,6 +439,7 @@ class MainFrame(tk.Frame):
             fh.write(f'Onscreen junction size:{_jsize}\n')
             fh.write(f"Magnification:{self.variables['junction_mag'].get()}\n")
             fh.write(f'Junction conversion factor:{_conversion}\n')
+            fh.write(f"Thermopower measurement: {bool(self.widgets['measurementFrame'].measvolt.get())}\n")
             fh.write(f"Peltier enabled: {self.widgets['tempcontrols'].peltierstatus}\n")
             fh.write(f"Upper temperature (°C): {self.widgets['tempcontrols'].uppertemp}\n")
             fh.write(f"Lower temperature (°C): {self.widgets['tempcontrols'].lowertemp}\n")
@@ -496,6 +497,7 @@ def increment_fn(fn):
         return f'{fn}_01'
 
 def write_data_to_file(fn, results):
+    logger.debug("Writing to %s", fn)
     _fn = Path(fn)
     with _fn.open('w', newline='') as csvfile:
         writer = csv.writer(csvfile, dialect='JV')

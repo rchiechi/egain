@@ -6,6 +6,7 @@ from tkinter import BooleanVar, StringVar, messagebox
 from tkinter import TOP, LEFT, RIGHT, BOTTOM
 from tkinter import BOTH
 from tkinter.font import Font
+from tkinter import DISABLED, NORMAL
 from meas.k6430 import K6430
 from meas.k2182A import K2182A
 from meas.util import enumerateDevices
@@ -27,6 +28,15 @@ class MeasurementControl(tk.Frame):
     sweeps_done = 0
     config_file = 'MeasurementControl.json'
 
+    SWEEP_PROTO = {'sweepLow': '-1.0',
+                   'sweepHigh': '1.0',
+                   'stepSize': '0.25',
+                   'nsweeps': '5',
+                   'reversed': '0',
+                   'measvolt': '0'
+                   }
+    MEAS_PROTO = {'ADDRESS': '24', 'NPLC': '5', 'compliance': '105e-3'}
+
     def __init__(self, root, cli_opts, **kwargs):
         self.master = root
         self._init_results()
@@ -37,16 +47,12 @@ class MeasurementControl(tk.Frame):
         super().__init__(self.master)
         self.labelFont = Font(size=8)
         self.config = parseusersettings(self.config_file)
-        self.sweep = self.config.get('sweep', {'sweepLow': '-1.0',
-                                               'sweepHigh': '1.0',
-                                               'stepSize': '0.25',
-                                               'nsweeps': '5',
-                                               'reversed': '0'
-                                               })
-        self.meas = self.config.get('meas', {'ADDRESS': '24', 'NPLC': '5', 'compliance': '105e-3'})
+        self.sweep = self.config.get('sweep', self.SWEEP_PROTO)
+        self.meas = self.config.get('meas', self.MEAS_PROTO)
         self.deviceString = StringVar()
         self.stop = False
         self.sweepcompletesound = StringVar()
+        self.widgets = {}
         self.createWidgets()
 
     def _init_results(self):
@@ -100,13 +106,17 @@ class MeasurementControl(tk.Frame):
         return False
 
     def createWidgets(self):
-        for _StringVar in self.sweep:
-            setattr(self, _StringVar, StringVar(value=str(self.sweep[_StringVar])))
+        for _StringVar in self.SWEEP_PROTO:
+            _val = self.sweep.get(_StringVar, self.SWEEP_PROTO[_StringVar])
+            setattr(self, _StringVar, StringVar(value=_val))
             getattr(self, _StringVar).trace_add('write', self._validateSweep)
         sweepFrame = tk.LabelFrame(self, text='Sweep Settings')
         sweepLowEntry = tk.Entry(sweepFrame, textvariable=self.sweepLow, width=4)
+        self.widgets['sweepLowEntry'] = sweepLowEntry
         sweepHighEntry = tk.Entry(sweepFrame, textvariable=self.sweepHigh, width=4)
+        self.widgets['sweepHighEntry'] = sweepHighEntry
         sweepStepSizeEntry = tk.Entry(sweepFrame, textvariable=self.stepSize, width=4)
+        self.widgets['sweepStepSizeEntry'] = sweepStepSizeEntry
         # sweepSweepsEntry = tk.Entry(sweepFrame, textvariable=self.nsweeps, width=4)
         sweepSweepsEntry = tk.Spinbox(sweepFrame,
                                       font=Font(size=10),
@@ -115,11 +125,12 @@ class MeasurementControl(tk.Frame):
                                       increment=1,
                                       textvariable=self.nsweeps,
                                       width=4)
-
+        self.widgets['sweepSweepsEntry'] = sweepSweepsEntry
         sweepFrame.pack(side=BOTTOM, fill=BOTH)
         reversedCheckbutton = tk.Checkbutton(sweepFrame, text='Reversed',
                                              variable=self.reversed,
                                              command=self._validateMeas)
+        self.widgets['reversedCheckbutton'] = reversedCheckbutton
         reversedCheckbutton.pack(side=LEFT)
         sweepLowEntryLabel = tk.Label(sweepFrame, text='From:', font=self.labelFont)
         sweepLowEntryLabel.pack(side=LEFT)
@@ -133,6 +144,10 @@ class MeasurementControl(tk.Frame):
         sweepSweepsLabel = tk.Label(sweepFrame, text='Sweeps:', font=self.labelFont)
         sweepSweepsLabel.pack(side=LEFT)
         sweepSweepsEntry.pack(side=LEFT)
+        measvoltCheckbutton = tk.Checkbutton(sweepFrame, text='Seebeck',
+                                             variable=self.measvolt,
+                                             command=self._validateMeas)
+        measvoltCheckbutton.pack(side=RIGHT)
 
         for _StringVar in self.meas:
             setattr(self, _StringVar, StringVar(value=str(self.meas[_StringVar])))
@@ -193,7 +208,7 @@ class MeasurementControl(tk.Frame):
 
     def _validateSweep(self, *args):
         try:
-            for _StringVar in self.sweep:
+            for _StringVar in self.SWEEP_PROTO:
                 _var = getattr(self, _StringVar).get()
                 if _var:
                     float(_var)
@@ -208,8 +223,9 @@ class MeasurementControl(tk.Frame):
         self._saveconfig()
 
     def _validateMeas(self, *args):
+        self._seebeckMode(int(self.measvolt.get()))
         try:
-            for _StringVar in self.meas:
+            for _StringVar in self.MEAS_PROTO:
                 _var = getattr(self, _StringVar).get()
                 try:
                     int(_var)
@@ -224,6 +240,16 @@ class MeasurementControl(tk.Frame):
         self.error = False
         self.config['meas'] = self.meas
         self._saveconfig()
+
+    def _seebeckMode(self, set_on):
+        _state = NORMAL
+        if set_on:
+            _state = DISABLED
+        for _widget in ('sweepLowEntry',
+                        'sweepHighEntry',
+                        'sweepStepSizeEntry',
+                        'reversedCheckbutton'):
+            self.widgets[_widget]['state'] = _state
 
     def stop_measurement(self):
         self.stop = True
@@ -244,9 +270,18 @@ class MeasurementControl(tk.Frame):
                             auto_sense_range=True,
                             flowcontrol=False,
                             compliance=float(self.compliance.get()))
-        self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep), NPLC=self.meas['NPLC'])
-        self.child_threads['meas'].start()
-        self._measureinbackground()
+        self.sweeps_done = 0
+        if int(self.measvolt.get()):
+            self.child_threads['meas'] = self.smu.measure_voltage(compliance=self.meas['compliance'],
+                                                                  NPLC=self.meas['NPLC'])
+            self.child_threads['meas'].start()
+            self._measureVoltageinbackground()
+        else:
+            self.child_threads['meas'] = self.smu.start_voltage_sweep(build_sweep(self.sweep),
+                                                                      compliance=self.meas['compliance'],
+                                                                      NPLC=self.meas['NPLC'])
+            self.child_threads['meas'].start()
+            self._measureinbackground()
 
     def getResistanceReader(self):
         if not self.is_initialized:
@@ -262,6 +297,33 @@ class MeasurementControl(tk.Frame):
         compliance = kwargs.get('compliance', 1e-6)
         self.smu.source_with_compliance(volts, compliance)
 
+    def _measureVoltageinbackground(self, **kwargs):
+        if not self.is_initialized:
+            messagebox.showerror("Error", "Sourcemeter is not initialized.")
+            return
+        self.isbusy = True
+        self.sweepdone.set(False)
+        if self.child_threads['meas'] is not None:
+            if self.child_threads['meas'].active:
+                if not self.stop:
+                    self._process_data(self.child_threads['meas'].read().split(b','))
+                self.sweeps_done += 1
+                if self.sweeps_done >= int(self.sweep["nsweeps"]) and not self.stop:
+                    logger.debug('Completed voltage measurement.')
+                    self.child_threads['meas'].kill()
+                    self.child_threads['meas'] = None
+                    self.sweeps_done = 0
+            elif self.stop and not self.child_threads['meas'].aborted:
+                self.child_threads['meas'].abort()
+                self.sweepdone.set(True)
+            self.after(100, self._measureVoltageinbackground)
+            return
+        self.smu.end_voltage_sweep(self.sweepcompletesound.get() == '1')
+        self.isbusy = False
+        self.sweepdone.set(True)
+        self.smu.disarm()
+        logger.info('Voltage measurement completed.')
+
     def _readinbackground(self):
         self.isbusy = True
         if self.child_threads['read'] is not None:
@@ -275,6 +337,7 @@ class MeasurementControl(tk.Frame):
 
     def _measureinbackground(self):
         if not self.is_initialized:
+            messagebox.showerror("Error", "Sourcemeter is not initialized.")
             return
         self.isbusy = True
         self.sweepdone.set(False)
@@ -299,6 +362,7 @@ class MeasurementControl(tk.Frame):
         self.smu.end_voltage_sweep(self.sweepcompletesound.get() == '1')
         self.isbusy = False
         self.sweepdone.set(True)
+        self.smu.disarm()
         logger.info('All sweeps completed.')
 
     def _process_data(self, data_):
