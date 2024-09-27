@@ -457,15 +457,6 @@ class MeasurementReadV(MeasurementControl):
     def voltage(self):
         return self.measvoltage
 
-# def build_sweep(sweep):
-#     _ends = [sweep['sweepHigh'], sweep['sweepLow']]
-#     if sweep['reversed']:
-#         _ends.reverse()
-#     _span1 = ['0.0', _ends[0]]
-#     _span2 = [_ends[0], _ends[1]]
-#     _span3 = _span1[::-1]
-#     return (sweep['stepSize'], _span1, _span2, _span3)
-
 def build_sweep(sweep):
     _sweepup = []
     _sweepdown = []

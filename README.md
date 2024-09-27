@@ -9,4 +9,4 @@ The "EGaIn setup" consists of a syringe full of eutectic Ga-In suspended over a 
 This software uses RS-232, not GPIB. Follow these steps to set the electrometer to RS-232 mode:
 1. Press `MENU`
 2. Navigate to `COMMUNICATION` and then press `ENTER`
-3. Select `RS-232` (the electrometer needs to reboot for this setting to take effect)
+3. Select `RS-232` and press `ENTER` (the electrometer needs to reboot for this setting to take effect)
