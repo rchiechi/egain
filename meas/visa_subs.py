@@ -122,7 +122,8 @@ class SerialVisa():
         self.delta = time.time()
         # self.address = address
         # self.timeout = timeout
-        self.smu = serial.Serial(address, baud, timeout=1, xonxoff=flowcontrol)
+        # self.smu = serial.Serial(address, baud, timeout=1, xonxoff=flowcontrol)
+        self.smu = serial.Serial(address, baud, timeout=1, rtscts=flowcontrol)
         # self.playchord()
 
     @property

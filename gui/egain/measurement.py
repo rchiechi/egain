@@ -198,6 +198,7 @@ class MeasurementControl(tk.Frame):
         if not self.is_initialized:
             _smu = K6430(self.deviceString.get(), quiet=self.cli_opts.quiet)
             if _smu.initialize(auto_sense_range=True,
+                               flowcontrol=True,
                                compliance=float(self.compliance.get())):
                 self.smu = _smu
                 self.config['device_string'] = self.deviceString.get()
@@ -455,6 +456,15 @@ class MeasurementReadV(MeasurementControl):
     @property
     def voltage(self):
         return self.measvoltage
+
+# def build_sweep(sweep):
+#     _ends = [sweep['sweepHigh'], sweep['sweepLow']]
+#     if sweep['reversed']:
+#         _ends.reverse()
+#     _span1 = ['0.0', _ends[0]]
+#     _span2 = [_ends[0], _ends[1]]
+#     _span3 = _span1[::-1]
+#     return (sweep['stepSize'], _span1, _span2, _span3)
 
 def build_sweep(sweep):
     _sweepup = []

@@ -165,16 +165,46 @@ class Keithley(Instrument):
         if kwargs.get("compliance", 0):
             self.set_compliance(kwargs['compliance'])
         self.visa.write(':SOUR:DEL:AUTO ON')
-        # self.visa.write(':SOUR:CLE:AUTO ON')
-        self.visa.write(f':SOUR:LIST:VOLT {",".join(v_list)}')
-        _points = self.visa.query(':SOUR:LIST:VOLT:POIN?')
-        if not _points:
-            _points = len(v_list)
+        self.visa.write(f':SOUR:LIST:VOLT {",".join(v_list[:100])}')
+        _points = len(v_list)
+        v_list = v_list[100:]
+        while len(v_list):
+            self.visa.write(f':SOUR:LIST:VOLT:APP {",".join(v_list[:100])}')
+            v_list = v_list[100:]
+        _points = self.visa.query(':SOUR:LIST:VOLT:POIN?') or _points
         self.visa.write(f':TRIG:COUN {_points}')
         self.visa.write(':SOUR:VOLT:MODE LIST')
         self.arm()
         self.visa.write(':INIT')
         return self.visa.get_wait_for_meas()
+
+    # def start_voltage_sweep(self, sweep, **kwargs):
+    #     self.disarm()
+    #     self.visa.write(':SYST:TIME:RES')
+    #     self.visa.write(':SOUR:FUNC:MODE VOLT')
+    #     self.visa.write(":SENS:FUNC 'CURR:DC'")
+    #     self.visa.write(":FORM:ELEM VOLT,CURR,TIME")
+    #     if self.auto_range:
+    #         self.visa.write(":SENS:CURR:RANG:AUTO ON")
+    #     else:
+    #         self.visa.write(f":SENS:CURR:RANG {self.sense_range:.2e}")
+    #     if kwargs.get("NPLC", 0):
+    #         self.setNPLC(kwargs['NPLC'])
+    #     if kwargs.get("compliance", 0):
+    #         self.set_compliance(kwargs['compliance'])
+    #     self.visa.write(':SOUR:DEL:AUTO ON')
+    #     # self.visa.write(':SOUR:CLE:AUTO ON')
+    #     # self.visa.write(f':SOUR:LIST:VOLT {",".join(v_list)}')
+    #     self.visa.write(f':SOUR:VOLT:STAR {sweep[1]}')
+    #     self.visa.write(f':SOUR:VOLT:STOP {sweep[2]}')
+    #     _points = self.visa.query(':SOUR:LIST:VOLT:POIN?')
+    #     if not _points:
+    #         _points = len(v_list)
+    #     self.visa.write(f':TRIG:COUN {_points}')
+    #     self.visa.write(':SOUR:VOLT:MODE LIST')
+    #     self.arm()
+    #     self.visa.write(':INIT')
+    #     return self.visa.get_wait_for_meas()
 
     def measure_resistance(self):
         self.disarm()
