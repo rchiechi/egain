@@ -7,10 +7,18 @@ inline void digitalToggle(byte pin) {
   digitalWrite(pin, !digitalRead(pin));
 }
 
-/*
-* Computhe power of a peltier based on the value of setDegC[side]
-* and then call the setpower function
-*/
+/* NEW PID LOGIC */
+
+void setPeltier(int _side){
+  if (peltier_on[_side]){
+    PID[_side].Compute();
+    analogWrite(peltier_addr[_side], PID_value[_side]);
+  }
+}
+
+/* OLD PELTIER LOGIC
+
+
 void setPeltier(int _side) {
   int _setpower = 0;
   double c = Thermocouples[_side].readCelsius();
@@ -50,9 +58,7 @@ void setPeltier(int _side) {
   }
 }
 
-/*
-* Set the power of a peltier
-*/
+
 void setpower(uint8_t _side, uint8_t _power) {
   uint8_t* set_power;
   if (_power > 100) {
@@ -69,6 +75,7 @@ void setpower(uint8_t _side, uint8_t _power) {
     analogWrite(peltier_addr[_side], 0);
   }
 }
+/*
 
 /*
 * Set the on/off state of a pletier based on the value of peltier_on
@@ -94,15 +101,28 @@ void togglePeltier() {
 * Set the polarity of a peltier based on the value of flow[side]
 */
 void togglePolarity() {
+  static uint8_t current_state;
   // Set both relays to off
   for (int side = LEFT; side <= RIGHT; ++side) {
     digitalWrite(peltier_relay[side], LOW);
   }
   delay(100);
+  // Set flow direction
   for (int side = LEFT; side <= RIGHT; ++side) {
     digitalWrite(peltier_polarity[side], flow[side]);
   }
   delay(100);
+  // Sync PID controllers with flow direction
+  for (int side = LEFT; side <= RIGHT; ++side) {
+    current_state = getPolarity(side);
+    if (current_state == HEAT){
+      PID[side].SetControllerDirection(DIRECT);
+    }else if (current_state == COOL ){
+      PID[side].SetControllerDirection(REVERSE);
+    }
+  }
+  delay(100);
+  
   togglePeltier();
 }
 

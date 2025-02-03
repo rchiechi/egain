@@ -103,8 +103,8 @@ void show_summary() {
   static double last_rc = 0;
 
   // Read the temperature as Celsius:
-  double lc = avgTC[LEFT].getAverage();
-  double rc = avgTC[RIGHT].getAverage();
+  double lc = avgTC[LEFT].getAvg();
+  double rc = avgTC[RIGHT].getAvg();
 
   if (update) {
     lcd.setBacklight(ON);

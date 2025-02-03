@@ -4,9 +4,11 @@
  */
 
 #include <SPI.h>
+#include <PID_v1.h>
+#include <movingAvg.h>          // https://github.com/JChristensen/movingAvg
 #include "Adafruit_MAX31855.h"
 #include <Adafruit_RGBLCDShield.h>
-#include "RunningAverage.h"
+// #include "RunningAverage.h"
 #include "peltier_LCD.h"
 
 // The thermocouple objects initialized with software SPI
@@ -21,7 +23,7 @@ Adafruit_RGBLCDShield lcd = Adafruit_RGBLCDShield();
 
 // **** Initialize global variables
 double setDegC[] = { 25.0, 25.0 };     // Target temperatures
-uint8_t power[] = { 0, 0 };            // Power to MOSTFETs
+// uint8_t power[] = { 0, 0 };            // Power to MOSTFETs
 bool peltier_on[] = { false, false };  // Keep track of left pletier power state
 uint8_t flow[] = { HEAT, COOL };       // Whether peltiers are in heating or cooling mode
 uint8_t peltier_polarity[] = { LPETLIER_POLARITY, RPLETIER_POLARITY };
@@ -31,10 +33,35 @@ bool initialized; // when true, device is initialized
 bool update; // when true, update LCD status
 
 // Running averages for temperatures
-RunningAverage avgTC[] = {
-  RunningAverage(10),  // LEFT
-  RunningAverage(10)   //RIGHT
+movingAvg avgTC[] = {
+  movingAvg(10),  // LEFT
+  movingAvg(10)   // RIGHT
 };
+
+/*
+   New PID logic TBD
+*/
+
+double PID_value = {0, 0};
+double currentTemp = {25, 25};
+
+//left PID constants
+double LKp = 10;
+double LKi = 0.5;
+double LKd = 0.1;
+//right PID constants
+double RKp = 10;
+double RKi = 0.5;
+double RKd = 0.1;
+
+// PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
+PID PIDs[] = {
+ PID(&currentTemp[LEFT], &PID_value[LEFT], &setDegC[LEFT], LKp, LKi, LKd, DIRECT); // LEFT
+ PID(&currentTemp[RIGHT], &PID_value[RIGHT], &setDegC[RIGHT], RKp, RKi, RKd, DIRECT); // RIGHT
+}
+// *********
+
+
 
 void (*state)() = NULL;                // The current state.
 void (*last_state)() = NULL;           // The state prior to the current state.
@@ -77,13 +104,14 @@ const uint8_t HEAT_IDX = 5;
 const String message = "message";
 const char leftbrace = "{";
 const char rightbrace = "}";
-const char quote = "\"";
+// const char quote = "\"";
 
 /* 
  ###########################################################################
                 setup
  ###########################################################################
 */
+
 void setup() {
   Serial.begin(115200);
   while (!Serial) delay(1);  // wait for Serial on Leonardo/Zero, etc
@@ -106,7 +134,8 @@ void setup() {
   for (uint8_t side = LEFT; side <= RIGHT; ++side) {
     pinMode(peltier_relay[side], OUTPUT);  // sets the digital pin as output
     pinMode(peltier_addr[side], OUTPUT);   // sets the PWM pin as output
-    avgTC[side].clear();                   // Clear the running average objects
+    avgTC[side].begin();                   // Clear the running average objects
+    PID[_side].SetMode(AUTOMATIC);
   }
   // Start the LCD screen
   lcd.begin(16, 2);
@@ -143,7 +172,7 @@ void loop() {
   for (uint8_t side = LEFT; side <= RIGHT; ++side) {
     c = Thermocouples[side].readCelsius();
     if (!isnan(c)) {
-      avgTC[side].addValue(c);
+      currentTemp[side] = avgTC[side].reading(c);
     }
   }
   time = millis();
