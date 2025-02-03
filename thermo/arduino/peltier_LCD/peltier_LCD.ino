@@ -42,8 +42,8 @@ movingAvg avgTC[] = {
    New PID logic TBD
 */
 
-double PID_value = {0, 0};
-double currentTemp = {25, 25};
+double PID_value[] = { 0.0, 0.0 };
+double currentTemp[] = {25.0 , 25.0};
 
 //left PID constants
 double LKp = 10;
@@ -56,9 +56,9 @@ double RKd = 0.1;
 
 // PID myPID(&Input, &Output, &Setpoint, Kp, Ki, Kd, DIRECT);
 PID PIDs[] = {
- PID(&currentTemp[LEFT], &PID_value[LEFT], &setDegC[LEFT], LKp, LKi, LKd, DIRECT); // LEFT
- PID(&currentTemp[RIGHT], &PID_value[RIGHT], &setDegC[RIGHT], RKp, RKi, RKd, DIRECT); // RIGHT
-}
+ PID(&currentTemp[LEFT], &PID_value[LEFT], &setDegC[LEFT], LKp, LKi, LKd, DIRECT), // LEFT
+ PID(&currentTemp[RIGHT], &PID_value[RIGHT], &setDegC[RIGHT], RKp, RKi, RKd, DIRECT) // RIGHT
+};
 // *********
 
 
@@ -135,7 +135,7 @@ void setup() {
     pinMode(peltier_relay[side], OUTPUT);  // sets the digital pin as output
     pinMode(peltier_addr[side], OUTPUT);   // sets the PWM pin as output
     avgTC[side].begin();                   // Clear the running average objects
-    PID[_side].SetMode(AUTOMATIC);
+    PIDs[side].SetMode(AUTOMATIC);
   }
   // Start the LCD screen
   lcd.begin(16, 2);

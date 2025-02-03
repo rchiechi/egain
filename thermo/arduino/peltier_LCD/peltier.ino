@@ -11,7 +11,7 @@ inline void digitalToggle(byte pin) {
 
 void setPeltier(int _side){
   if (peltier_on[_side]){
-    PID[_side].Compute();
+    PIDs[_side].Compute();
     analogWrite(peltier_addr[_side], PID_value[_side]);
   }
 }
@@ -85,11 +85,11 @@ void togglePeltier() {
     if (peltier_on[side]) {
       digitalWrite(peltier_relay[side], HIGH);
     }
-    if (peltier_on[side]) {
-      digitalWrite(peltier_relay[side], HIGH);
+    if (!peltier_on[side]) {
+      digitalWrite(peltier_relay[side], LOW);
     }
   }
-  if (!peltier_on[LEFT] & !peltier_on[RIGHT]) {
+  if (!peltier_on[LEFT] && !peltier_on[RIGHT]) {
     for (uint8_t side = LEFT; side <= RIGHT; ++side) {
       digitalWrite(peltier_relay[side], LOW);
     }
@@ -116,9 +116,9 @@ void togglePolarity() {
   for (int side = LEFT; side <= RIGHT; ++side) {
     current_state = getPolarity(side);
     if (current_state == HEAT){
-      PID[side].SetControllerDirection(DIRECT);
+      PIDs[side].SetControllerDirection(DIRECT);
     }else if (current_state == COOL ){
-      PID[side].SetControllerDirection(REVERSE);
+      PIDs[side].SetControllerDirection(REVERSE);
     }
   }
   delay(100);

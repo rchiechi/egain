@@ -24,14 +24,14 @@ void handle_request() {  // Handle incoming Serial requests
   }
   if (incomingCmd == "LEFTOFF") {
     peltier_on[LEFT] = false;
-    power[LEFT] = 0;
+    // power[LEFT] = 0;
   }
   if (incomingCmd == "RIGHTON") {
     peltier_on[RIGHT] = true;
   }
   if (incomingCmd == "RIGHTOFF") {
     peltier_on[RIGHT] = false;
-    power[RIGHT] = 0;
+    // power[RIGHT] = 0;
   }
   if (incomingCmd == "SETLEFTTEMP") {
     setDegC[LEFT] = Serial.parseFloat();
@@ -61,9 +61,9 @@ void handle_request() {  // Handle incoming Serial requests
 
   if (incomingCmd == "POLL") {
     Serial.print(F("{\"LEFT\":"));
-    Serial.print(avgTC[LEFT].getAverage());
+    Serial.print(avgTC[LEFT].getAvg());
     Serial.print(F(",\"RIGHT\":"));
-    Serial.print(avgTC[RIGHT].getAverage());
+    Serial.print(avgTC[RIGHT].getAvg());
     Serial.print(F(","));
     Serial.print(F("\"LEFTTARGET\":"));
     Serial.print(setDegC[LEFT]);
@@ -78,6 +78,10 @@ void handle_request() {  // Handle incoming Serial requests
 
 
 void checkPeltier() {
+  static int power[] = {0, 0};
+  for (uint8_t side = LEFT; side <= RIGHT; ++side) {
+    power[side] = map(PID_value[side], 0, 255, 0, 100);
+  }
   Serial.print(F("\"PELTIERON\":["));
   if (peltier_on[LEFT]) {
     Serial.print(F("true"));
