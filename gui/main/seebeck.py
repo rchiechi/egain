@@ -23,6 +23,7 @@ import os
 import platform
 import time
 import csv
+from pathlib import Path
 import tkinter.ttk as tk
 from tkinter import filedialog
 from tkinter import StringVar, BooleanVar, Label, Entry, messagebox
@@ -60,7 +61,7 @@ class MainFrame(tk.Frame):
     timer = 0
     config_file = GLOBAL_OPTS
 
-    def __init__(self, root):
+    def __init__(self, root, cli_opts=None):
         self.root = root
         super().__init__(self.root)
         self.opts = createOptions()
@@ -116,7 +117,7 @@ class MainFrame(tk.Frame):
         outputfilenameEntryLabel = Label(master=outputFrame,
                                          text='Output Filename Prefix:')
         outputfilenameEntryLabel.pack(side=LEFT)
-        outputdirstring = StringVar(value=self.opts['save_path']+'/')
+        outputdirstring = StringVar(value=self.opts['save_path'])
         self.variables['outputdirstring'] = outputdirstring
         outputdirLabel = Label(master=outputFrame,
                                textvariable=outputdirstring)
@@ -129,7 +130,8 @@ class MainFrame(tk.Frame):
         outputfilenameEntry.delete(0, END)
         outputfilenameEntry.insert(0, self.opts['output_file_name'])
         for _ev in ('<Return>', '<Leave>', '<Enter>'):
-            outputfilenameEntry.bind(_ev, self.checkOptions)
+            outputfilenameEntry.bind(_ev, self.checkOutputfilename)
+        self.widgets['outputfilenameEntry'] = outputfilenameEntry
 
         outputFrame.pack(side=TOP, fill=X)
         saveButton = tk.Button(master=buttonFrame, text="Save To", command=self.SpawnSaveDialogClick)
@@ -205,10 +207,23 @@ class MainFrame(tk.Frame):
         self.measButtonClick()
 
     def SpawnSaveDialogClick(self):
-        self.opts['save_path'] = filedialog.askdirectory(
+        _path = filedialog.askdirectory(
             title="Path to save data",
             initialdir=self.opts['save_path'])
+        if not _path:
+            return
+        self.opts['save_path'] = Path(_path)
+        logger.debug(f"Saving to {self.opts['save_path']}")
         self.variables['outputdirstring'].set(self.opts['save_path'])
+        self.checkOptions()
+
+    def checkOutputfilename(self, event):
+        self.opts['output_file_name'] = event.widget.get()
+        if os.path.exists(os.path.join(self.variables['outputdirstring'].get(),
+                          f"{event.widget.get()}_data.txt")):
+            event.widget.config({"background": "Yellow"})
+        else:
+            event.widget.config({"background": "White"})
         self.checkOptions()
 
     def checkOptions(self, *args):
