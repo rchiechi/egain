@@ -27,6 +27,8 @@ Q_KEY = 113
 X_KEY = 120
 ON_OFF_MAP = {False: 'ON', True: 'OFF'}
 
+DEVSINUSE = {'peltierstats': None, 'seebeckstats': None}
+
 class curses_updater:
 
     _initialized = False
@@ -77,12 +79,16 @@ class seebeckstats(curses_updater):
             self.thermothread.stop()
         self._initialized = False
         self.display.blank()
+        DEVSINUSE['seebeckstats'] = None
 
     def start(self):
         self.alive.set()
         for _dev in enumerateDevices(first='ttyS0'):
+            if _dev in DEVSINUSE.values():
+                continue
             voltmeter = K2182A(_dev)
             if voltmeter.initialize(auto_sense_range=True):
+                DEVSINUSE['seebeckstats'] = _dev
                 break
             voltmeter = None
         Lthermocouple, Rthermocouple = get_thermocouples()
@@ -131,12 +137,17 @@ class peltierstats(curses_updater):
         if self.gradcomm is not None:
             self.gradcomm.stop()
         self._initialized = False
+        DEVSINUSE['peltierstats'] = None
 
     def start(self):
         self.alive.set()
         for _dev in enumerateDevices(first='ttyACM0'):
+            if _dev in DEVSINUSE.values():
+                continue
             peltier = init_thermo_device(_dev)
             if peltier is not None:
+                DEVSINUSE['peltierstats'] = _dev
+                self.dev = _dev
                 break
         if peltier is not None:
             self.gradcomm = Gradient(self.alive, peltier, port=tc.PELTIER_PORT)
