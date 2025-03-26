@@ -16,7 +16,7 @@ opts = parser.parse_args()
 try:
     if opts.mode == 'curses':
         cursesgui(opts)
-    elif if opts.mode == 'rich':
+    elif opts.mode == 'rich':
         richgui(opts)
     else:
         parser.print_help()
