@@ -47,5 +47,5 @@ class Thermo(Netcontroller):
                 with self._lock:
                     self.last_json['voltage'] = float(self.voltmeter.fetch_data())
             except ValueError as msg:
-                print(f"Error reading voltage: {msg}")
+                self.console.print(f"Error reading voltage: {msg}")
                 self.last_json['voltage'] = 0.0

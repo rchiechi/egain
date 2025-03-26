@@ -29,7 +29,7 @@ class Gradient(Netcontroller):
     def _update(self):
         self.writeserial(tc.POLL)
         self.readserial()
-        print(self.status, end='\r')
+        self.console.print(self.status, end='\r')
 
 
 if __name__ == '__main__':

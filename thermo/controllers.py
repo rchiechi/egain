@@ -6,12 +6,14 @@ from multiprocessing.connection import Client, Listener
 import serial
 import json
 import thermo.constants as tc
+from rich.console import Console
 
 class Netcontroller():
 
     _lock = threading.Lock()
 
     def __init__(self, alive=None, devices=None, **kwargs):
+        self.console = kwargs.get('console', Console())
         self._update_frequency = 5
         self._statcheck_frequency = 5
         self.last_json = {}
@@ -132,7 +134,7 @@ class Netcontroller():
         """
         The main application loop
         """
-        # print(f"Starting listener in {self.addr}")
+        self.console.print(f"Starting listener in {self.addr}")
         while self.alive.is_set() and self.command == tc.COMMAND_RUN:
             # block until a client connection is received
             with self.listener.accept() as conn:
@@ -143,7 +145,7 @@ class Netcontroller():
                     return
                 # if it's a shut down command, return to stop this thread
                 if isinstance(message, str) and message == tc.COMMAND_STOP:
-                    # print(f"Listener {self.addr} dying.")
+                    self.console.print(f"Listener {self.addr} dying.")
                     self.alive.clear()
                     self.message = tc.COMMAND_STOP
                     return
@@ -166,8 +168,8 @@ class Netcontroller():
                         self.cmdq.put(_cmd)
 
     def _updater_main(self):
-        # print(f"Starting {self.update_frequency} second updater with ")
-        # print(f"statcheck upates at {self.statcheck_frequency} seconds.")
+        self.console.print(f"Starting {self.update_frequency} second updater with ")
+        self.console.print(f"statcheck upates at {self.statcheck_frequency} seconds.")
         start_time = [time.time(), time.time()]
         while self.alive.is_set() and self.command == tc.COMMAND_RUN:
             if time.time() - start_time[0] > self.update_frequency:
@@ -180,7 +182,7 @@ class Netcontroller():
                 self.writeserial(*self.cmdq.get())
             time.sleep(0.1)
         self._updater_exit()
-        # print("Updater thread dying.")
+        self.console.print("Updater thread dying.")
         self.alive.clear()
         self.message = tc.COMMAND_STOP
 
@@ -207,15 +209,15 @@ class Netcontroller():
                     if update:
                         self.last_json = _json
                 except json.decoder.JSONDecodeError:
-                    print(f'JSON Error: "{_msg}"')
+                    self.console.print(f'JSON Error: "{_msg}"')
                     self.serial_device.timeout = 500
                     _c = b'1'
                     while _c:  # Purge serial bufffer
                         _c = self.serial_device.read(1)
         except serial.serialutil.SerialException as msg:
-            print(f"Serial error {msg}")
+            self.console.print(f"Serial error {msg}")
         except AttributeError:
-            print("Error reading. Serial device not connected")
+            self.console.print("Error reading. Serial device not connected")
         self.last_serial = time.time()
         return _json
 
@@ -234,7 +236,7 @@ class Netcontroller():
                     self.serial_device.write(val)
                     self.serial_device.write(tc.TERMINATOR)
         except serial.serialutil.SerialException:
-            print(f"Error sending command to {self.serial_device.name}.")
+            self.console.print(f"Error sending command to {self.serial_device.name}.")
         except AttributeError:
-            print(f"Error sending {cmd}. Serial device not connected.")
+            self.console.print(f"Error sending {cmd}. Serial device not connected.")
         self.last_serial = time.time()
