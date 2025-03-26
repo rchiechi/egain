@@ -95,7 +95,7 @@ def gui(opts):
         for dev in enumerateDevices(first='ttyACM0'):
             if dev in DEVSINUSE.values():
                 continue
-            peltier = init_thermo_device(dev)
+            peltier = init_thermo_device(dev, console)
             if peltier is not None:
                 DEVSINUSE['peltierstats'] = dev
                 break

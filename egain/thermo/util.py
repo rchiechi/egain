@@ -5,6 +5,7 @@ import time
 import json
 import serial
 import egain.thermo.constants as tc
+from rich.console import Console
 
 def enumerateDevices(**kwargs):
     _first = kwargs.get("first", None)
@@ -39,15 +40,15 @@ def serial_ports(**kwargs):
     Returns:
     A list of serial device paths.
     """
-    _first = kwargs.get("first", None)
-    _ports = [_first] if _first is not None else []
+    # _first = kwargs.get("first", None)
+    # _ports = [_first] if _first is not None else []
     if os.name == "nt":
-        _ports += [f"COM{i}" for i in range(256)]
+        _ports = [f"COM{i}" for i in range(256)]
     elif os.name == "posix":
-        _ports += glob.glob("/dev/tty[A-Za-z]*")
+        _ports = glob.glob("/dev/tty[A-Za-z]*")
         _ports += glob.glob("/dev/serial*")
     else:
-        raise EnvironmentError("Unsupported platform")
+        raise Exception("Unsupported platform")
 
     ports = set()
     for _port in _ports:
@@ -59,12 +60,11 @@ def serial_ports(**kwargs):
             pass
     return ports
 
-def init_thermo_device(device):
-    print(f"\nInitializing {device}...", end='')
+def init_thermo_device(device, console=Console()):
+    console.print(f"\n[yellow]Initializing {device}...", end='')
     n = 0
     try:
-        ser_port = os.path.join('/', 'dev', device)
-        thermo = serial.Serial(ser_port, 115200, timeout=1)
+        thermo = serial.Serial(device, 115200, timeout=1)
         _json = ''
         while not _json or n < 10:
             time.sleep(1)
@@ -73,11 +73,11 @@ def init_thermo_device(device):
                 _msg = json.loads(_json)
                 _val = _msg.get('message', '')
                 if _val == tc.INITIALIZED:
-                    print("\nDevice initalized")
+                    console.print("\n[green]setting up...", end='')
                     time.sleep(0.5)
                     thermo.write(tc.SHOWSTATUS+tc.TERMINATOR)
                     time.sleep(0.5)
-                    print("Done!")
+                    console.print("[b]Done!")
                     return thermo
                 else:
                     print(_val)
@@ -87,5 +87,5 @@ def init_thermo_device(device):
             n += 1
     except serial.serialutil.SerialException:
         return None
-    print("\nEmpty reply from device.")
+    console.print("\n[red]Empty reply from device.")
     return None
