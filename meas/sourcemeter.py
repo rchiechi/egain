@@ -26,12 +26,12 @@ class Instrument:
         if isinstance(address, int):
             # self.visa = visa_subs.initialize_gpib(address, board=0)
             self.backend = MODE_GPIB
-            self.init_func = initialize_gpib
+            self.init_func = visa_subs.initialize_gpib
         else:
             # self.visa = visa_subs.initialize_serial(address,
             #                                         flowcontrol=kwargs.get('flowcontrol', False),
             #                                         quiet=kwargs.get('quiet', False))
-            self.init_func = initialize_gpib
+            self.init_func = visa_subs.initialize_gpib
             self.backend = MODE_SERIAL
 
     @property
