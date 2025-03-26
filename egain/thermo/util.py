@@ -80,9 +80,9 @@ def init_thermo_device(device, console=Console()):
                     console.print("[b]Done!")
                     return thermo
                 else:
-                    print(_val)
+                    console.print(_val)
             except json.decoder.JSONDecodeError:
-                print(f"{n}...", end='')
+                conole.print(f"{n}...", end='')
                 sys.stdout.flush()
             n += 1
     except serial.serialutil.SerialException:
