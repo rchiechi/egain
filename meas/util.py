@@ -43,6 +43,7 @@ def serial_ports(**kwargs):
         _ports += [f"COM{i}" for i in range(256)]
     elif os.name == "posix":
         _ports += glob.glob("/dev/tty[A-Za-z]*")
+        _ports += glob.glob("/dev/serial*")
     else:
         raise EnvironmentError("Unsupported platform")
 

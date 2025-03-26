@@ -24,13 +24,14 @@ class Instrument:
         self.name = "Instrument Name"
         self.address = address
         if isinstance(address, int):
-            self.visa = visa_subs.initialize_gpib(address, 0)
+            # self.visa = visa_subs.initialize_gpib(address, board=0)
             self.backend = MODE_GPIB
+            self.init_func = initialize_gpib
         else:
-            # self.visa = serial.Serial(address, 9600, timeout=0.5)
-            self.visa = visa_subs.initialize_serial(address,
-                                                    flowcontrol=kwargs.get('flowcontrol', False),
-                                                    quiet=kwargs.get('quiet', False))
+            # self.visa = visa_subs.initialize_serial(address,
+            #                                         flowcontrol=kwargs.get('flowcontrol', False),
+            #                                         quiet=kwargs.get('quiet', False))
+            self.init_func = initialize_gpib
             self.backend = MODE_SERIAL
 
     @property
@@ -83,7 +84,9 @@ class Keithley(Instrument):
                  mode=VOLT, source_range=21, sense_range=105e-9, compliance=105e-9,
                  ramp_step=0.1, auto_sense_range=False, reset=True
         """
-
+        self.visa = self.init_func(address,
+                                   flowcontrol=kwargs.get('flowcontrol', False),
+                                   quiet=kwargs.get('quiet', False))
         if self.visa is None:
             return False
 
@@ -294,7 +297,8 @@ class KeithleyV(Instrument):
                  mode=VOLT, source_range=21, sense_range=105e-9, compliance=105e-9,
                  ramp_step=0.1, auto_sense_range=False, reset=True
         """
-
+        self.visa = self.init_func(address,
+                                   flowcontrol=kwargs.get('flowcontrol', False))
         if self.visa is None:
             return False
 

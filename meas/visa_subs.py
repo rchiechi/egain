@@ -33,17 +33,21 @@ logger = logging.getLogger(__package__+'.visa')
 MODE_GPIB = 'GPIB'
 MODE_SERIAL = 'SERIAL'
 
-def initialize_gpib(address, board, query_id=True, read_termination="LF", **kwargs):
+def initialize_gpib(address, **kwargs):
+    board = kwargs.get('board', 0)
+    query_id = kwaregs.get('query_id', True)
+    read_termination = kwargs.get('read_termination', "LF")
     logger.error("GPBIB not implemented.")
     sys.exit()
 
 
-def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
+def initialize_serial(address,  **kwargs):
     """ Initialize Serial devices using SerialVisa """
-
+    idn = kwargs.get("idn", "*IDN?")
+    read_termination = kwargs.get("read_termination", "CR")
     try:
-        logger.info(f"Opening serial device {name}")
-        serial_visa = SerialVisa(visatoserial(name), flowcontrol=kwargs.get("flowcontrol", False))
+        logger.info(f"Opening serial device {address}")
+        serial_visa = SerialVisa(visatoserial(address), flowcontrol=kwargs.get("flowcontrol", False))
         serial_visa.timeout = 500
         i = 0
         while i < 5:
@@ -69,7 +73,7 @@ def initialize_serial(name, idn="*IDN?", read_termination="CR", **kwargs):
 
     except Exception as msg:
         logger.warning(f"Exception: {str(msg)}")
-    logger.error("Failed opening serial port %s" % name)
+    logger.error("Failed opening serial port %s" % address)
     return None
 
 @contextmanager

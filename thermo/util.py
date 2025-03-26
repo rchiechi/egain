@@ -8,11 +8,10 @@ import thermo.constants as tc
 
 def enumerateDevices(**kwargs):
     _first = kwargs.get("first", None)
-    _filter = ''
     if sys.platform.startswith("darwin"):
         _filters = ['usbmodem']
     if sys.platform.startswith("linux"):
-        _filters = ['ttyACM', 'ttyUSB']
+        _filters = ['serial0', 'serial1', 'ttyACM', 'ttyUSB']
     _devs = set()
     try:
         for _dev in os.listdir('/dev'):
@@ -46,6 +45,7 @@ def serial_ports(**kwargs):
         _ports += [f"COM{i}" for i in range(256)]
     elif os.name == "posix":
         _ports += glob.glob("/dev/tty[A-Za-z]*")
+        _ports += glob.glob("/dev/serial*")
     else:
         raise EnvironmentError("Unsupported platform")
 
