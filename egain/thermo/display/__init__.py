@@ -1,2 +1,2 @@
-from .curses import gui as cursescur
+from .curses import gui as cursesgui
 from .rich import gui as richgui

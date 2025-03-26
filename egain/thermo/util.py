@@ -4,7 +4,7 @@ import glob
 import time
 import json
 import serial
-import thermo.constants as tc
+import egain.thermo.constants as tc
 
 def enumerateDevices(**kwargs):
     _first = kwargs.get("first", None)

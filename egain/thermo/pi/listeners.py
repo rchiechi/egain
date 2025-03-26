@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
-from thermo.controllers import Netcontroller
+from egain.thermo.controllers import Netcontroller
 
 class Thermo(Netcontroller):
 

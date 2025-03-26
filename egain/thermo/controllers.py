@@ -5,7 +5,7 @@ import queue
 from multiprocessing.connection import Client, Listener
 import serial
 import json
-import .constants as tc
+from . import constants as tc
 from rich.console import Console
 
 class Netcontroller():
