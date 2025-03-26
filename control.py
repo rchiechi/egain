@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import sys
+import argparse
 import curses
 import threading
 import time
@@ -10,6 +11,11 @@ from thermo.peltier import Gradient
 from thermo.util import enumerateDevices, init_thermo_device
 from thermo.pi.listeners import Thermo
 import thermo.constants as tc
+from rich.live import Live
+from rich.layout import Layout
+from rich.panel import Panel
+from rich.table import Table
+
 
 try:
     from thermo.pi.seebeck import get_thermocouples, pidisplay
@@ -207,7 +213,7 @@ class menu_idx:
         if _val > 0:
             self._range = _val
 
-def main(stdscr):
+def gui(stdscr):
 
     external_output = ''
     stdout_buff = StringIO()
@@ -296,6 +302,115 @@ def main(stdscr):
         pelt_win.stop()
 
 
+def update_seebeck_table(table, lt, rt, v):
+    if abs(v) < 0.01:
+        volts = f"{_v*1000:0.4f} mV"
+    else:
+        volts = f"{_v:0.6f} V"
+    table.add_column("[b]Left")
+    table.add_column("[b]Right")
+    table.add_column("[b]ΔV")
+    table.add_row(f"{lt:0.1f} °C", f"{rt:0.1f} °C", volts)
+    return table
+
+def update_peltier_table(table, lt, rt, lm, rm):
+    if lm == tc.HEAT:
+        left = "[b][red]Left"
+    elif lm == tc.COOL:
+        left = "[b][blue]Left"
+    else:
+        left = "[b]Left"
+    if rm == tc.HEAT:
+        right = "[b][red]Right"
+    elif rm == tc.COOL:
+        right = "[b][blue]Right"
+    else:
+        right = "[b]Right"
+    table.add_column(left)
+    table.add_column(right)
+    table.add_row(f"{lt:0.1f} °C", f"{rt:0.1f} °C")
+    return table
+
+def cli(opts):
+    # Create layout
+    layout = Layout()
+    layout.split_row(
+        Layout(name="seebeck"),
+        Layout(name="peltier")
+    )
+    seebeck_table = Table()
+    layout["seebeck"].update(Panel(update_seebeck_table(seebeck_table, 0, 0, 0)))
+    peltier_table = Table()
+    layout["peltier"].update(Panel(update_peltier_table(peltier_table, 0, 0, None, None)))
+
+    alive = threading.Event()
+    alive.set()
+    thermothread, gradcomm = None, None
+    if opts.seebeck:
+        for _dev in enumerateDevices(first='serial0'):
+            if _dev in DEVSINUSE.values():
+                continue
+            voltmeter = K2182A(_dev)
+            if voltmeter.initialize(auto_sense_range=True):
+                DEVSINUSE['seebeckstats'] = _dev
+                break
+            voltmeter = None
+        Lthermocouple, Rthermocouple = get_thermocouples()
+        thermothread = Thermo(alive,
+                              [{'left':Lthermocouple, 'right':Rthermocouple}, voltmeter],
+                                port=tc.THERMO_PORT)
+        thermothread.start()
+    if opts.peltier:
+        for _dev in enumerateDevices(first='ttyACM0'):
+            if _dev in DEVSINUSE.values():
+                continue
+            peltier = init_thermo_device(_dev)
+            if peltier is not None:
+                DEVSINUSE['peltierstats'] = _dev
+                self.dev = _dev
+                break
+        if peltier is not None:
+            gradcomm = Gradient(alive, peltier, port=tc.PELTIER_PORT)
+            gradcomm.start()
+    
+    lts, rts, voltage = 0, 0, 0
+    ltp, rtp, lm, rm = 0, 0, None, None
+    try:
+        with Live(layout, refresh_per_second=4) as live:
+            if thermothread:
+                lts =thermothread.lefttemp
+                rts = thermothread.righttemp
+                voltage = self.thermothread.voltage
+            if gradcomm:
+                ltp = gradcomm.status.get(tc.LEFT, 0.0)
+                rtp = gradcomm.status.get(tc.RIGHT, 0.0)
+                lm = gradcomm.status.get(tc.LEFTFLOW)
+                rm = gradcomm.status.get(tc.RIGHTFLOW)
+            for i in range(10):
+                time.sleep(0.7)
+                layout["seebeck"].update(Panel(update_seebeck_table(seebeck_table, lts, rts, voltage)))
+                layout["peltier"].update(Panel(update_peltier_table(peltier_table, ltp, rtp, lm, rm)))
+    finally:
+        alive.clear()
+        
+
 if __name__ == "__main__":
-    curses.wrapper(main)
-    print("\nKilling threads")
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    subparsers = parser.add_subparsers(dest="mode", help="sub-command help")
+    cli_parser = subparsers.add_parser('cli', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    cli_parser.add_argument('--seebeck', action="store_true",
+                                 help="Startup with seebeck active.")
+    cli_parser.add_argument('--peltier', action="store_true",
+                                  help="Startup with peltier active.")
+    opts = parser.parse_args()
+    try:
+        if parser.mode != 'cli':
+            curses.wrapper(gui)
+        else:
+            cli(opts)
+    except Exception as e:
+        print(f"Exception: {e}")
+        print(e.__traceback__)
+    finally:
+        print("\nKilling threads")
+        

@@ -6,3 +6,4 @@ SciPy>=1.11.1
 Pillow>=10.0.0
 adafruit-circuitpython-max31856>=0.11.6
 adafruit-circuitpython-rgb-display>=3.11.3
+rich>=13.9.4
