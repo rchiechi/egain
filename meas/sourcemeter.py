@@ -27,7 +27,7 @@ class Instrument:
             self.backend = MODE_GPIB
             self.init_func = visa_subs.initialize_gpib
         else:
-            self.init_func = visa_subs.initialize_gpib
+            self.init_func = visa_subs.initialize_serial
             self.backend = MODE_SERIAL
 
     @property
