@@ -293,7 +293,7 @@ class KeithleyV(Instrument):
                  mode=VOLT, source_range=21, sense_range=105e-9, compliance=105e-9,
                  ramp_step=0.1, auto_sense_range=False, reset=True
         """
-        self.visa = self.init_func(address,
+        self.visa = self.init_func(self.address,
                                    flowcontrol=kwargs.get('flowcontrol', False))
         if not self.initialized:
            return False
