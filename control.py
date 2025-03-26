@@ -83,7 +83,7 @@ class seebeckstats(curses_updater):
 
     def start(self):
         self.alive.set()
-        for _dev in enumerateDevices(first='ttyS0'):
+        for _dev in enumerateDevices(first='serial0'):
             if _dev in DEVSINUSE.values():
                 continue
             voltmeter = K2182A(_dev)
