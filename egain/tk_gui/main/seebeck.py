@@ -33,11 +33,11 @@ from tkinter import END, BOTH, HORIZONTAL
 from tkinter import DISABLED, NORMAL
 from tkinter import PhotoImage
 from tkinter.font import Font
-from gui.util import parseusersettings
-from config.options import GLOBAL_OPTS, createOptions
-from gui.datacanvas import dataCanvas
-from gui.seebeck.tempcontrol import TempControl
-from gui.seebeck.seebeckmeas import SeebeckMeas
+from egain.tk_gui.util import parseusersettings
+from egain.config.options import GLOBAL_OPTS, createOptions
+from egain.tk_gui.datacanvas import dataCanvas
+from egain.tk_gui.seebeck.tempcontrol import TempControl
+from egain.tk_gui.seebeck.seebeckmeas import SeebeckMeas
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 

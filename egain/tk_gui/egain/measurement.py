@@ -7,11 +7,11 @@ from tkinter import TOP, LEFT, RIGHT, BOTTOM
 from tkinter import BOTH
 from tkinter.font import Font
 from tkinter import DISABLED, NORMAL
-from meas.k6430 import K6430
-from meas.k2182A import K2182A
-from meas.util import enumerateDevices
-from meas.visa_subs import MODE_SERIAL
-from gui.util import parseusersettings
+from egain.meas.k6430 import K6430
+from egain.meas.k2182A import K2182A
+from egain.meas.util import enumerateDevices
+from egain.meas.visa_subs import MODE_SERIAL
+from egain.tk_gui.util import parseusersettings
 
 MEAS_MODE = MODE_SERIAL
 
@@ -175,7 +175,7 @@ class MeasurementControl(tk.Frame):
                                      self.deviceString,
                                      'Choose SMU device',
                                      *enumerateDevices(first='ttyUSB0'))
-        self.deviceString.trace('w', self._initdevice)
+        self.deviceString.trace_add('write', self._initdevice)
         measNPLCLabel = tk.Label(measFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
         measNPLC.pack(side=LEFT)
@@ -408,7 +408,7 @@ class MeasurementReadV(MeasurementControl):
                                      self.deviceString,
                                      'Choose Voltmeter',
                                      *enumerateDevices(first='ttyUSB0'))
-        self.deviceString.trace('w', self._initdevice)
+        self.deviceString.trace_add('write', self._initdevice)
         measNPLCLabel = tk.Label(nplcFrame, text='NPLC:', font=self.labelFont)
         measNPLCLabel.pack(side=LEFT)
         measNPLC.pack(side=LEFT)

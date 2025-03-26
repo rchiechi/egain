@@ -3,8 +3,7 @@ forked from https://github.com/HuangJunye/GrapheneLab-Measurement-Code.git
 """
 
 import time
-import meas.visa_subs as visa_subs
-from meas.visa_subs import MODE_GPIB, MODE_SERIAL
+from .visa_subs import MODE_GPIB, MODE_SERIAL, initialize_gpib, initialize_serial
 # from meas.notes import Music
 
 VOLT = 'VOLT'
@@ -25,9 +24,9 @@ class Instrument:
         self.address = address
         if isinstance(address, int):
             self.backend = MODE_GPIB
-            self.init_func = visa_subs.initialize_gpib
+            self.init_func = initialize_gpib
         else:
-            self.init_func = visa_subs.initialize_serial
+            self.init_func = initialize_serial
             self.backend = MODE_SERIAL
 
     @property

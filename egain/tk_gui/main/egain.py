@@ -35,13 +35,13 @@ from tkinter import END, BOTH, HORIZONTAL
 from tkinter import DISABLED, NORMAL
 from tkinter import PhotoImage
 from tkinter.font import Font
-from gui.datacanvas import dataCanvas
-from gui.stagecontrol import StageControls
-from gui.egain.tempcontrol import TempControl
-from gui.egain.measurement import MeasurementControl
-from gui.tooltip import CreateTooltip
-from gui.util import parseusersettings
-from config.options import GLOBAL_OPTS, createOptions
+from egain.tk_gui.datacanvas import dataCanvas
+from egain.tk_gui.stagecontrol import StageControls
+from egain.tk_gui.egain.tempcontrol import TempControl
+from egain.tk_gui.egain.measurement import MeasurementControl
+from egain.tk_gui.tooltip import CreateTooltip
+from egain.tk_gui.util import parseusersettings
+from egain.config.options import GLOBAL_OPTS, createOptions
 
 absdir = os.path.dirname(os.path.realpath(__file__))
 

@@ -7,10 +7,10 @@ from tkinter import TOP, BOTTOM, LEFT, RIGHT
 from tkinter import END, BOTH, NONE, VERTICAL, HORIZONTAL
 from tkinter import DISABLED, NORMAL
 from tkinter import X, Y
-from gui.colors import BLACK, WHITE
-from stage.backend import NetHost, IP_ADDRESS, PORT
-from stage.mks import ESP302
-from gui.util import parseusersettings
+from .colors import BLACK, WHITE
+from egain.stage.backend import NetHost, IP_ADDRESS, PORT
+from egain.stage.mks import ESP302
+from .util import parseusersettings
 
 logger = logging.getLogger(__package__+'.stagecontrol')
 

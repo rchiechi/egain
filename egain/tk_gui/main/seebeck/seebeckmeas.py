@@ -2,8 +2,8 @@ import tkinter.ttk as tk
 from tkinter import StringVar
 from tkinter import N
 from tkinter import TOP, LEFT, RIGHT  # pylint: disable=unused-import
-import thermo.constants as tc
-from gui.seebeck.meas import Meas
+import egain.thermo.constants as tc
+from .seebeck.meas import Meas
 
 
 class SeebeckMeas(Meas):

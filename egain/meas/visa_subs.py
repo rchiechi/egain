@@ -25,7 +25,7 @@ import threading
 from contextlib import contextmanager
 # import pyvisa as visa
 import serial
-from meas.notes import Music
+from .notes import Music
 # rm = visa.ResourceManager()
 
 logger = logging.getLogger(__package__+'.visa')

@@ -2,7 +2,7 @@ import os
 import argparse
 from datetime import datetime
 from pathlib import Path
-from gui.util import parseusersettings
+from egain.tk_gui.util import parseusersettings
 
 GLOBAL_OPTS = 'global.pickle'
 

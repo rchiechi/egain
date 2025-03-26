@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import time
 import threading
-import thermo.constants as tc
-from thermo.util import enumerateDevices, init_thermo_device
-from thermo.controllers import Netcontroller
+import egain.thermo.constants as tc
+from egain.thermo.util import enumerateDevices, init_thermo_device
+from egain.thermo.controllers import Netcontroller
 
 class Gradient(Netcontroller):
 

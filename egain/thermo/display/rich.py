@@ -3,11 +3,11 @@ import argparse
 import threading
 import time
 from io import StringIO
-from meas.k2182A import K2182A
-from thermo.peltier import Gradient
-from thermo.util import enumerateDevices, init_thermo_device
-from thermo.pi.listeners import Thermo
-import thermo.constants as tc
+from egain.meas.k2182A import K2182A
+from egain.thermo.peltier import Gradient
+from egain.thermo.util import enumerateDevices, init_thermo_device
+from egain.thermo.pi.listeners import Thermo
+import egain.thermo.constants as tc
 from rich.console import Console
 from rich.live import Live
 from rich.layout import Layout

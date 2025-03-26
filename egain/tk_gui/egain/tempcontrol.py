@@ -9,7 +9,7 @@ from tkinter import IntVar, StringVar
 from tkinter import N, X
 from tkinter import TOP, BOTTOM, LEFT, RIGHT, DISABLED, NORMAL
 import serial
-from meas.util import enumerateDevices
+from egain.meas.util import enumerateDevices
 
 TEMPS = {'UPPER':None, 'LOWER':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'

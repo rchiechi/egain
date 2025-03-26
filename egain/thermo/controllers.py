@@ -5,7 +5,7 @@ import queue
 from multiprocessing.connection import Client, Listener
 import serial
 import json
-import thermo.constants as tc
+import .constants as tc
 from rich.console import Console
 
 class Netcontroller():

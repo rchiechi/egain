@@ -3,8 +3,8 @@
 import os
 import sys
 import logging
-from config.logging import ColorFormatter
-from config.options import parsecliopts
+from egain.config.logging import ColorFormatter
+from egain.config.options import parsecliopts
 from tkinter import Tk
 
 # _logfile = os.path.join(TMPDIR, os.path.basename(sys.argv[0]).split('.')[0] + '.log')
@@ -28,9 +28,9 @@ logger.debug("Debug logging enabled.")
 
 BIN = os.path.basename(sys.argv[0])
 if 'egain' in BIN:
-    from gui.main.egain import MainFrame
+    from egain.tk_gui.main.egain import MainFrame
 elif 'seebeck' in BIN:
-    from gui.main.seebeck import MainFrame
+    from egain.tk_gui.main.seebeck import MainFrame
 else:
     print(f"Call this script from a symlink with either egain or seebeck in the name, not {BIN}.")
     sys.exit()

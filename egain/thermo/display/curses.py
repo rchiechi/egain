@@ -4,13 +4,13 @@ import curses
 import threading
 import time
 from io import StringIO
-from meas.k2182A import K2182A
-from thermo.peltier import Gradient
-from thermo.util import enumerateDevices, init_thermo_device
-from thermo.pi.listeners import Thermo
-import thermo.constants as tc
+from egain.meas.k2182A import K2182A
+from egain.thermo.peltier import Gradient
+from egain.thermo.util import enumerateDevices, init_thermo_device
+from egain.thermo.pi.listeners import Thermo
+import egain.thermo.constants as tc
 try:
-    from thermo.pi.seebeck import get_thermocouples, pidisplay
+    from egain.thermo.pi.seebeck import get_thermocouples, pidisplay
     ON_PI = True
 except ModuleNotFoundError:
     ON_PI = False
