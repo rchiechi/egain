@@ -15,7 +15,7 @@ from rich.live import Live
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
-
+from rich.traceback import Traceback
 
 try:
     from thermo.pi.seebeck import get_thermocouples, pidisplay
@@ -392,6 +392,9 @@ def cli(opts):
                 layout["peltier"].update(update_peltier_table(0, 0, None, None))
     except KeyboardInterrupt:
         pass
+    except Exception as e:
+        layout["seebeck"].update(f"Exception: {e}")
+        layout["peltier"].update(Panel(Traceback.from_exception(type(e), e, e.__traceback__)))
     finally:
         alive.clear()
         
@@ -405,14 +408,14 @@ if __name__ == "__main__":
     cli_parser.add_argument('--peltier', action="store_true",
                                   help="Startup with peltier active.")
     opts = parser.parse_args()
-    # try:
-    if opts.mode != 'cli':
-        curses.wrapper(gui)
-    else:
-        cli(opts)
-    # except Exception as e:
-    #     print(f"Exception: {e}")
-    #     print(e.__traceback__)
-    # finally:
-    #     print("\nKilling threads")
+    try:
+        if opts.mode != 'cli':
+            curses.wrapper(gui)
+        else:
+            cli(opts)
+    except Exception as e:
+        print(f"Exception: {e}")
+        print(e.__traceback__)
+    finally:
+        print("\nKilling threads")
         
