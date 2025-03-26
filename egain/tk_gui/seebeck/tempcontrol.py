@@ -5,8 +5,8 @@ from tkinter import N
 from tkinter import TOP, BOTTOM, LEFT, RIGHT
 from tkinter import DISABLED, NORMAL
 
-import thermo.constants as tc
-from gui.seebeck.meas import Meas
+import egain.thermo.constants as tc
+from egain.tk_gui.seebeck.meas import Meas
 
 class TempControl(Meas):
 

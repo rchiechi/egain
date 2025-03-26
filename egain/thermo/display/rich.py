@@ -14,8 +14,9 @@ from rich.layout import Layout
 from rich.panel import Panel
 from rich.table import Table
 from rich.traceback import Traceback
+
 try:
-    from thermo.pi.seebeck import get_thermocouples, pidisplay
+    from egain.thermo.pi.seebeck import get_thermocouples, pidisplay
     ON_PI = True
 except ModuleNotFoundError:
     ON_PI = False

@@ -2,8 +2,8 @@ import time
 import tkinter.ttk as tk
 from tkinter import StringVar
 from multiprocessing.connection import Client
-import thermo.constants as tc
-from gui.util import ping, parseusersettings, validateip
+import egain.thermo.constants as tc
+from egain.tk_gui.util import ping, parseusersettings, validateip
 
 TEMPS = {'LEFT':None, 'RIGHT':None}
 DEFAULTUSBDEVICE = 'Choose USB Device'
