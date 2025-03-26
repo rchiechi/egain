@@ -385,31 +385,28 @@ def cli(opts):
             layout["peltier"].update("[b][green]Peltier started.")
         else:
             layout["peltier"].update("[b][red]Error starting peltier.")
-    
-    lts, rts, voltage = 0, 0, 0
-    ltp, rtp, lm, rm = 0, 0, None, None
-    try:
-        with Live(layout, refresh_per_second=4) as live:
-            while True:                
-                if thermothread:
-                    lts =thermothread.lefttemp
-                    rts = thermothread.righttemp
-                    voltage = self.thermothread.voltage
-                    layout["seebeck"].update(update_seebeck_table(lts, rts, voltage))
-                if gradcomm:
-                    ltp = gradcomm.status.get(tc.LEFT, 0.0)
-                    rtp = gradcomm.status.get(tc.RIGHT, 0.0)
-                    lm = gradcomm.status.get(tc.LEFTFLOW)
-                    rm = gradcomm.status.get(tc.RIGHTFLOW)
-                    layout["peltier"].update(update_peltier_table(ltp, rtp, lm, rm))
-                time.sleep(0.5)    
-    except KeyboardInterrupt:
-        pass
-    except Exception as e:
-        layout["seebeck"].update(f"Exception: {e}")
-        layout["peltier"].update(Panel(Traceback.from_exception(type(e), e, e.__traceback__)))
-    finally:
-        alive.clear()
+    # try:
+    with Live(layout, refresh_per_second=4) as live:
+        while True:                
+            if thermothread:
+                lts =thermothread.lefttemp
+                rts = thermothread.righttemp
+                voltage = self.thermothread.voltage
+                layout["seebeck"].update(update_seebeck_table(lts, rts, voltage))
+            if gradcomm:
+                ltp = gradcomm.status.get(tc.LEFT, 0.0)
+                rtp = gradcomm.status.get(tc.RIGHT, 0.0)
+                lm = gradcomm.status.get(tc.LEFTFLOW)
+                rm = gradcomm.status.get(tc.RIGHTFLOW)
+                layout["peltier"].update(update_peltier_table(ltp, rtp, lm, rm))
+            time.sleep(0.5)    
+    # except KeyboardInterrupt:
+    #     pass
+    # except Exception as e:
+    #     layout["seebeck"].update(f"Exception: {e}")
+    #     layout["peltier"].update(Panel(Traceback.from_exception(type(e), e, e.__traceback__)))
+    # finally:
+    #     alive.clear()
         
 
 if __name__ == "__main__":
