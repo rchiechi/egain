@@ -196,9 +196,10 @@ class MeasurementControl(tk.Frame):
     def _initdevice(self, *args):
         self.isbusy = True
         if not self.is_initialized:
-            _smu = K6430(self.deviceString.get(), quiet=self.cli_opts.quiet)
+            _smu = K6430(self.deviceString.get())
             if _smu.initialize(auto_sense_range=True,
                                flowcontrol=True,
+                               quiet=self.cli_opts.quiet,
                                compliance=float(self.compliance.get())):
                 self.smu = _smu
                 self.config['device_string'] = self.deviceString.get()

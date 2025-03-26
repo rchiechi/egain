@@ -20,17 +20,13 @@ class Instrument:
     DATA_FORMAT = ('V', 'I', 't')
     visa = None
 
-    def __init__(self, address, **kwargs):
+    def __init__(self, address):
         self.name = "Instrument Name"
         self.address = address
         if isinstance(address, int):
-            # self.visa = visa_subs.initialize_gpib(address, board=0)
             self.backend = MODE_GPIB
             self.init_func = visa_subs.initialize_gpib
         else:
-            # self.visa = visa_subs.initialize_serial(address,
-            #                                         flowcontrol=kwargs.get('flowcontrol', False),
-            #                                         quiet=kwargs.get('quiet', False))
             self.init_func = visa_subs.initialize_gpib
             self.backend = MODE_SERIAL
 
@@ -84,10 +80,10 @@ class Keithley(Instrument):
                  mode=VOLT, source_range=21, sense_range=105e-9, compliance=105e-9,
                  ramp_step=0.1, auto_sense_range=False, reset=True
         """
-        self.visa = self.init_func(address,
+        self.visa = self.init_func(self.address,
                                    flowcontrol=kwargs.get('flowcontrol', False),
                                    quiet=kwargs.get('quiet', False))
-        if self.visa is None:
+        if not self.initialized:
             return False
 
         if self.mode == VOLT:
@@ -299,8 +295,8 @@ class KeithleyV(Instrument):
         """
         self.visa = self.init_func(address,
                                    flowcontrol=kwargs.get('flowcontrol', False))
-        if self.visa is None:
-            return False
+        if not self.initialized:
+           return False
 
         if self.mode == VOLT:
             self._sense = VOLT
