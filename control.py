@@ -86,9 +86,8 @@ class seebeckstats(curses_updater):
         for _dev in enumerateDevices(first='serial0'):
             if _dev in DEVSINUSE.values():
                 continue
-            print("1")
+            sys.exit()
             voltmeter = K2182A(_dev)
-            print("2")
             if voltmeter.initialize(auto_sense_range=True):
                 DEVSINUSE['seebeckstats'] = _dev
                 break
