@@ -11,6 +11,7 @@ from thermo.peltier import Gradient
 from thermo.util import enumerateDevices, init_thermo_device
 from thermo.pi.listeners import Thermo
 import thermo.constants as tc
+from rich.console import Console
 from rich.live import Live
 from rich.layout import Layout
 from rich.panel import Panel
