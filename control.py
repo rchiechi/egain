@@ -347,6 +347,7 @@ def cli(opts):
     alive.set()
     thermothread, gradcomm = None, None
     if opts.seebeck:
+        layout["seebeck"].update("[b][yellow]Starting seebeck...")
         for _dev in enumerateDevices(first='serial0'):
             if _dev in DEVSINUSE.values():
                 continue
@@ -360,7 +361,10 @@ def cli(opts):
                               [{'left':Lthermocouple, 'right':Rthermocouple}, voltmeter],
                                 port=tc.THERMO_PORT)
         thermothread.start()
+        layout["seebeck"].update("[b][green]Seebeck started.")
+        time.sleep(1)
     if opts.peltier:
+        layout["seebeck"].update("[b][yellow]Starting peltier...")
         for _dev in enumerateDevices(first='ttyACM0'):
             if _dev in DEVSINUSE.values():
                 continue
