@@ -17,7 +17,7 @@ import curses
 import platform
 from PIL import Image, ImageDraw, ImageFont
 from .listeners import Thermo
-from meas.k2182A import K2182A
+from egain.meas.k2182A import K2182A
 import thermo.constants as tc
 
 led = 26
