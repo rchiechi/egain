@@ -16,9 +16,11 @@ from rich.table import Table
 from rich.traceback import Traceback
 
 try:
-    from egain.thermo.pi.seebeck import get_thermocouples, pidisplay
+    from egain.thermo.pi import get_thermocouples
     ON_PI = True
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:
+    print(e.__traceback__)
+    get_thermocouples = None
     ON_PI = False
 
 DEVSINUSE = {'peltierstats': None, 'seebeckstats': None}
@@ -65,7 +67,7 @@ def gui(opts):
     alive = threading.Event()
     alive.set()
     thermothread, gradcomm = None, None
-    if opts.seebeck:
+    if opts.seebeck and ON_PI:
         voltmeter = None
         console.print("[b][yellow]Starting seebeck... ", end='')
         for dev in enumerateDevices(first='serial0'):

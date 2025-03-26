@@ -13,6 +13,8 @@ try:
     from egain.thermo.pi.seebeck import get_thermocouples, pidisplay
     ON_PI = True
 except ModuleNotFoundError:
+    get_thermocouples = None
+    pidisplay = None
     ON_PI = False
 
 LEFT_ARROW = 260

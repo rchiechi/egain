@@ -3,10 +3,12 @@ try:
     import digitalio
     import board
     import RPi.GPIO as GPIO
-except ModuleNotFoundError:
-    # import sys
-    print("Make sure you are running this script on a Raspberry Pi")
-    # sys.exit()
+    import adafruit_max31856
+    from adafruit_rgb_display import st7789
+
+except ModuleNotFoundError as e:
+    raise ModuleNotFoundError(">>> Make sure you are running this script on a Raspberry Pi <<<")
+
 import os
 import time
 import subprocess
@@ -14,8 +16,6 @@ import threading
 import curses
 import platform
 from PIL import Image, ImageDraw, ImageFont
-from adafruit_rgb_display import st7789
-import adafruit_max31856
 from .listeners import Thermo
 from meas.k2182A import K2182A
 import thermo.constants as tc
