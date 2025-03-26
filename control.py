@@ -391,7 +391,7 @@ def cli(opts):
             if thermothread:
                 lts =thermothread.lefttemp
                 rts = thermothread.righttemp
-                voltage = self.thermothread.voltage
+                voltage = thermothread.voltage
                 layout["seebeck"].update(update_seebeck_table(lts, rts, voltage))
             if gradcomm:
                 ltp = gradcomm.status.get(tc.LEFT, 0.0)

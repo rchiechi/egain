@@ -132,7 +132,7 @@ class Netcontroller():
         """
         The main application loop
         """
-        print(f"Starting listener in {self.addr}")
+        # print(f"Starting listener in {self.addr}")
         while self.alive.is_set() and self.command == tc.COMMAND_RUN:
             # block until a client connection is received
             with self.listener.accept() as conn:
@@ -143,7 +143,7 @@ class Netcontroller():
                     return
                 # if it's a shut down command, return to stop this thread
                 if isinstance(message, str) and message == tc.COMMAND_STOP:
-                    print(f"Listener {self.addr} dying.")
+                    # print(f"Listener {self.addr} dying.")
                     self.alive.clear()
                     self.message = tc.COMMAND_STOP
                     return
@@ -166,8 +166,8 @@ class Netcontroller():
                         self.cmdq.put(_cmd)
 
     def _updater_main(self):
-        print(f"Starting {self.update_frequency} second updater with ")
-        print(f"statcheck upates at {self.statcheck_frequency} seconds.")
+        # print(f"Starting {self.update_frequency} second updater with ")
+        # print(f"statcheck upates at {self.statcheck_frequency} seconds.")
         start_time = [time.time(), time.time()]
         while self.alive.is_set() and self.command == tc.COMMAND_RUN:
             if time.time() - start_time[0] > self.update_frequency:
@@ -180,7 +180,7 @@ class Netcontroller():
                 self.writeserial(*self.cmdq.get())
             time.sleep(0.1)
         self._updater_exit()
-        print("Updater thread dying.")
+        # print("Updater thread dying.")
         self.alive.clear()
         self.message = tc.COMMAND_STOP
 
