@@ -2,7 +2,7 @@
 
 import sys
 import argparse
-from .thermo.display import cursesgui, richgui
+from thermo.display import cursesgui, richgui
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 subparsers = parser.add_subparsers(dest="mode", help="sub-command help")
