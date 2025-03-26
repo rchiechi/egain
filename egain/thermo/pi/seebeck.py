@@ -18,7 +18,7 @@ import platform
 from PIL import Image, ImageDraw, ImageFont
 from .listeners import Thermo
 from egain.meas.k2182A import K2182A
-import thermo.constants as tc
+import egain.thermo.constants as tc
 
 led = 26
 
