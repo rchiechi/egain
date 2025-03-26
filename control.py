@@ -340,16 +340,13 @@ def cli(opts):
         Layout(name="seebeck"),
         Layout(name="peltier")
     )
-    layout["seebeck"].update(update_seebeck_table(0, 0, 0))
-    layout["peltier"].update(update_peltier_table(0, 0, None, None))
-
+    console = Console()
     alive = threading.Event()
     alive.set()
     thermothread, gradcomm = None, None
     if opts.seebeck:
         voltmeter = None
-        layout["seebeck"].update("[b][yellow]Starting seebeck...")
-        sys.stdout.flush()
+        console.print("[b][yellow]Starting seebeck... ", end='')
         for dev in enumerateDevices(first='serial0'):
             if dev in DEVSINUSE.values():
                 continue
@@ -364,14 +361,13 @@ def cli(opts):
                                 [{'left':Lthermocouple, 'right':Rthermocouple}, voltmeter],
                                     port=tc.THERMO_PORT)
             thermothread.start()
-            layout["seebeck"].update("[b][green]Seebeck started.")
+            console.print(f"[green]started on {dev}.")
         else:
-            layout["peltier"].update("[b][red]Error starting seebeck.")
-            
+            console.print("[b][red]Error starting seebeck.")
+    
     if opts.peltier:
         peltier = None
-        layout["peltier"].update("[b][yellow]Starting peltier...")
-        sys.stdout.flush()
+        console.print("[b][yellow]Starting peltier... ", end='')
         for dev in enumerateDevices(first='ttyACM0'):
             if dev in DEVSINUSE.values():
                 continue
@@ -382,31 +378,36 @@ def cli(opts):
         if peltier:
             gradcomm = Gradient(alive, peltier, port=tc.PELTIER_PORT)
             gradcomm.start()
-            layout["peltier"].update("[b][green]Peltier started.")
+            console.print(f"[green]started on {dev}.")
         else:
-            layout["peltier"].update("[b][red]Error starting peltier.")
-    # try:
-    with Live(layout, refresh_per_second=4) as live:
-        while True:                
-            if thermothread:
-                lts =thermothread.lefttemp
-                rts = thermothread.righttemp
-                voltage = thermothread.voltage
-                layout["seebeck"].update(update_seebeck_table(lts, rts, voltage))
-            if gradcomm:
-                ltp = gradcomm.status.get(tc.LEFT, 0.0)
-                rtp = gradcomm.status.get(tc.RIGHT, 0.0)
-                lm = gradcomm.status.get(tc.LEFTFLOW)
-                rm = gradcomm.status.get(tc.RIGHTFLOW)
-                layout["peltier"].update(update_peltier_table(ltp, rtp, lm, rm))
-            time.sleep(0.5)    
-    # except KeyboardInterrupt:
-    #     pass
-    # except Exception as e:
-    #     layout["seebeck"].update(f"Exception: {e}")
-    #     layout["peltier"].update(Panel(Traceback.from_exception(type(e), e, e.__traceback__)))
-    # finally:
-    #     alive.clear()
+            console.print("[b][red]Error starting peltier.")
+    try:
+        
+        layout["seebeck"].update(update_seebeck_table(0, 0, 0))
+        layout["peltier"].update(update_peltier_table(0, 0, None, None))
+        
+        with Live(layout, refresh_per_second=4) as live:
+            while True:                
+                if thermothread:
+                    lts =thermothread.lefttemp
+                    rts = thermothread.righttemp
+                    voltage = thermothread.voltage
+                    layout["seebeck"].update(update_seebeck_table(lts, rts, voltage))
+                if gradcomm:
+                    ltp = gradcomm.status.get(tc.LEFT, 0.0)
+                    rtp = gradcomm.status.get(tc.RIGHT, 0.0)
+                    lm = gradcomm.status.get(tc.LEFTFLOW)
+                    rm = gradcomm.status.get(tc.RIGHTFLOW)
+                    layout["peltier"].update(update_peltier_table(ltp, rtp, lm, rm))
+                time.sleep(0.5)    
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        layout["seebeck"].update(f"Exception: {e}")
+        layout["peltier"].update(Panel(Traceback.from_exception(type(e), e, e.__traceback__)))
+        raise(e)
+    finally:
+        alive.clear()
         
 
 if __name__ == "__main__":
@@ -418,14 +419,13 @@ if __name__ == "__main__":
     cli_parser.add_argument('--peltier', action="store_true",
                                   help="Startup with peltier active.")
     opts = parser.parse_args()
-    # try:
-    if opts.mode != 'cli':
-        curses.wrapper(gui)
-    else:
-        cli(opts)
-    # except Exception as e:
-    #     print(f"Exception: {e}")
-    #     print(e.__traceback__)
-    # finally:
-    #     print("\nKilling threads")
-    #     
+    try:
+        if opts.mode != 'cli':
+            curses.wrapper(gui)
+        else:
+            cli(opts)
+    except Exception as e:
+        print(f"Exception: {e}")
+        print(e.__traceback__)
+    finally:
+        print("\nKilling threads") 
