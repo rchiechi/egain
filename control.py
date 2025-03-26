@@ -340,8 +340,8 @@ def cli(opts):
         Layout(name="seebeck"),
         Layout(name="peltier")
     )
-    layout["seebeck"].update(Panel(update_seebeck_table(0, 0, 0), expand=False))
-    layout["peltier"].update(Panel(update_peltier_table(0, 0, None, None), expand=False))
+    layout["seebeck"].update(update_seebeck_table(0, 0, 0))
+    layout["peltier"].update(update_peltier_table(0, 0, None, None))
 
     alive = threading.Event()
     alive.set()
@@ -388,8 +388,8 @@ def cli(opts):
                 rm = gradcomm.status.get(tc.RIGHTFLOW)
             for i in range(10):
                 time.sleep(0.7)
-                layout["seebeck"].update(Panel(update_seebeck_table(0, 0, 0), expand=False))
-                layout["peltier"].update(Panel(update_peltier_table(0, 0, None, None), expand=False))
+                layout["seebeck"].update(update_seebeck_table(0, 0, 0))
+                layout["peltier"].update(update_peltier_table(0, 0, None, None))
     except KeyboardInterrupt:
         pass
     finally:
