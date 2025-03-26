@@ -304,9 +304,9 @@ def gui(stdscr):
 
 def update_seebeck_table(table, lt, rt, v):
     if abs(v) < 0.01:
-        volts = f"{_v*1000:0.4f} mV"
+        volts = f"{v*1000:0.4f} mV"
     else:
-        volts = f"{_v:0.6f} V"
+        volts = f"{v:0.6f} V"
     table.add_column("[b]Left")
     table.add_column("[b]Right")
     table.add_column("[b]ΔV")
