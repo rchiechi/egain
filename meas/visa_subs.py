@@ -35,7 +35,7 @@ MODE_SERIAL = 'SERIAL'
 
 def initialize_gpib(address, **kwargs):
     board = kwargs.get('board', 0)
-    query_id = kwaregs.get('query_id', True)
+    query_id = kwargs.get('query_id', True)
     read_termination = kwargs.get('read_termination', "LF")
     logger.error("GPBIB not implemented.")
     sys.exit()
