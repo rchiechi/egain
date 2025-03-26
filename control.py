@@ -386,7 +386,7 @@ def cli(opts):
                 rtp = gradcomm.status.get(tc.RIGHT, 0.0)
                 lm = gradcomm.status.get(tc.LEFTFLOW)
                 rm = gradcomm.status.get(tc.RIGHTFLOW)
-            for i in range(10):
+            while True:
                 time.sleep(0.7)
                 layout["seebeck"].update(update_seebeck_table(0, 0, 0))
                 layout["peltier"].update(update_peltier_table(0, 0, None, None))
