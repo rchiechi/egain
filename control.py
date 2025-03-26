@@ -302,7 +302,8 @@ def gui(stdscr):
         pelt_win.stop()
 
 
-def update_seebeck_table(table, lt, rt, v):
+def update_seebeck_table(lt, rt, v):
+    table = Table()
     if abs(v) < 0.01:
         volts = f"{v*1000:0.4f} mV"
     else:
@@ -313,7 +314,8 @@ def update_seebeck_table(table, lt, rt, v):
     table.add_row(f"{lt:0.1f} °C", f"{rt:0.1f} °C", volts)
     return table
 
-def update_peltier_table(table, lt, rt, lm, rm):
+def update_peltier_table(lt, rt, lm, rm):
+    table = Table()
     if lm == tc.HEAT:
         left = "[b][red]Left"
     elif lm == tc.COOL:
@@ -338,10 +340,8 @@ def cli(opts):
         Layout(name="seebeck"),
         Layout(name="peltier")
     )
-    seebeck_table = Table()
-    layout["seebeck"].update(Panel(update_seebeck_table(seebeck_table, 0, 0, 0)))
-    peltier_table = Table()
-    layout["peltier"].update(Panel(update_peltier_table(peltier_table, 0, 0, None, None)))
+    layout["seebeck"].update(Panel(update_seebeck_table(0, 0, 0), expand=False))
+    layout["peltier"].update(Panel(update_peltier_table(0, 0, None, None), expand=False))
 
     alive = threading.Event()
     alive.set()
@@ -388,8 +388,10 @@ def cli(opts):
                 rm = gradcomm.status.get(tc.RIGHTFLOW)
             for i in range(10):
                 time.sleep(0.7)
-                layout["seebeck"].update(Panel(update_seebeck_table(seebeck_table, lts, rts, voltage)))
-                layout["peltier"].update(Panel(update_peltier_table(peltier_table, ltp, rtp, lm, rm)))
+                layout["seebeck"].update(Panel(update_seebeck_table(0, 0, 0), expand=False))
+                layout["peltier"].update(Panel(update_peltier_table(0, 0, None, None), expand=False))
+    except KeyboardInterrupt:
+        pass
     finally:
         alive.clear()
         
