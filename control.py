@@ -404,7 +404,7 @@ if __name__ == "__main__":
                                   help="Startup with peltier active.")
     opts = parser.parse_args()
     try:
-        if parser.mode != 'cli':
+        if opts.mode != 'cli':
             curses.wrapper(gui)
         else:
             cli(opts)
