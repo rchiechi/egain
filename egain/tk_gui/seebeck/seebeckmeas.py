@@ -8,9 +8,10 @@ from .meas import Meas
 
 class SeebeckMeas(Meas):
 
-    _port = tc.THERMO_PORT
-    _v = 0.0
-    config_file = 'SeebeckMeas.json'
+    def post_init(self):
+        self._port = tc.THERMO_PORT
+        self._v = 0.0
+        self.config_file = 'SeebeckMeas.json'
 
     def createWidgets(self):
         self.left_temp_reading = StringVar(value='0.0')

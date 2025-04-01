@@ -4,10 +4,6 @@ from egain.thermo.controllers import Netcontroller
 
 class Thermo(Netcontroller):
 
-    last_lt = 0.0
-    last_rt = 0.0
-    last_v = 0.0
-
     def _post_init(self):
         self.lt = self.devices[0]['left']
         self.rt = self.devices[0]['right']

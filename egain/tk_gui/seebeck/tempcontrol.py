@@ -10,8 +10,9 @@ from egain.tk_gui.seebeck.meas import Meas
 
 class TempControl(Meas):
 
-    _port = tc.PELTIER_PORT
-    config_file = 'TempControl.json'
+    def post_init(self):
+        self._port = tc.PELTIER_PORT
+        self.config_file = 'TempControl.json'
 
     def createWidgets(self):
         self.leftTempString = StringVar()
@@ -34,8 +35,8 @@ class TempControl(Meas):
         setFrame = tk.LabelFrame(self,
                                  text='Target Temperatures (°C)',
                                  labelanchor=N)
-        setlefttempEntry = tk.Entry(setFrame, textvariable=self.lefttargettemp, width=4)
-        setrighttempEntry = tk.Entry(setFrame, textvariable=self.righttargettemp, width=4)
+        setlefttempEntry = tk.Entry(setFrame, textvariable=self.lefttargettemp, width=5)
+        setrighttempEntry = tk.Entry(setFrame, textvariable=self.righttargettemp, width=5)
         self.lefttargettemp.set("25.0")
         self.righttargettemp.set("25.0")
         for n in ('<Return>', '<Tab>'):
@@ -151,16 +152,6 @@ class TempControl(Meas):
     def _getTemp(self, *args, **kwargs):
         self.lefttargettemp.set(f'{self.last_status.get(tc.LEFTTARGET, 25.0):0.2f}')
         self.righttargettemp.set(f'{self.last_status.get(tc.RIGHTTARGET, 25.0):0.2f}')
-        # try:
-        #     if float(self.lefttargettemp.get()) != self.last_status.get(tc.LEFTTARGET, 25.0):
-        #         self.lefttargettemp.set(f'{self.last_status.get(tc.LEFTTARGET, 25.0):0.2f}')
-        # except ValueError:
-        #     pass
-        # try:
-        #     if float(self.righttargettemp.get()) != self.last_status.get(tc.RIGHTTARGET, 25.0):
-        #         self.righttargettemp.set(f'{self.last_status.get(tc.RIGHTTARGET, 25.0):0.2f}')
-        # except ValueError:
-        #     pass
 
     def _setTemp(self, *args):
         if not self.initialized:

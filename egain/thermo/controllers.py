@@ -10,9 +10,8 @@ from rich.console import Console
 
 class Netcontroller():
 
-    _lock = threading.Lock()
-
     def __init__(self, alive=None, devices=None, **kwargs):
+        self._lock = threading.Lock()
         self.console = kwargs.get('console', Console())
         self._update_frequency = 5
         self._statcheck_frequency = 5

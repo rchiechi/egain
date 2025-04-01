@@ -11,26 +11,30 @@ DEFAULTUSBDEVICE = 'Choose USB Device'
 
 class Meas(tk.Frame):
 
-    _lt = 0.0
-    _rt = 0.0
-    _initialized = False
-    last_status = {}
-    widgets = {}
-    _host = '127.0.0.1'
-    _port = '6000'
-    config_file = 'Meas.json'
     UPDATE_DELAY = 10
 
     def __init__(self, root):
         self.master = root
         super().__init__(self.master)
+        self._lt = 0.0
+        self._rt = 0.0
+        self._initialized = False
+        self.last_status = {}
+        self.widgets = {}
+        self._host = '127.0.0.1'
+        self._port = '6000'
+        self.config_file = 'Meas.json'
         _config = parseusersettings(self.config_file)
         self.addr = StringVar(value=f"{_config.get('host', self._host)}:{_config.get('port', self._port)}")
         self.last_update = time.time() - self.UPDATE_DELAY
         self._ok_to_update = True
+        self.post_init()
         self.createWidgets()
         self._checkconnetion()
         self.readstatus()
+    
+    def post_init(self):
+        return None
 
     def createWidgets(self):
         return
