@@ -44,11 +44,11 @@ class TempControl(Meas):
 
         toggleFrame = tk.Frame(self)
         peltierLeftCheck = tk.Checkbutton(toggleFrame,
-                                          text='Left Peliter On',
+                                          text='Left Peltier On',
                                           variable=self.left_peltier_on,
                                           command=lambda: self._setPeltier('LEFT'))
         peltierRightCheck = tk.Checkbutton(toggleFrame,
-                                           text='Right Peliter On',
+                                           text='Right Peltier On',
                                            variable=self.right_peltier_on,
                                            command=lambda: self._setPeltier('RIGHT'))
 
@@ -58,18 +58,18 @@ class TempControl(Meas):
         leftheatcoolButton = tk.Button(heatcoolFrame, text="Heat",
                                        command=lambda: self._heatcoolbuttonclick('leftheatcoolButton'),
                                        width=5)
-        rigthheatcoolButton = tk.Button(heatcoolFrame, text="Cool",
+        rightheatcoolButton = tk.Button(heatcoolFrame, text="Cool",
                                         command=lambda: self._heatcoolbuttonclick('rightheatcoolButton'),
                                         width=5)
         self.widgets['leftheatcoolButton'] = leftheatcoolButton
-        self.widgets['rightheatcoolButton'] = rigthheatcoolButton
+        self.widgets['rightheatcoolButton'] = rightheatcoolButton
 
         for _widget in (setlefttempEntry,
                         setrighttempEntry,
                         peltierLeftCheck,
                         peltierRightCheck,
                         leftheatcoolButton,
-                        rigthheatcoolButton):
+                        rightheatcoolButton):
             _widget.bind('<Enter>', self.pause_update)
             _widget.bind('<Leave>', self.unpause_update)
 
@@ -99,7 +99,7 @@ class TempControl(Meas):
         leftTemp.pack(side=TOP, expand=False)
         rightTemp.pack(side=BOTTOM)
         leftheatcoolButton.pack(side=LEFT)
-        rigthheatcoolButton.pack(side=LEFT)
+        rightheatcoolButton.pack(side=LEFT)
         toggleFrame.pack(side=TOP)
         heatcoolFrame.pack(side=TOP)
         setFrame.pack(side=TOP)
