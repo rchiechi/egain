@@ -71,6 +71,10 @@ class Netcontroller:
         return self._serial_device
 
     @property
+    def listenaddress(self):
+        return ":".join(self._addr)
+
+    @property
     def addr(self):
         return self._addr
 
