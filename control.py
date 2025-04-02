@@ -2,6 +2,7 @@
 
 import sys
 import argparse
+import traceback
 from egain.thermo.display import cursesgui, richgui
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -24,6 +25,6 @@ try:
         parser.print_help()
 except Exception as e:
     print(f"Exception: {e}")
-    print(e.__traceback__)
+    traceback.print_exc()
 finally:
     print("\nKilling threads") 

@@ -255,8 +255,8 @@ class Dummycontroller(Netcontroller):
                 value = getattr(tc, attribute)
                 self.last_json[str(value)] = None
         self.last_json = {'left': -999.99,
-                'right': -999.99,
-                'voltage': 0}
+                          'right': -999.99,
+                          'voltage': 0}
 
     def readserial(self, update=True):
         self.last_serial = time.time()
