@@ -250,13 +250,13 @@ class Dummycontroller(Netcontroller):
         self.lt = None
         self.rt = None
         self.voltmeter = None
-        self.last_json = {'left': -999.99,
-                          'right': -999.99,
-                          'voltage': 0}
         for attribute in dir(tc):
             if not attribute.startswith('_'):  # Skip private attributes
                 value = getattr(tc, attribute)
                 self.last_json[str(value)] = None
+        self.last_json = {'left': -999.99,
+                'right': -999.99,
+                'voltage': 0}
 
     def readserial(self, update=True):
         self.last_serial = time.time()
