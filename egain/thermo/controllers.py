@@ -72,7 +72,7 @@ class Netcontroller:
 
     @property
     def listenaddress(self):
-        return ":".join(self._addr)
+        return f"{self._addr[0]}:{self._addr[1]}"
 
     @property
     def addr(self):

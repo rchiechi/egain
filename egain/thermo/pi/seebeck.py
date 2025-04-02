@@ -5,7 +5,6 @@ try:
     import RPi.GPIO as GPIO
     import adafruit_max31856
     from adafruit_rgb_display import st7789
-
 except ModuleNotFoundError as e:
     raise ModuleNotFoundError(">>> Make sure you are running this script on a Raspberry Pi <<<")
 

@@ -25,10 +25,10 @@ class Meas(tk.Frame):
         self._port = '6000'
         self.config_file = 'Meas.json'
         _config = parseusersettings(self.config_file)
-        self.addr = StringVar(value=f"{_config.get('host', self._host)}:{_config.get('port', self._port)}")
         self.last_update = time.time() - self.UPDATE_DELAY
         self._ok_to_update = True
         self.post_init()
+        self.addr = StringVar(value=f"{_config.get('host', self._host)}:{_config.get('port', self._port)}")
         self.createWidgets()
         self._checkconnetion()
         self.readstatus()

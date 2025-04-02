@@ -6,7 +6,6 @@ from io import StringIO
 from egain.meas.k2182A import K2182A
 from egain.thermo.util import enumerateDevices, init_thermo_device
 from egain.thermo.peltier import Gradient
-from egain.thermo.pi.listeners import Thermo
 from egain.thermo.controllers import Dummycontroller
 import egain.thermo.constants as tc
 from rich.console import Console
@@ -17,6 +16,7 @@ from rich.table import Table
 from rich.traceback import Traceback
 
 try:
+    from egain.thermo.pi.listeners import Thermo
     from egain.thermo.pi import get_thermocouples
     ON_PI = True
 except ModuleNotFoundError as e:
@@ -36,7 +36,8 @@ def update_seebeck_table(lt, rt, v, addr):
     table.add_column("[b]Right")
     table.add_column("[b]ΔV")
     table.add_row(f"{lt:0.1f} °C", f"{rt:0.1f} °C", volts)
-    table.add_row(addr)
+    table.add_section()
+    table.add_row("[blue]Listen Address:", f"[blue]{addr}")
     return table
 
 def update_peltier_table(lt, rt, lm, rm, addr):
@@ -56,7 +57,8 @@ def update_peltier_table(lt, rt, lm, rm, addr):
     table.add_column(left)
     table.add_column(right)
     table.add_row(f"{lt:0.1f} °C", f"{rt:0.1f} °C")
-    table.add_row(addr)
+    table.add_section()
+    table.add_row("[blue]Listen Address:", f"[blue]{addr}")
     return table
 
 def gui(opts):
@@ -70,10 +72,10 @@ def gui(opts):
     alive = threading.Event()
     alive.set()
     thermothread, gradcomm = None, None
-    if opts.seebeck and ON_PI:
+    if opts.seebeck:
         voltmeter = None
         console.print("[b][yellow]Starting seebeck... ", end='')
-        if not opts.dummy:
+        if not opts.dummy and ON_PI:
             for dev in enumerateDevices(first='serial0'):
                 if dev in DEVSINUSE.values():
                     continue
