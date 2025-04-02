@@ -120,8 +120,8 @@ def gui(opts):
             console.print(f"[green]started dummy peltier controller.")
     try:
         
-        layout["seebeck"].update(update_seebeck_table(0, 0, 0))
-        layout["peltier"].update(update_peltier_table(0, 0, None, None))
+        layout["seebeck"].update(update_seebeck_table(0, 0, 0, "0.0.0.0:0000"))
+        layout["peltier"].update(update_peltier_table(0, 0, None, None, "0.0.0.0:0000"))
         
         with Live(layout, refresh_per_second=4) as live:
             while True:                
