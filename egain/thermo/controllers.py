@@ -247,9 +247,9 @@ class Dummycontroller(Netcontroller):
 
     def post_init(self):
         self._initialized = True
-        self.lt = self.devices[0]['left']
-        self.rt = self.devices[0]['right']
-        self.voltmeter = self.devices[1]
+        self.lt = None
+        self.rt = None
+        self.voltmeter = None
         self.last_json = {'left': -999.99,
                           'right': -999.99,
                           'voltage': 0}
