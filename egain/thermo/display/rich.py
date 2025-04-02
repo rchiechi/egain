@@ -129,13 +129,13 @@ def gui(opts):
                     layout["seebeck"].update(update_seebeck_table(thermothread.lefttemp,
                                                                   thermothread.righttemp,
                                                                   thermothread.voltage,
-                                                                  thermothread.addr))
+                                                                  ":".join(thermothread.addr)))
                 if gradcomm:
                     layout["peltier"].update(update_peltier_table(gradcomm.status.get(tc.LEFT, 0.0), 
                                                                   gradcomm.status.get(tc.RIGHT, 0.0),
                                                                   gradcomm.status.get(tc.LEFTFLOW),
                                                                   gradcomm.status.get(tc.RIGHTFLOW),
-                                                                  gradcomm.addr))
+                                                                  ":".join(gradcomm.addr)))
                 time.sleep(0.5)    
     except KeyboardInterrupt:
         pass
