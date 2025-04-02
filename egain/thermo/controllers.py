@@ -269,12 +269,12 @@ class Dummycontroller(Netcontroller):
 
     @property
     def lefttemp(self):
-        return self.last_json.get('left')
+        return self.last_json.get('left', -999.99)
 
     @property
     def righttemp(self):
-        return self.last_json.get('right')
+        return self.last_json.get('right', -999.99)
 
     @property
     def voltage(self):
-        return self.last_json.get('voltage')
+        return self.last_json.get('voltage', 0)
