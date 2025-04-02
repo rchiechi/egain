@@ -8,33 +8,10 @@ import json
 from . import constants as tc
 from rich.console import Console
 
-class Dummycontroller(Netcontroller):
 
-    def post_init(self):
-        self._initialized = True
-        self.lt = self.devices[0]['left']
-        self.rt = self.devices[0]['right']
-        self.voltmeter = self.devices[1]
-        self.last_json = {'left': -999.99,
-                          'right': -999.99,
-                          'voltage': 0}
-        for attribute in dir(tc):
-            if not attribute.startswith('_'):  # Skip private attributes
-                value = getattr(tc, attribute)
-                self.last_json[str(value)] = None
-        
-
-    def readserial(self, update=True):
-        self.last_serial = time.time()
-        return self.last_json
-
-    def writeserial(self, cmd, val=None):
-        self.console.print(Panel(f"cmd: {cmd}, val:{val}", title='Dummycontroller'))
-        self.last_json[str(cmd)] = val
-        self.last_serial = time.time()
     
 
-class Netcontroller():
+class Netcontroller:
 
     def __init__(self, alive=None, devices=None, **kwargs):
         self._lock = threading.Lock()
@@ -264,4 +241,29 @@ class Netcontroller():
             self.console.print(f"Error sending command to {self.serial_device.name}.")
         except AttributeError:
             self.console.print(f"Error sending {cmd}. Serial device not connected.")
+        self.last_serial = time.time()
+
+class Dummycontroller(Netcontroller):
+
+    def post_init(self):
+        self._initialized = True
+        self.lt = self.devices[0]['left']
+        self.rt = self.devices[0]['right']
+        self.voltmeter = self.devices[1]
+        self.last_json = {'left': -999.99,
+                          'right': -999.99,
+                          'voltage': 0}
+        for attribute in dir(tc):
+            if not attribute.startswith('_'):  # Skip private attributes
+                value = getattr(tc, attribute)
+                self.last_json[str(value)] = None
+        
+
+    def readserial(self, update=True):
+        self.last_serial = time.time()
+        return self.last_json
+
+    def writeserial(self, cmd, val=None):
+        self.console.print(Panel(f"cmd: {cmd}, val:{val}", title='Dummycontroller'))
+        self.last_json[str(cmd)] = val
         self.last_serial = time.time()
