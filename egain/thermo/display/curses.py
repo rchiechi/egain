@@ -5,9 +5,11 @@ import threading
 import time
 from io import StringIO
 from egain.meas.k2182A import K2182A
-from egain.thermo.peltier import Gradient
 from egain.thermo.util import enumerateDevices, init_thermo_device
 from egain.thermo.pi.listeners import Thermo
+from egain.thermo.peltier import Gradient
+from egain.thermo.pi.listeners import Thermo
+from egain.thermo.controllers import Dummycontroller
 import egain.thermo.constants as tc
 try:
     from egain.thermo.pi.seebeck import get_thermocouples, pidisplay

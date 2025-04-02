@@ -4,9 +4,10 @@ import threading
 import time
 from io import StringIO
 from egain.meas.k2182A import K2182A
-from egain.thermo.peltier import Gradient
 from egain.thermo.util import enumerateDevices, init_thermo_device
+from egain.thermo.peltier import Gradient
 from egain.thermo.pi.listeners import Thermo
+from egain.thermo.controllers import Dummycontroller
 import egain.thermo.constants as tc
 from rich.console import Console
 from rich.live import Live
@@ -70,41 +71,51 @@ def gui(opts):
     if opts.seebeck and ON_PI:
         voltmeter = None
         console.print("[b][yellow]Starting seebeck... ", end='')
-        for dev in enumerateDevices(first='serial0'):
-            if dev in DEVSINUSE.values():
-                continue
-            voltmeter = K2182A(dev)
-            if voltmeter.initialize(auto_sense_range=True):
-                DEVSINUSE['seebeckstats'] = dev
-                break
-            voltmeter = None
-        if voltmeter:
-            Lthermocouple, Rthermocouple = get_thermocouples()
-            thermothread = Thermo(alive,
-                                [{'left':Lthermocouple, 'right':Rthermocouple}, voltmeter],
-                                    port=tc.THERMO_PORT,
-                                    console=console)
-            thermothread.start()
-            console.print(f"[green]started on {dev}.")
+        if not opts.dummy:
+            for dev in enumerateDevices(first='serial0'):
+                if dev in DEVSINUSE.values():
+                    continue
+                voltmeter = K2182A(dev)
+                if voltmeter.initialize(auto_sense_range=True):
+                    DEVSINUSE['seebeckstats'] = dev
+                    break
+                voltmeter = None
+            if voltmeter:
+                Lthermocouple, Rthermocouple = get_thermocouples()
+                thermothread = Thermo(alive,
+                                    [{'left':Lthermocouple, 'right':Rthermocouple}, voltmeter],
+                                        port=tc.THERMO_PORT,
+                                        console=console)
+                thermothread.start()
+                console.print(f"[green]started on {dev}.")
+            else:
+                console.print("[b][red]Error starting seebeck.")
         else:
-            console.print("[b][red]Error starting seebeck.")
+            thermothread = Dummycontroller(alive, voltmeter, port=tc.THERMO_PORT, console=console)
+            thermothread.start()
+            console.print(f"[green]started dummy peltier controller.")
     
     if opts.peltier:
         peltier = None
         console.print("[b][yellow]Starting peltier... ", end='')
-        for dev in enumerateDevices(first='ttyACM0'):
-            if dev in DEVSINUSE.values():
-                continue
-            peltier = init_thermo_device(dev, console)
-            if peltier is not None:
-                DEVSINUSE['peltierstats'] = dev
-                break
-        if peltier:
-            gradcomm = Gradient(alive, peltier, port=tc.PELTIER_PORT, console=console)
-            gradcomm.start()
-            console.print(f"[green]started on {dev}.")
+        if not opts.dummy:
+            for dev in enumerateDevices(first='ttyACM0'):
+                if dev in DEVSINUSE.values():
+                    continue
+                peltier = init_thermo_device(dev, console)
+                if peltier is not None:
+                    DEVSINUSE['peltierstats'] = dev
+                    break
+            if peltier:
+                gradcomm = Gradient(alive, peltier, port=tc.PELTIER_PORT, console=console)
+                gradcomm.start()
+                console.print(f"[green]started on {dev}.")
+            else:
+                console.print("[b][red]Error starting peltier.")
         else:
-            console.print("[b][red]Error starting peltier.")
+            gradcomm = Dummycontroller(alive, peltier, port=tc.PELTIER_PORT, console=console)
+            gradcomm.start()
+            console.print(f"[green]started dummy peltier controller.")
     try:
         
         layout["seebeck"].update(update_seebeck_table(0, 0, 0))

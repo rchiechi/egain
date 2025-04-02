@@ -12,6 +12,8 @@ rich_parser.add_argument('--seebeck', action="store_true",
                              help="Startup with seebeck active.")
 rich_parser.add_argument('--peltier', action="store_true",
                               help="Startup with peltier active.")
+rich_parser.add_argument('--dummy', action="store_true",
+                                help="Startup with dummy controllers.")
 opts = parser.parse_args()
 try:
     if opts.mode == 'curses':
