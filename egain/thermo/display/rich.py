@@ -26,7 +26,7 @@ except ModuleNotFoundError as e:
 
 DEVSINUSE = {'peltierstats': None, 'seebeckstats': None}
 
-def update_seebeck_table(lt, rt, v):
+def update_seebeck_table(lt, rt, v, addr):
     table = Table()
     if abs(v) < 0.01:
         volts = f"{v*1000:0.4f} mV"
@@ -36,9 +36,10 @@ def update_seebeck_table(lt, rt, v):
     table.add_column("[b]Right")
     table.add_column("[b]ΔV")
     table.add_row(f"{lt:0.1f} °C", f"{rt:0.1f} °C", volts)
+    table.add_row(addr)
     return table
 
-def update_peltier_table(lt, rt, lm, rm):
+def update_peltier_table(lt, rt, lm, rm, addr):
     table = Table()
     if lm == tc.HEAT:
         left = "[b][red]Left"
@@ -55,6 +56,7 @@ def update_peltier_table(lt, rt, lm, rm):
     table.add_column(left)
     table.add_column(right)
     table.add_row(f"{lt:0.1f} °C", f"{rt:0.1f} °C")
+    table.add_row(addr)
     return table
 
 def gui(opts):
@@ -124,16 +126,16 @@ def gui(opts):
         with Live(layout, refresh_per_second=4) as live:
             while True:                
                 if thermothread:
-                    lts =thermothread.lefttemp
-                    rts = thermothread.righttemp
-                    voltage = thermothread.voltage
-                    layout["seebeck"].update(update_seebeck_table(lts, rts, voltage))
+                    layout["seebeck"].update(update_seebeck_table(thermothread.lefttemp,
+                                                                  thermothread.righttemp,
+                                                                  thermothread.voltage,
+                                                                  thermothread.addr))
                 if gradcomm:
-                    ltp = gradcomm.status.get(tc.LEFT, 0.0)
-                    rtp = gradcomm.status.get(tc.RIGHT, 0.0)
-                    lm = gradcomm.status.get(tc.LEFTFLOW)
-                    rm = gradcomm.status.get(tc.RIGHTFLOW)
-                    layout["peltier"].update(update_peltier_table(ltp, rtp, lm, rm))
+                    layout["peltier"].update(update_peltier_table(gradcomm.status.get(tc.LEFT, 0.0), 
+                                                                  gradcomm.status.get(tc.RIGHT, 0.0),
+                                                                  gradcomm.status.get(tc.LEFTFLOW),
+                                                                  gradcomm.status.get(tc.RIGHTFLOW),
+                                                                  gradcomm.addr))
                 time.sleep(0.5)    
     except KeyboardInterrupt:
         pass
