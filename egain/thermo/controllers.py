@@ -257,7 +257,6 @@ class Dummycontroller(Netcontroller):
             if not attribute.startswith('_'):  # Skip private attributes
                 value = getattr(tc, attribute)
                 self.last_json[str(value)] = None
-        
 
     def readserial(self, update=True):
         self.last_serial = time.time()
@@ -267,3 +266,15 @@ class Dummycontroller(Netcontroller):
         self.console.print(Panel(f"cmd: {cmd}, val:{val}", title='Dummycontroller'))
         self.last_json[str(cmd)] = val
         self.last_serial = time.time()
+
+    @property
+    def lefttemp(self):
+        return self.last_json['left']
+
+    @property
+    def righttemp(self):
+        return self.last_json['right']
+
+    @property
+    def voltage(self):
+        return self.last_json['voltage']
