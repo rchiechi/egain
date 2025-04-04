@@ -272,6 +272,10 @@ class Dummycontroller(Netcontroller):
         self.last_serial = time.time()
 
     @property
+    def initialized(self):
+        return True
+
+    @property
     def lefttemp(self):
         return self.last_json.get('left', -999.99)
 

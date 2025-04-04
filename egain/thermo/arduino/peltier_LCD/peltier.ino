@@ -14,6 +14,11 @@ void setPeltier(int _side){
     PIDs[_side].Compute();
     analogWrite(peltier_addr[_side], PID_value[_side]);
   }
+  else {
+    analogWrite(peltier_addr[_side], 0); // Explicitly set PWM to 0
+    // Optional: reset the PID output variable
+    PID_value[_side] = 0.0;
+  }
 }
 
 /* OLD PELTIER LOGIC
@@ -78,16 +83,17 @@ void setpower(uint8_t _side, uint8_t _power) {
 /*
 
 /*
-* Set the on/off state of a pletier based on the value of peltier_on
+* Set the on/off state of a peltier based on the value of peltier_on
 */
 void togglePeltier() {
   for (uint8_t side = LEFT; side <= RIGHT; ++side) {
     if (peltier_on[side]) {
       digitalWrite(peltier_relay[side], HIGH);
     }
-    if (!peltier_on[side]) {
-      digitalWrite(peltier_relay[side], LOW);
-    }
+    // With only one power supply, this statement will turn both off
+    // if (!peltier_on[side]) {
+    //   digitalWrite(peltier_relay[side], LOW);
+    // }
   }
   if (!peltier_on[LEFT] && !peltier_on[RIGHT]) {
     for (uint8_t side = LEFT; side <= RIGHT; ++side) {
@@ -106,12 +112,12 @@ void togglePolarity() {
   for (int side = LEFT; side <= RIGHT; ++side) {
     digitalWrite(peltier_relay[side], LOW);
   }
-  delay(100);
+  delay(10);
   // Set flow direction
   for (int side = LEFT; side <= RIGHT; ++side) {
     digitalWrite(peltier_polarity[side], flow[side]);
   }
-  delay(100);
+  delay(10);
   // Sync PID controllers with flow direction
   for (int side = LEFT; side <= RIGHT; ++side) {
     current_state = getPolarity(side);
@@ -121,7 +127,7 @@ void togglePolarity() {
       PIDs[side].SetControllerDirection(REVERSE);
     }
   }
-  delay(100);
+  delay(10);
   
   togglePeltier();
 }

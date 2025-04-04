@@ -136,6 +136,7 @@ void setup() {
     pinMode(peltier_addr[side], OUTPUT);   // sets the PWM pin as output
     avgTC[side].begin();                   // Clear the running average objects
     PIDs[side].SetMode(AUTOMATIC);
+    PIDs[side].SetOutputLimits(0, 255);
   }
   // Start the LCD screen
   lcd.begin(16, 2);
@@ -197,6 +198,6 @@ void loop() {
   for (uint8_t side = LEFT; side <= RIGHT; ++side) {
     setPeltier(side);
   }
-  delay(100);
+  delay(10);
 }
 // ###########################################################################
