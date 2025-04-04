@@ -56,7 +56,7 @@ void exec_poll() {
     Serial.print(F(","));
     checkPeltier(); // This function prints the rest (power, flow)
     // Check if an error message exists BEFORE closing the JSON object
-    if (!error_msg.isEmpty()) { // Use isEmpty() for clarity
+    if (error_msg.length() > 0) { // Use isEmpty() for clarity
         Serial.print(F(",\"ERROR\":\"")); // Add the JSON key for the error
         Serial.print(error_msg);         // Print the actual error message
         Serial.print(F("\""));           // Close the error string in JSON
