@@ -40,7 +40,7 @@ void animate_splash_screen() {
     lcd.setCursor(0, 1);
     if (blink) {
       lcd.write(0x7E);
-      lcd.print(F(" PRESS SELECT "));
+      lcd.print(F(" PRESS SELECT V1.0 "));
       lcd.write(0x7F);
     } else {
       lcd.print(F("                "));
