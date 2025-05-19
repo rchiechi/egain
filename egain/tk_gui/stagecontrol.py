@@ -122,7 +122,7 @@ class StageControls(tk.Frame):
                                      text='Relative Move Distance')
         relativemoveindicatorLabel = tk.Label(master=relativemoveFrame,
                                               textvariable=self.relative_move_label)
-        self.unitStr.set(self.units[2])  # Set default units to mm
+        self.unitStr.set(self.units[3])  # Set default units to µm
         unitOptionMenu = tk.OptionMenu(relativemoveFrame,  # Create menu for units
                                        self.unitStr,
                                        self.unitStr.get(),
